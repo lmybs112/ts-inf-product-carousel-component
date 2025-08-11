@@ -36,9 +36,17 @@
             console.log('從 URL 參數讀取的 brand 值:', brandFromUrl);
             console.log('最終使用的 brand 值:', brand);
 
+            // 從 URL 參數中讀取 displayMode 值，如果沒有則使用預設值 'SaleRate'
+            const displayModeFromUrl = getUrlParameter('displayMode');
+            const displayMode = displayModeFromUrl || 'SaleRate';
+            
+            console.log('從 URL 參數讀取的 displayMode 值:', displayModeFromUrl);
+            console.log('最終使用的 displayMode 值:', displayMode);
+
             // 使用簡化的初始化函數
             const carousel = initInfProductCarouselComponent({
                 brand: brand,
+                displayMode: displayMode,
                 showPositionId: {
                     top: 'infFitsHeader',
                     bottom: 'infFitsFooter'

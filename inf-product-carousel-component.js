@@ -1037,7 +1037,8 @@ class InfProductCarouselComponent extends HTMLElement {
           ctype_val,
           bid,
           autoplay,
-          sortedBreakpoints
+          sortedBreakpoints,
+          displayMode
         });
   
         $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
@@ -1180,6 +1181,10 @@ class InfProductCarouselComponent extends HTMLElement {
   
     getEmbeddedAds(ids, containerId, config) {
       const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode } = config;
+      
+      // 調試日誌：確認 displayMode 的值
+      console.log('getEmbeddedAds - displayMode:', displayMode);
+      console.log('getEmbeddedAds - config:', config);
   
       const requestData = brand.toLocaleUpperCase() === 'DABE' ? {
         Brand: brand,
@@ -1268,19 +1273,83 @@ class InfProductCarouselComponent extends HTMLElement {
             }
           }
   
-          let jsonData = customEdm && customEdm.length > 0
-            ? customEdm.map(item => {
-                let newItem = Object.assign({}, item);
-                newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
-                newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
-                return newItem;
-              })
-            : getRandomElements(response['bhv'], response['bhv'].length > 12 ? 12 : response['bhv'].length).map(item => {
-                let newItem = Object.assign({}, item);
-                newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
-                newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
-                return newItem;
-              });
+          // 根據 displayMode 決定資料取用順序
+          let jsonData = [];
+          
+          // 調試日誌：確認資料處理邏輯
+          console.log('資料處理 - displayMode:', displayMode);
+          console.log('API 回應資料:', response);
+          
+          if (customEdm && customEdm.length > 0) {
+            // 如果有自定義 EDM 資料，優先使用
+            jsonData = customEdm.map(item => {
+              let newItem = Object.assign({}, item);
+              newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+              newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              return newItem;
+            });
+          } else {
+            // 根據 displayMode 決定資料來源順序
+            if (displayMode === 'SaleRate') {
+              // SaleRate 模式：優先使用 bhv 或 corr，然後是 sp_atc 或 sp_trans
+              let sourceData = [];
+              
+              // 優先取用 bhv 或 corr
+              if (response['bhv'] && response['bhv'].length > 0) {
+                sourceData = response['bhv'];
+              } else if (response['corr'] && response['corr'].length > 0) {
+                sourceData = response['corr'];
+              }
+              
+              // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans
+              if (sourceData.length === 0) {
+                if (response['sp_atc'] && response['sp_atc'].length > 0) {
+                  sourceData = response['sp_atc'];
+                } else if (response['sp_trans'] && response['sp_trans'].length > 0) {
+                  sourceData = response['sp_trans'];
+                }
+              }
+              
+              // 處理資料並限制數量
+              if (sourceData.length > 0) {
+                jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
+                  let newItem = Object.assign({}, item);
+                  newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+                  newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+                  return newItem;
+                });
+              }
+            } else if (displayMode === 'SocialProofNum') {
+              // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr
+              let sourceData = [];
+              
+              if (response['sp_atc'] && response['sp_atc'].length > 0) {
+                sourceData = response['sp_atc'];
+              } else if (response['sp_trans'] && response['sp_trans'].length > 0) {
+                sourceData = response['sp_trans'];
+              }
+              
+              // 處理資料並限制數量
+              if (sourceData.length > 0) {
+                jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
+                  let newItem = Object.assign({}, item);
+                  newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+                  newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+                  return newItem;
+                });
+              }
+            } else {
+              // 其他模式：使用預設的 bhv 資料
+              if (response['bhv'] && response['bhv'].length > 0) {
+                jsonData = getRandomElements(response['bhv'], response['bhv'].length > 12 ? 12 : response['bhv'].length).map(item => {
+                  let newItem = Object.assign({}, item);
+                  newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+                  newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+                  return newItem;
+                });
+              }
+            }
+          }
   
           if (jsonData.length > 0) {
             this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
@@ -1322,12 +1391,12 @@ class InfProductCarouselComponent extends HTMLElement {
           <div class="embeddedItemInfo">
             <h3 class="embeddedItemInfo__title">${img.title}</h3>
             
-            ${displayMode === 'SocialProofNum' && img.record_cnt?
+            ${displayMode === 'SocialProofNum'?
                 `<div class="embeddedItemInfo__content">
                   <p class="embeddedItemInfo__discount">${img.record_cnt}人購買</p>
                   <p class="embeddedItemInfo__price">NT$ ${img.price}</p>
                 </div>`:
-                img.sale_price && img.sale_price !== img.price
+                displayMode === 'SaleRate' && img.sale_price && img.sale_price !== img.price
               ? `<div class="embeddedItemInfo__content">
                   <p class="embeddedItemInfo__discount">${Math.ceil(100 - (parseInt(img.sale_price.replace(',', '')) * 100) / parseInt(img.price.replace(',', '')))}% off</p>
                   <p class="embeddedItemInfo__price">NT$ ${img.sale_price}</p>
