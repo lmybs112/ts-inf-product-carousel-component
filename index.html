@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Component 測試</title>
+
+<body>
+    <div id="infFitsHeader" style="border-bottom:1px solid #ddd; min-height:100px;">
+        infFitsHeader
+    </div>
+    <div id="test" style="border-bottom:1px solid #ddd; min-height:100px;">
+        <div>
+            <div>
+                test
+            </div>
+        </div>
+    </div>
+    <div id="infFitsFooter" style="border-bottom:1px solid #ddd; min-height:100px;">
+        infFitsFooter
+    </div>
+    <script src="./inf-product-carousel-component.js"></script>
+    <script>
+        // URL 參數解析函數
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 從 URL 參數中讀取 brand 值，如果沒有則使用預設值 'ALMI'
+            const brandFromUrl = getUrlParameter('brand');
+            const brand = brandFromUrl || 'ALMI';
+            
+            console.log('從 URL 參數讀取的 brand 值:', brandFromUrl);
+            console.log('最終使用的 brand 值:', brand);
+
+            // 使用簡化的初始化函數
+            const carousel = initInfProductCarouselComponent({
+                brand: brand,
+                showPositionId: {
+                    top: 'infFitsHeader',
+                    bottom: 'infFitsFooter'
+                },
+                autoplay: false
+            });
+            console.log('組件已初始化:', carousel);
+        });
+    </script>
+</body>
+
+</html>
