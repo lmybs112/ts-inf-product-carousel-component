@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產品輪播組件 Demo</title>
+</head>
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+</style>
+<body>
+    <div id="infFitsHeader">
+        <h2>頂部廣告區域</h2>
+    </div>
+    
+    <div id="content">
+        <h1>頁面內容</h1>
+        <p>這是一個示例頁面內容</p>
+    </div>
+    
+    <div id="infFitsFooter">
+        <h2>底部廣告區域</h2>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 載入腳本
+            const script = document.createElement('script');
+            script.src = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-component.js';
+            script.async = true;
+            script.onload = function() {
+                const config = {
+                    brand: 'ALMI',
+                    showPositionId: {
+                        top: 'infFitsHeader',
+                        bottom: 'infFitsFooter'
+                    }
+                };
+                // 初始化組件
+                window.initInfProductCarouselComponent(config);
+            };
+            document.head.appendChild(script);
+        });
+    </script>
+</body>
+</html> 

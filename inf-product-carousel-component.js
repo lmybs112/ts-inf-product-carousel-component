@@ -20,7 +20,7 @@ class InfProductCarouselComponent extends HTMLElement {
         }
 
     async fetchBrandConfigAndInit(config = {}) {
-      const { brand = 'JERSCY' } = config;
+      const { brand} = config;
       
       try {
         // 調用品牌配置 API
@@ -92,18 +92,12 @@ class InfProductCarouselComponent extends HTMLElement {
       // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
       if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
         convertedConfig.breakpoints = {
-          1024: {
+          768: {
             slidesPerView: brandConfig.CarouselLayout,
             slidesPerGroup: brandConfig.CarouselLayout,
             spaceBetween: 24,
             loopFillGroupWithBlank: true
           },
-          768: {
-            slidesPerView: brandConfig.CarouselLayout > 5 ? 4 : brandConfig.CarouselLayout,
-            slidesPerGroup: brandConfig.CarouselLayout > 5 ? 4 : brandConfig.CarouselLayout,
-            spaceBetween: 24,
-            loopFillGroupWithBlank: true
-          }
         };
       }
 
@@ -127,6 +121,9 @@ class InfProductCarouselComponent extends HTMLElement {
       // DisplayMode: 保留 (您已經寫好了)
       if (brandConfig.DisplayMode) {
         convertedConfig.displayMode = brandConfig.DisplayMode;
+        console.log('convertBrandConfig - 從品牌配置讀取 DisplayMode:', brandConfig.DisplayMode);
+      } else {
+        console.log('convertBrandConfig - 品牌配置中沒有 DisplayMode');
       }
 
       // status: 組件啟用狀態
@@ -607,26 +604,29 @@ class InfProductCarouselComponent extends HTMLElement {
         #${containerId} .embeddedAdContainer a:focus {
           outline: none;
         }
-        #${containerId} .embeddedAdContainer .embeddedAdContainer__title {
+        #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
           font-family: "Noto Sans TC", "Figtree", sans-serif;
           text-align: center;
           font-style: normal;
           font-weight: 500;
           line-height: normal;
           color: #000;
-          font-size: var(--inf-embedded-ad-font-16);
+          font-size: var(--inf-embedded-ad-font-18);
           letter-spacing: 1.6px;
           text-align: left;
           margin: 0;
           padding: 0;
+          margin-bottom: 12px;
         }
+
         @media (min-width: 768px) {
-          #${containerId} .embeddedAdContainer .embeddedAdContainer__title {
+          #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
             margin-top: 0px;
+            margin-bottom: 0px;
           }
         }
         @media (min-width: 1025px) {
-          #${containerId} .embeddedAdContainer .embeddedAdContainer__title {
+          #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
             color: var(--inf-embedded-ad-dark-yellow), var(--inf-embedded-ad-dark-gray);
             font-size: 22px;
             letter-spacing: 0.84px;
@@ -779,7 +779,7 @@ class InfProductCarouselComponent extends HTMLElement {
           align-items: center;
       }
 
-      #${containerId} .text-section h2 {
+      #${containerId} .text-section h2.embeddedAdContainer__title-v2 {
           color: #000;
           font-family: 'Noto Sans TC' Arial, sans-serif;
           font-size: 32px;
@@ -799,14 +799,14 @@ class InfProductCarouselComponent extends HTMLElement {
           text-align: center;
       }
         @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer__wrapper{
+        #${containerId} .embeddedAdContainer__wrapper:has(.embeddedAdContainer__title-v2){
           gap: 64px;
         }
         #${containerId} .text-section {
           gap: 24px;
         }
 
-       #${containerId} .text-section h2 {
+       #${containerId} .text-section h2.embeddedAdContainer__title-v2 {
           color: #1e1e19;
           text-align: center;
           font-size: 51px;
@@ -860,6 +860,7 @@ class InfProductCarouselComponent extends HTMLElement {
           font-size: 12px;
           opacity: 1;
           transform: scale(0.8);
+          text-wrap-mode: nowrap;
         }
         #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__sptext {
           color: #333;
@@ -930,6 +931,11 @@ class InfProductCarouselComponent extends HTMLElement {
           font-size: 12px;
           line-height: 16px;
         }
+        #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original,
+        #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price,
+        #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
+          text-wrap-mode: nowrap;
+        }
       `;
       shadowRoot.appendChild(customCSS);
   
@@ -937,10 +943,10 @@ class InfProductCarouselComponent extends HTMLElement {
         let ids = this.ids_init();
   
         const embeddedContainer = `
-                 <div class="embeddedAdContainer__wrapper">
+        <div class="embeddedAdContainer__wrapper">
              <div class="text-section">
-               <h2 class="embeddedAdContainer__title">${title}</h2>
-               ${description ? `<p class="embeddedAdContainer__desc">${description}</p>` : ''}
+               <h2 class="${description && false ? 'embeddedAdContainer__title-v2' : 'embeddedAdContainer__title'}">${title}</h2>
+               ${description && false ? `<p class="embeddedAdContainer__desc">${description}</p>` : ''}
              </div>
           <div class="embeddedAdContainer" id="embedded-ad-container-${containerId}">
             <div style="margin-bottom: 6px;">
@@ -1073,15 +1079,6 @@ class InfProductCarouselComponent extends HTMLElement {
             });
           }
         });
-  
-        $(shadowRoot).on('click', `#${containerId} .title-nav-prev`, function() {
-          $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).trigger('click');
-        });
-  
-        $(shadowRoot).on('click', `#${containerId} .title-nav-next`, function() {
-          $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).trigger('click');
-        });
-  
         $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .embeddedItem`, function() {
           const title = $(this).data('title');
           const link = $(this).data('link');
@@ -1184,7 +1181,7 @@ class InfProductCarouselComponent extends HTMLElement {
       
       // 調試日誌：確認 displayMode 的值
       console.log('getEmbeddedAds - displayMode:', displayMode);
-      console.log('getEmbeddedAds - config:', config);
+      console.log('getEmbeddedAds - 完整配置:', config);
   
       const requestData = brand.toLocaleUpperCase() === 'DABE' ? {
         Brand: brand,
@@ -1276,10 +1273,6 @@ class InfProductCarouselComponent extends HTMLElement {
           // 根據 displayMode 決定資料取用順序
           let jsonData = [];
           
-          // 調試日誌：確認資料處理邏輯
-          console.log('資料處理 - displayMode:', displayMode);
-          console.log('API 回應資料:', response);
-          
           if (customEdm && customEdm.length > 0) {
             // 如果有自定義 EDM 資料，優先使用
             jsonData = customEdm.map(item => {
@@ -1367,6 +1360,9 @@ class InfProductCarouselComponent extends HTMLElement {
     }
   
     updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode) {
+      // 調試日誌：確認 updatePopAd 中的 displayMode 值
+      console.log('updatePopAd - displayMode:', displayMode);
+      
       let displayImages = images;
   
       if (images.length === 0) {
@@ -1427,8 +1423,16 @@ class InfProductCarouselComponent extends HTMLElement {
         loopFillGroupWithBlank: true,
         spaceBetween: 8,
         navigation: {
-          nextEl: this.shadowRoot.querySelector(`#${containerId} .swiper-next`),
-          prevEl: this.shadowRoot.querySelector(`#${containerId} .swiper-prev`)
+          nextEl: [
+            this.shadowRoot.querySelector(`#${containerId} .title-nav-next`),
+            this.shadowRoot.querySelector(`#${containerId} .swiper-next`),
+            this.shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)
+          ].filter(el => el), // 過濾掉 null 元素
+          prevEl: [
+            this.shadowRoot.querySelector(`#${containerId} .title-nav-prev`),
+            this.shadowRoot.querySelector(`#${containerId} .swiper-prev`),
+            this.shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)
+          ].filter(el => el) // 過濾掉 null 元素
         },
         simulateTouch: true,
         touchRatio: 1,
