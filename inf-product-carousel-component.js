@@ -2,6 +2,7 @@ class InfProductCarouselComponent extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
+      this.shadowJQuery = null; // 添加獨立的 jQuery 實例屬性
     }
   
     static get observedAttributes() {
@@ -378,18 +379,38 @@ class InfProductCarouselComponent extends HTMLElement {
       return '627b5ab044a027000fde0add';
     }
   
+    // 輔助方法：獲取獨立的 jQuery 實例
+    getJQuery() {
+      return this.shadowJQuery || jQuery;
+    }
+
     ensureEmbeddedAdJQueryLoaded(callback) {
+      if (this.shadowJQuery) {
+        // 如果已經有獨立的 jQuery 實例，直接使用
+        this.loadSwiperScript();
+        callback();
+        return;
+      }
+
       if (typeof jQuery === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
         script.type = 'text/javascript';
         script.onload = () => {
+          // 創建獨立的 jQuery 實例
+          this.shadowJQuery = jQuery.noConflict(true);
           this.loadSwiperScript();
           callback();
         };
-        script.onerror = () => console.error('載入 jQuery 時出錯');
+        script.onerror = () => {
+          console.error('載入 jQuery 時出錯');
+          // 即使載入失敗也繼續執行，使用原生 JavaScript
+          callback();
+        };
         document.head.appendChild(script);
       } else {
+        // 如果頁面已有 jQuery，創建獨立的實例
+        this.shadowJQuery = jQuery.noConflict(true);
         this.loadSwiperScript();
         callback();
       }
@@ -429,8 +450,9 @@ class InfProductCarouselComponent extends HTMLElement {
         test,
         GA4Key
       } = config;
-  
-      const $ = jQuery;
+
+      // 使用獨立的 jQuery 實例
+      const $ = this.getJQuery();
       const shadowRoot = this.shadowRoot;
   
       const googleFontLink = document.createElement('link');
@@ -1347,12 +1369,17 @@ class InfProductCarouselComponent extends HTMLElement {
           if (jsonData.length > 0) {
             this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
           } else {
-            $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
+            // 調試日誌
+            console.log('jQuery 實例:', this.getJQuery());
+            console.log('loading 元素:', this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`));
+            console.log('jQuery fadeOut 方法:', typeof this.getJQuery().fn.fadeOut);
+            
+            this.getJQuery()(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
             if (containerId === 'personalized-recommendations') {
-              $('#jump-recom').hide();
+              this.getJQuery()('#jump-recom').hide();
             }
             if (containerId === 'more-recommendations') {
-              $('#jump-more').hide();
+              this.getJQuery()('#jump-more').hide();
             }
           }
         })
@@ -1405,7 +1432,7 @@ class InfProductCarouselComponent extends HTMLElement {
         </a>
       `).join('');
   
-      $(this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`)).html(items);
+      this.getJQuery()(this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`)).html(items);
   
       const swiper = new Swiper(this.shadowRoot.querySelector(`.swiper-basic-${containerId}`), {
         direction: 'horizontal',
@@ -1478,10 +1505,15 @@ class InfProductCarouselComponent extends HTMLElement {
               });
             }
 
-            $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-              $(this.shadowRoot.querySelector(`#${containerId} .embeddedAdContainer`)).show();
+            // 調試日誌
+            console.log('Swiper init - jQuery 實例:', this.getJQuery());
+            console.log('Swiper init - loading 元素:', this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`));
+            console.log('Swiper init - jQuery fadeOut 方法:', typeof this.getJQuery().fn.fadeOut);
+            
+            this.getJQuery()(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
+              this.getJQuery()(this.shadowRoot.querySelector(`#${containerId} .embeddedAdContainer`)).show();
               // 載入完成後顯示文字區域
-              $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
+              this.getJQuery()(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
             });
           },
           resize: function() {
