@@ -9,7 +9,7 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   connectedCallback() {
-    // Element is added to DOM; initialization handled by attributeChangedCallback
+    // 元素被加入 DOM 時不需要初始化，由 attributeChangedCallback 處理
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -17,12 +17,13 @@ class InfProductCarouselComponent extends HTMLElement {
       const config = JSON.parse(newValue || '{}');
       this.fetchBrandConfigAndInit(config);
     }
-  }
+      }
 
   async fetchBrandConfigAndInit(config = {}) {
-    const { brand } = config;
+    const { brand} = config;
     
     try {
+      // 調用品牌配置 API
       const brandConfigResponse = await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
         method: 'POST',
         headers: {
@@ -33,27 +34,32 @@ class InfProductCarouselComponent extends HTMLElement {
       });
 
       if (!brandConfigResponse.ok) {
-        throw new Error(`Brand config API failed: ${brandConfigResponse.status}`);
+        throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
       }
 
       const brandConfigResponseData = await brandConfigResponse.json();
       const brandConfig = brandConfigResponseData.find(
-        item => item.Module === 'Product_Carousel_Widget'
-      )?.ConfigData.Section_Info[0];
-      console.log('Brand config data:', brandConfig);
+          item => item.Module === 'Product_Carousel_Widget'
+        )?.ConfigData.Section_Info[0];
+      console.log('品牌配置資料:', brandConfig);
 
+      // 將 brandConfig 轉換為標準配置格式
       const convertedBrandConfig = this.convertBrandConfig(brandConfig, config);
-      console.log('Converted brand config:', convertedBrandConfig);
+      console.log('轉換後的品牌配置:', convertedBrandConfig);
 
+      // 將轉換後的品牌配置合併到原有配置中
       const mergedConfig = {
         ...config,
         ...convertedBrandConfig,
-        brandConfig
+        brandConfig: brandConfig // 保留原始 brandConfig 供其他地方使用
       };
 
+      // 使用合併後的配置進行初始化，並在初始化後自動移動到目標容器
       this.initProductRecommendation(mergedConfig, true);
+      
     } catch (error) {
-      console.error('Error fetching brand config:', error);
+      console.error('獲取品牌配置時發生錯誤:', error);
+      // 如果品牌配置 API 失敗，仍然使用原有配置初始化
       this.initProductRecommendation(config);
     }
   }
@@ -63,22 +69,27 @@ class InfProductCarouselComponent extends HTMLElement {
 
     const convertedConfig = {};
 
+    // CarouselButton: true → arrowPosition = 'center', false → arrowPosition = 'none'
     if (typeof brandConfig.CarouselButton === 'boolean') {
       convertedConfig.arrowPosition = brandConfig.CarouselButton ? 'center' : 'none';
     }
 
+    // Description: 變更 description
     if (brandConfig.Description) {
       convertedConfig.description = brandConfig.Description;
     }
 
+    // RecommendMode: 直接使用
     if (brandConfig.RecommendMode) {
       convertedConfig.recommendMode = brandConfig.RecommendMode;
     }
 
+      // Title: 變更 title
     if (brandConfig.Title) {
       convertedConfig.title = brandConfig.Title;
     }
 
+    // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
     if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
       convertedConfig.breakpoints = {
         768: {
@@ -90,11 +101,15 @@ class InfProductCarouselComponent extends HTMLElement {
       };
     }
 
+    // Location: 新增 showPositionId 配置
     if (brandConfig.Location) {
+      // 使用外部傳入的 showPositionId 配置，而不是寫死的值
       if (config.showPositionId) {
         convertedConfig.showPositionId = config.showPositionId;
+        // 根據 Location 設定對應的 containerId
         convertedConfig.containerId = brandConfig.Location === 'top' ? config.showPositionId.top : config.showPositionId.bottom;
       } else {
+        // 如果沒有外部 showPositionId 配置，使用預設值
         convertedConfig.showPositionId = {
           top: 'infFitsHeader',
           bottom: 'infFitsFooter'
@@ -103,13 +118,15 @@ class InfProductCarouselComponent extends HTMLElement {
       }
     }
 
+    // DisplayMode: 保留 (您已經寫好了)
     if (brandConfig.DisplayMode) {
       convertedConfig.displayMode = brandConfig.DisplayMode;
-      console.log('convertBrandConfig - DisplayMode from brand config:', brandConfig.DisplayMode);
+      console.log('convertBrandConfig - 從品牌配置讀取 DisplayMode:', brandConfig.DisplayMode);
     } else {
-      console.log('convertBrandConfig - No DisplayMode in brand config');
+      console.log('convertBrandConfig - 品牌配置中沒有 DisplayMode');
     }
 
+    // status: 組件啟用狀態
     if (typeof brandConfig.status === 'boolean') {
       convertedConfig.enabled = brandConfig.status;
     }
@@ -118,11 +135,12 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   initProductRecommendation(config = {}, shouldAutoAppend = false) {
+    // 檢查組件是否啟用
     if (config.enabled === false) {
-      console.log('Component disabled, skipping initialization');
+      console.log('組件已停用，不進行初始化');
       return;
     }
-
+    
     const defaultConfig = {
       brand: 'JERSCY',
       containerId: 'infFitsFooter',
@@ -179,6 +197,7 @@ class InfProductCarouselComponent extends HTMLElement {
       }
     };
 
+    // 合併配置：預設配置 < 用戶配置（已包含轉換後的品牌配置）
     const finalConfig = {
       ...defaultConfig,
       ...config,
@@ -214,21 +233,26 @@ class InfProductCarouselComponent extends HTMLElement {
         return acc;
       }, {});
 
-    const Brand = brand;
+          const Brand = brand;
     const skuContent = this.shopline_sku();
     const show_up_position_before = `#${containerId}`;
     const test = 'A';
     let GA4Key = '';
 
-    console.log('Final config:', finalConfig);
-    console.log('Original brand config:', config.brandConfig);
+    // 輸出最終配置以供調試
+    console.log('最終配置:', finalConfig);
+    console.log('原始品牌配置:', config.brandConfig);
 
+    // 如果需要自動 append 且品牌配置指定了 Location，則自動移動到目標容器
     if (shouldAutoAppend && config.brandConfig && config.brandConfig.Location) {
       const appendSuccess = this.appendToTargetContainer(containerId, backgroundColor);
+      
       if (!appendSuccess) {
+        // 如果自動 append 失敗，使用原來的 render 方法
         this.render(containerId, backgroundColor, title);
       }
     } else {
+      // 正常渲染到 shadow DOM
       this.render(containerId, backgroundColor, title);
     }
 
@@ -255,6 +279,7 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   render(containerId, backgroundColor, title) {
+    // 先清空 shadow DOM，準備根據配置重新渲染
     this.shadowRoot.innerHTML = `
       <div id="temp-container" style="display: none;">
         <div id="recommendation-loading">
@@ -265,23 +290,29 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   appendToTargetContainer(containerId, backgroundColor) {
+    // 檢查目標容器是否存在於外部 DOM 中
     const targetContainer = document.getElementById(containerId);
     
     if (targetContainer) {
+      // 如果目標容器存在，將組件內容移動到目標容器
       const componentContent = `
-        <div id="${containerId}" style="background-color: ${backgroundColor}; border-radius: 8px; max-width: 1280px; margin: 0 auto;">
+        <div id="${containerId}" style="background-color: ${backgroundColor}; border-radius: 8px;max-width: 1280px;margin: 0 auto;">
           <div id="recommendation-loading">
             <span class="loading-text">Loading...</span>
           </div>
         </div>
       `;
       
+      // 更新 shadow DOM 內容
       this.shadowRoot.innerHTML = componentContent;
+      
+      // 將整個組件 append 到目標容器
       targetContainer.appendChild(this);
-      console.log(`Component appended to container: ${containerId}`);
+      
+      console.log(`組件已自動 append 到容器: ${containerId}`);
       return true;
     } else {
-      console.warn(`Target container ${containerId} not found, keeping component in current position`);
+      console.warn(`目標容器 ${containerId} 不存在，組件將保持在當前位置`);
       return false;
     }
   }
@@ -291,7 +322,7 @@ class InfProductCarouselComponent extends HTMLElement {
     if (typeof dataLayer !== 'undefined') {
       for (let i = 0; i < dataLayer.length; i++) {
         if (dataLayer[i].Action === 'Product-Detail') {
-          console.log('Found matching "gtm.load" event');
+          console.log('找到了符合 "gtm.load" 的事件，執行後續動作');
           console.log('FOUND!!');
           member_id = dataLayer[i].Uid !== '' ? dataLayer[i].Uid : '';
           break;
@@ -313,7 +344,7 @@ class InfProductCarouselComponent extends HTMLElement {
     if (typeof dataLayer !== 'undefined') {
       for (let i = 0; i < dataLayer.length; i++) {
         if (dataLayer[i].Action === 'Product-Detail') {
-          console.log('Found matching "gtm.load" event');
+          console.log('找到了符合 "gtm.load" 的事件，執行後續動作');
           console.log('FOUND!!');
           member_id = dataLayer[i].Uid !== '' ? dataLayer[i].Uid : '';
           break;
@@ -348,9 +379,20 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   ensureEmbeddedAdJQueryLoaded(callback) {
-    // Since jQuery is removed, we only need to load Swiper and execute the callback
-    this.loadSwiperScript();
-    callback();
+    if (typeof jQuery === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
+      script.type = 'text/javascript';
+      script.onload = () => {
+        this.loadSwiperScript();
+        callback();
+      };
+      script.onerror = () => console.error('載入 jQuery 時出錯');
+      document.head.appendChild(script);
+    } else {
+      this.loadSwiperScript();
+      callback();
+    }
   }
 
   loadSwiperScript() {
@@ -388,6 +430,7 @@ class InfProductCarouselComponent extends HTMLElement {
       GA4Key
     } = config;
 
+    const $ = jQuery;
     const shadowRoot = this.shadowRoot;
 
     const googleFontLink = document.createElement('link');
@@ -398,7 +441,7 @@ class InfProductCarouselComponent extends HTMLElement {
     const googleFontLink2 = document.createElement('link');
     googleFontLink2.rel = 'preconnect';
     googleFontLink2.href = 'https://fonts.gstatic.com';
-    googleFontLink2.crossOrigin = 'anonymous';
+    googleFontLink2.crossorigin = 'anonymous';
     shadowRoot.appendChild(googleFontLink2);
 
     const googleFontLink3 = document.createElement('link');
@@ -408,12 +451,12 @@ class InfProductCarouselComponent extends HTMLElement {
 
     const customCSS = document.createElement('style');
     customCSS.type = 'text/css';
-    customCSS.textContent = `
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+    customCSS.innerHTML = `
+    *{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
       :host {
         display: block;
         --inf-embedded-ad-font-9: 9px;
@@ -575,6 +618,7 @@ class InfProductCarouselComponent extends HTMLElement {
         padding: 0;
         margin-bottom: 12px;
       }
+
       @media (min-width: 768px) {
         #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
           margin-top: 0px;
@@ -603,7 +647,7 @@ class InfProductCarouselComponent extends HTMLElement {
       #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img {
         position: relative;
         width: 100%;
-        border-radius: 8px;
+        border-radius: 8px; /* 直接使用值，確保圓角生效 */
       }
       #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
         position: absolute;
@@ -640,6 +684,16 @@ class InfProductCarouselComponent extends HTMLElement {
           font-size: var(--inf-embedded-ad-font-14);
           line-height: 17px;
         }
+      }
+      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__imgBox {
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1 / 1;
+        display: grid;
+        place-items: center;
+        border-radius: 8px; /* 直接使用值，確保圓角生效 */
+        will-change: transform;
       }
       #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
         position: absolute;
@@ -682,7 +736,7 @@ class InfProductCarouselComponent extends HTMLElement {
         height: 100%;
         object-fit: cover;
         will-change: transform;
-        border-radius: 8px;
+        border-radius: 8px; /* 直接使用值，確保圓角生效 */
       }
       #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
         width: 100%;
@@ -710,61 +764,65 @@ class InfProductCarouselComponent extends HTMLElement {
         line-clamp: 1;
         -webkit-box-orient: vertical;
       }
-      #${containerId} .embeddedAdContainer__wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0px;
-      }
-      #${containerId} .text-section {
-        display: none;
+    #${containerId} .embeddedAdContainer__wrapper{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0px;
+    }
+    #${containerId} .text-section {
+        display: none; /* 初始隱藏，載入完成後顯示 */
         flex-direction: column;
         width: 100%;
         gap: 10px;
         align-items: center;
-      }
-      #${containerId} .text-section h2.embeddedAdContainer__title-v2 {
+    }
+
+    #${containerId} .text-section h2.embeddedAdContainer__title-v2 {
         color: #000;
-        font-family: 'Noto Sans TC', Arial, sans-serif;
+        font-family: 'Noto Sans TC' Arial, sans-serif;
         font-size: 32px;
         font-weight: 700;
         line-height: 39px;
         letter-spacing: 0.64px;
         white-space: pre-wrap;
-      }
-      #${containerId} .text-section p {
+    }
+
+    #${containerId} .text-section p {
         color: rgba(0, 0, 0, 0.8);
-        font-family: 'Noto Sans TC', Arial, sans-serif;
+        font-family: 'Noto Sans TC' Arial, sans-serif;
         font-size: 17px;
         font-weight: 300;
         line-height: 22px;
         letter-spacing: 0.34px;
         text-align: center;
-      }
+    }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer__wrapper:has(.embeddedAdContainer__title-v2) {
-          gap: 64px;
-        }
-        #${containerId} .text-section {
-          gap: 24px;
-        }
-        #${containerId} .text-section h2.embeddedAdContainer__title-v2 {
-          color: #1e1e19;
-          text-align: center;
-          font-size: 51px;
-          line-height: 56px;
-          letter-spacing: 1.02px;
-        }
-        #${containerId} .text-section p {
-          color: #787974;
-          text-align: center;
-          font-size: 28px;
-          font-weight: 400;
-          line-height: 33px;
-          letter-spacing: -0.56px;
-        }
+      #${containerId} .embeddedAdContainer__wrapper:has(.embeddedAdContainer__title-v2){
+        gap: 64px;
       }
+      #${containerId} .text-section {
+        gap: 24px;
+      }
+
+     #${containerId} .text-section h2.embeddedAdContainer__title-v2 {
+        color: #1e1e19;
+        text-align: center;
+        font-size: 51px;
+        line-height: 56px;
+        letter-spacing: 1.02px;
+      }
+
+     #${containerId} .text-section p {
+        color: #787974;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 33px;
+        letter-spacing: -0.56px;
+      }
+    }
       @media (min-width: 768px) {
         #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title {
           font-size: var(--inf-embedded-ad-font-custom);
@@ -881,17 +939,18 @@ class InfProductCarouselComponent extends HTMLElement {
     `;
     shadowRoot.appendChild(customCSS);
 
-    const ids = this.ids_init();
+    $(() => {
+      let ids = this.ids_init();
 
-    const embeddedContainer = `
+      const embeddedContainer = `
       <div class="embeddedAdContainer__wrapper">
-        <div class="text-section">
-          <h2 class="${description && false ? 'embeddedAdContainer__title-v2' : 'embeddedAdContainer__title'}">${title}</h2>
-          ${description && false ? `<p class="embeddedAdContainer__desc">${description}</p>` : ''}
-        </div>
+           <div class="text-section">
+             <h2 class="${description && false ? 'embeddedAdContainer__title-v2' : 'embeddedAdContainer__title'}">${title}</h2>
+             ${description && false ? `<p class="embeddedAdContainer__desc">${description}</p>` : ''}
+           </div>
         <div class="embeddedAdContainer" id="embedded-ad-container-${containerId}">
           <div style="margin-bottom: 6px;">
-            <div class="title-navigation" style="width: 100%; justify-content: flex-end">
+            <div class="title-navigation" style="width: 100%;justify-content: flex-end">
               <div class="title-nav-prev">
                 <img src="https://raw.githubusercontent.com/infFITSDevelopment/pop-ad/refs/heads/main/slide-arrow-left.svg" />
               </div>
@@ -910,90 +969,174 @@ class InfProductCarouselComponent extends HTMLElement {
             <img src="https://raw.githubusercontent.com/infFITSDevelopment/pop-ad/refs/heads/main/slide-arrow-left.svg" />
           </div>
         </div>
-      </div>
-    `;
+        </div>
+      `;
 
-    const container = shadowRoot.querySelector(show_up_position_before);
-    container.insertAdjacentHTML('beforeend', embeddedContainer);
+      $(shadowRoot.querySelector(show_up_position_before)).append(embeddedContainer);
 
-    const updateStyles = () => {
-      const newContainerWidth = container.getBoundingClientRect().width;
-      const nextButton = shadowRoot.querySelector(`#${containerId} .swiper-next`);
-      const prevButton = shadowRoot.querySelector(`#${containerId} .swiper-prev`);
-      const nextCorrButton = shadowRoot.querySelector(`#${containerId} .swiper-next-corr`);
-      const prevCorrButton = shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`);
-      const titleNavigation = shadowRoot.querySelector(`#${containerId} .title-navigation`);
+      $(window).resize(() => {
+        const newContainerWidth = $(shadowRoot.querySelector(show_up_position_before)).width();
+        if (arrowPosition === 'none') {
+          $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
+          $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
+        } else {
+          if (arrowPosition === 'center' && newContainerWidth >= 768) {
+            $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'block');
+            $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'block');
+            $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'block');
+            $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
+            $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
+          } else {
+            $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
+            $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
+            $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
+            $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'none');
+            $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'inline-flex');
+          }
+        }
+        $(shadowRoot.querySelector(show_up_position_before))
+          .css('padding', customPadding ? customPadding : newContainerWidth >= 768 ? '32px' : '8px')
+          .toggleClass('small-container', newContainerWidth < 768);
+        if (customPadding) {
+          $(shadowRoot.querySelector(`#${containerId}.small-container`)).css('padding', customPadding);
+        }
+      });
+
+      const containerWidth = $(shadowRoot.querySelector(show_up_position_before)).width();
+      $(shadowRoot.querySelector(show_up_position_before))
+        .css('padding', customPadding ? customPadding : containerWidth >= 768 ? '32px' : '8px')
+        .toggleClass('small-container', containerWidth < 768);
+      if (customPadding) {
+        $(shadowRoot.querySelector(`#${containerId}.small-container`)).css('padding', customPadding);
+      }
 
       if (arrowPosition === 'none') {
-        if (nextButton) nextButton.style.display = 'none';
-        if (prevButton) prevButton.style.display = 'none';
-        if (nextCorrButton) nextCorrButton.style.display = 'none';
-        if (prevCorrButton) prevCorrButton.style.display = 'block';
-        if (titleNavigation) titleNavigation.style.display = 'none';
+        $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
+        $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
+        $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
+        $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
+        $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
       } else {
-        if (arrowPosition === 'center' && newContainerWidth >= 768) {
-          if (nextButton) nextButton.style.display = 'block';
-          if (prevButton) prevButton.style.display = 'block';
-          if (nextCorrButton) nextCorrButton.style.display = 'block';
-          if (prevCorrButton) prevCorrButton.style.display = 'block';
-          if (titleNavigation) titleNavigation.style.display = 'none';
+        if (arrowPosition === 'center' && containerWidth >= 768) {
+          $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'block');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'block');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'block');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
+          $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
         } else {
-          if (nextButton) nextButton.style.display = 'none';
-          if (prevButton) prevButton.style.display = 'none';
-          if (nextCorrButton) nextCorrButton.style.display = 'none';
-          if (prevCorrButton) prevCorrButton.style.display = 'none';
-          if (titleNavigation) titleNavigation.style.display = 'inline-flex';
+          $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'none');
+          $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'inline-flex');
         }
       }
 
-      container.style.padding = customPadding ? customPadding : newContainerWidth >= 768 ? '32px' : '8px';
-      container.classList.toggle('small-container', newContainerWidth < 768);
-      if (customPadding && container.classList.contains('small-container')) {
-        container.style.padding = customPadding;
-      }
-    };
+      this.getEmbeddedAds(ids, containerId, {
+        brand,
+        customEdm,
+        hide_discount,
+        hide_size,
+        ctype_val,
+        bid,
+        autoplay,
+        sortedBreakpoints,
+        displayMode
+      });
 
-    updateStyles();
-    window.addEventListener('resize', updateStyles);
-
-    this.getEmbeddedAds(ids, containerId, {
-      brand,
-      customEdm,
-      hide_discount,
-      hide_size,
-      ctype_val,
-      bid,
-      autoplay,
-      sortedBreakpoints,
-      displayMode
-    });
-
-    // Event listeners for GA4 tracking
-    const addClickListener = (selector, eventName, label, value) => {
-      const elements = shadowRoot.querySelectorAll(selector);
-      elements.forEach(element => {
-        element.addEventListener('click', () => {
-          if (typeof gtag === 'function') {
-            gtag('event', eventName + test, {
-              send_to: GA4Key,
-              event_category: selector.includes('corr') ? 'swiper-wrapper-corr-embedded' : 'embedded',
-              event_label: label,
-              value: value
-            });
-          }
+      $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
+        const title = $(this).data('title');
+        const link = $(this).data('link');
+        gtag('event', 'click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'embedded',
+          event_label: title,
+          event_value: link
         });
       });
-    };
 
-    addClickListener(`#${containerId} .embeddedItem`, 'click_embedded_item', (element) => element.dataset.title, (element) => element.dataset.link);
-    addClickListener(`#${containerId} .a-left`, 'click_embedded_item', 'arrow-left', 'left');
-    addClickListener(`#${containerId} .a-right`, 'click_embedded_item', 'arrow-right', 'right');
-    addClickListener(`#${containerId} #swiper-wrapper-corr .embeddedItem`, 'corr_click_embedded_item', (element) => `Title: ${element.dataset.title}`, (element) => element.dataset.link.length);
-    addClickListener(`#${containerId} #swiper-wrapper-corr .a-left`, 'corr_click_embedded_item', 'arrow-left', 10);
-    addClickListener(`#${containerId} #swiper-wrapper-corr .a-right`, 'corr_click_embedded_item', 'arrow-right', 10);
-    addClickListener(`#${containerId} #swiper-wrapper-basic .embeddedItem`, 'bhv_click_embedded_item', (element) => `Title: ${element.dataset.title}`, (element) => element.dataset.link.length);
-    addClickListener(`#${containerId} #swiper-wrapper-basic .a-left`, 'bhv_click_embedded_item', 'arrow-left', 10);
-    addClickListener(`#${containerId} #swiper-wrapper-basic .a-right`, 'bhv_click_embedded_item', 'arrow-right', 10);
+      $(shadowRoot).on('click', `#${containerId} .a-left`, function() {
+        if (typeof gtag === 'function') {
+          gtag('event', 'click_embedded_item' + test, {
+            send_to: GA4Key,
+            event_category: 'embedded',
+            event_label: 'arrow-left',
+            event_value: 'left'
+          });
+        }
+      });
+
+      $(shadowRoot).on('click', `#${containerId} .a-right`, function() {
+        if (typeof gtag === 'function') {
+          gtag('event', 'click_embedded_item' + test, {
+            send_to: GA4Key,
+            event_category: 'embedded',
+            event_label: 'arrow-right',
+            event_value: 'right'
+          });
+        }
+      });
+      $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .embeddedItem`, function() {
+        const title = $(this).data('title');
+        const link = $(this).data('link');
+        gtag('event', 'corr_click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'swiper-wrapper-corr-embedded',
+          event_label: 'Title: ' + title,
+          value: link.length
+        });
+      });
+
+      $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-left`, function() {
+        gtag('event', 'corr_click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'swiper-wrapper-corr-embedded',
+          event_label: 'arrow-left',
+          value: 10
+        });
+      });
+
+      $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-right`, function() {
+        gtag('event', 'corr_click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'swiper-wrapper-corr-embedded',
+          event_label: 'arrow-right',
+          value: 10
+        });
+      });
+
+      $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-basic .embeddedItem`, function() {
+        const title = $(this).data('title');
+        const link = $(this).data('link');
+        gtag('event', 'bhv_click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'swiper-wrapper-basic-embedded',
+          event_label: 'Title: ' + title,
+          value: link.length
+        });
+      });
+
+      $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-basic .a-left`, function() {
+        gtag('event', 'bhv_click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'swiper-wrapper-basic-embedded',
+          event_label: 'arrow-left',
+          value: 10
+        });
+      });
+
+      $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-basic .a-right`, function() {
+        gtag('event', 'bhv_click_embedded_item' + test, {
+          send_to: GA4Key,
+          event_category: 'swiper-wrapper-basic-embedded',
+          event_label: 'arrow-right',
+          value: 10
+        });
+      });
+    });
   }
 
   ids_init() {
@@ -1036,8 +1179,9 @@ class InfProductCarouselComponent extends HTMLElement {
   getEmbeddedAds(ids, containerId, config) {
     const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode } = config;
     
+    // 調試日誌：確認 displayMode 的值
     console.log('getEmbeddedAds - displayMode:', displayMode);
-    console.log('getEmbeddedAds - full config:', config);
+    console.log('getEmbeddedAds - 完整配置:', config);
 
     const requestData = brand.toLocaleUpperCase() === 'DABE' ? {
       Brand: brand,
@@ -1126,9 +1270,11 @@ class InfProductCarouselComponent extends HTMLElement {
           }
         }
 
+        // 根據 displayMode 決定資料取用順序
         let jsonData = [];
         
         if (customEdm && customEdm.length > 0) {
+          // 如果有自定義 EDM 資料，優先使用
           jsonData = customEdm.map(item => {
             let newItem = Object.assign({}, item);
             newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
@@ -1136,14 +1282,19 @@ class InfProductCarouselComponent extends HTMLElement {
             return newItem;
           });
         } else {
+          // 根據 displayMode 決定資料來源順序
           if (displayMode === 'SaleRate') {
+            // SaleRate 模式：優先使用 bhv 或 corr，然後是 sp_atc 或 sp_trans
             let sourceData = [];
+            
+            // 優先取用 bhv 或 corr
             if (response['bhv'] && response['bhv'].length > 0) {
               sourceData = response['bhv'];
             } else if (response['corr'] && response['corr'].length > 0) {
               sourceData = response['corr'];
             }
             
+            // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans
             if (sourceData.length === 0) {
               if (response['sp_atc'] && response['sp_atc'].length > 0) {
                 sourceData = response['sp_atc'];
@@ -1152,6 +1303,7 @@ class InfProductCarouselComponent extends HTMLElement {
               }
             }
             
+            // 處理資料並限制數量
             if (sourceData.length > 0) {
               jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
                 let newItem = Object.assign({}, item);
@@ -1161,13 +1313,16 @@ class InfProductCarouselComponent extends HTMLElement {
               });
             }
           } else if (displayMode === 'SocialProofNum') {
+            // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr
             let sourceData = [];
+            
             if (response['sp_atc'] && response['sp_atc'].length > 0) {
               sourceData = response['sp_atc'];
             } else if (response['sp_trans'] && response['sp_trans'].length > 0) {
               sourceData = response['sp_trans'];
             }
             
+            // 處理資料並限制數量
             if (sourceData.length > 0) {
               jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
                 let newItem = Object.assign({}, item);
@@ -1177,6 +1332,7 @@ class InfProductCarouselComponent extends HTMLElement {
               });
             }
           } else {
+            // 其他模式：使用預設的 bhv 資料
             if (response['bhv'] && response['bhv'].length > 0) {
               jsonData = getRandomElements(response['bhv'], response['bhv'].length > 12 ? 12 : response['bhv'].length).map(item => {
                 let newItem = Object.assign({}, item);
@@ -1191,18 +1347,12 @@ class InfProductCarouselComponent extends HTMLElement {
         if (jsonData.length > 0) {
           this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
         } else {
-          const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
-          loadingElement.style.transition = 'opacity 0.4s';
-          loadingElement.style.opacity = '0';
-          setTimeout(() => loadingElement.style.display = 'none', 400);
-          
+          $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
           if (containerId === 'personalized-recommendations') {
-            const jumpRecom = document.querySelector('#jump-recom');
-            if (jumpRecom) jumpRecom.style.display = 'none';
+            $('#jump-recom').hide();
           }
           if (containerId === 'more-recommendations') {
-            const jumpMore = document.querySelector('#jump-more');
-            if (jumpMore) jumpMore.style.display = 'none';
+            $('#jump-more').hide();
           }
         }
       })
@@ -1210,6 +1360,7 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode) {
+    // 調試日誌：確認 updatePopAd 中的 displayMode 值
     console.log('updatePopAd - displayMode:', displayMode);
     
     let displayImages = images;
@@ -1235,11 +1386,12 @@ class InfProductCarouselComponent extends HTMLElement {
         </div>
         <div class="embeddedItemInfo">
           <h3 class="embeddedItemInfo__title">${img.title}</h3>
-          ${displayMode === 'SocialProofNum' ?
+          
+          ${displayMode === 'SocialProofNum'?
               `<div class="embeddedItemInfo__content">
                 <p class="embeddedItemInfo__discount">${img.record_cnt}人購買</p>
                 <p class="embeddedItemInfo__price">NT$ ${img.price}</p>
-              </div>` :
+              </div>`:
               displayMode === 'SaleRate' && img.sale_price && img.sale_price !== img.price
             ? `<div class="embeddedItemInfo__content">
                 <p class="embeddedItemInfo__discount">${Math.ceil(100 - (parseInt(img.sale_price.replace(',', '')) * 100) / parseInt(img.price.replace(',', '')))}% off</p>
@@ -1253,8 +1405,7 @@ class InfProductCarouselComponent extends HTMLElement {
       </a>
     `).join('');
 
-    const swiperWrapper = this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`);
-    swiperWrapper.innerHTML = items;
+    $(this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`)).html(items);
 
     const swiper = new Swiper(this.shadowRoot.querySelector(`.swiper-basic-${containerId}`), {
       direction: 'horizontal',
@@ -1276,12 +1427,12 @@ class InfProductCarouselComponent extends HTMLElement {
           this.shadowRoot.querySelector(`#${containerId} .title-nav-next`),
           this.shadowRoot.querySelector(`#${containerId} .swiper-next`),
           this.shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)
-        ].filter(el => el),
+        ].filter(el => el), // 過濾掉 null 元素
         prevEl: [
           this.shadowRoot.querySelector(`#${containerId} .title-nav-prev`),
           this.shadowRoot.querySelector(`#${containerId} .swiper-prev`),
           this.shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)
-        ].filter(el => el)
+        ].filter(el => el) // 過濾掉 null 元素
       },
       simulateTouch: true,
       touchRatio: 1,
@@ -1289,7 +1440,7 @@ class InfProductCarouselComponent extends HTMLElement {
       resistanceRatio: 0.65,
       observer: true,
       observeParents: true,
-      on: {
+              on: {
         init: () => {
           const swiperEl = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`);
           let isDragging = false;
@@ -1327,19 +1478,11 @@ class InfProductCarouselComponent extends HTMLElement {
             });
           }
 
-          const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
-          loadingElement.style.transition = 'opacity 0.4s';
-          loadingElement.style.opacity = '0';
-          setTimeout(() => {
-            loadingElement.style.display = 'none';
-            const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .embeddedAdContainer`);
-            embeddedContainer.style.display = 'block';
-            const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
-            textSection.style.display = 'flex';
-            textSection.style.opacity = '0';
-            textSection.style.transition = 'opacity 0.6s';
-            setTimeout(() => textSection.style.opacity = '1', 0);
-          }, 400);
+          $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
+            $(this.shadowRoot.querySelector(`#${containerId} .embeddedAdContainer`)).show();
+            // 載入完成後顯示文字區域
+            $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
+          });
         },
         resize: function() {
           setTimeout(() => {
@@ -1354,9 +1497,16 @@ class InfProductCarouselComponent extends HTMLElement {
 
 customElements.define('inf-product-carousel-component', InfProductCarouselComponent);
 
+// 提供一個簡化的初始化函數
 window.initInfProductCarouselComponent = function(config = {}) {
+  // 創建組件實例
   const carousel = document.createElement('inf-product-carousel-component');
+  
+  // 設置配置
   carousel.setAttribute('config', JSON.stringify(config));
+  
+  // 添加到 body，組件會自動處理後續邏輯
   document.body.appendChild(carousel);
+  
   return carousel;
 };
