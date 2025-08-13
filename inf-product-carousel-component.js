@@ -20,27 +20,30 @@ class InfProductCarouselComponent extends HTMLElement {
       }
 
   async fetchBrandConfigAndInit(config = {}) {
-    const { brand} = config;
+    const { brand, carousel} = config;
+    let brandConfig = {};
+    config.showPositionId = carousel.showPositionId;
     
     try {
       // 調用品牌配置 API
-      const brandConfigResponse = await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
+      const brandConfigResponse = carousel.type === 'product' ? await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ Brand: brand })
-      });
+      }): {ok: true, json: () => Promise.resolve({})};
 
       if (!brandConfigResponse.ok) {
         throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
       }
 
       const brandConfigResponseData = await brandConfigResponse.json();
-      const brandConfig = brandConfigResponseData.find(
+      brandConfig =carousel.brandConfig? carousel.brandConfig :  brandConfigResponseData.find(
           item => item.Module === 'Product_Carousel_Widget'
         )?.ConfigData.Section_Info[0];
+      brandConfig.type = carousel.type;
       console.log('品牌配置資料:', brandConfig);
 
       // 將 brandConfig 轉換為標準配置格式
@@ -51,7 +54,8 @@ class InfProductCarouselComponent extends HTMLElement {
       const mergedConfig = {
         ...config,
         ...convertedBrandConfig,
-        brandConfig: brandConfig // 保留原始 brandConfig 供其他地方使用
+        brandConfig: brandConfig, // 保留原始 brandConfig 供其他地方使用
+        carouselType: carousel.type // 添加 carousel 類型
       };
 
       // 使用合併後的配置進行初始化，並在初始化後自動移動到目標容器
@@ -274,7 +278,8 @@ class InfProductCarouselComponent extends HTMLElement {
       skuContent,
       show_up_position_before,
       test,
-      GA4Key
+      GA4Key,
+      carouselType: finalConfig.carouselType || 'product' // 添加 carousel 類型
     }));
   }
 
@@ -427,7 +432,8 @@ class InfProductCarouselComponent extends HTMLElement {
       skuContent,
       show_up_position_before,
       test,
-      GA4Key
+      GA4Key,
+      carouselType
     } = config;
 
     const $ = jQuery;
@@ -1044,7 +1050,8 @@ class InfProductCarouselComponent extends HTMLElement {
         bid,
         autoplay,
         sortedBreakpoints,
-        displayMode
+        displayMode,
+        carouselType: config.carouselType || 'product' // 添加 carousel 類型
       });
 
       $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
@@ -1177,12 +1184,11 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   getEmbeddedAds(ids, containerId, config) {
-    const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode } = config;
+    const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType } = config;
     
     // 調試日誌：確認 displayMode 的值
     console.log('getEmbeddedAds - displayMode:', displayMode);
     console.log('getEmbeddedAds - 完整配置:', config);
-
     const requestData = brand.toLocaleUpperCase() === 'DABE' ? {
       Brand: brand,
       LGVID: ids.lgiven_id,
@@ -1233,9 +1239,69 @@ class InfProductCarouselComponent extends HTMLElement {
       return result;
     };
 
-    const api_recom_product_url = brand.toLocaleUpperCase() === 'DABE' ? 'HTTP_stock_cdp_product_recommendation' : 'HTTP_inf_alpha_bhv_cdp_product_recommendation';
+    // 根據 carouselType 決定使用不同的 API URL 和選項
+    console.log('getEmbeddedAds - carouselType:', carouselType);
+    let apiUrl, fetchOptions;
+    
+    if (carouselType === 'popup') {
+      // popup 類型使用特殊的 URL 和選項
+      apiUrl = 'https://api.inffits.com/HTTP_pidinfo_cdp_product_recommendation/extension/recom_product';
+      fetchOptions = {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          Brand: "CLARKS",
+          LGVID: "x",
+          MRID: "",
+          recom_num: "6",
+          PID: "10662339",
+          SIZEAI: "True",
+          SP_PID: "xxSOCIAL PROOF", // FIXME
+          SIZEAI_ptr: "bhv",
+          bid: {
+            HV: "25.5",
+            WV: "0",
+            CC: "",
+            DataItem: "0010",
+            ClothSize: "",
+            GVID: "INF",
+            Sizes: "",
+            Brand: "CLARKS",
+            ml_out: "",
+            Hip: "1-cm",
+            TID: "162410.45086",
+            FitP: "2,2,2,2",
+            LGVID: "INF",
+            ga_id: "INF",
+            MRID: "INF",
+            Gender: "F",
+            Waist: "1-cm",
+            ClothID: "",
+            FMLpath: "FMLSep",
+            Shoulder: "1-cm",
+            AvatarSizeSCWH: "",
+            Transaction: "34",
+            comment: "try_on_report_online",
+            ORDERID: "",
+            DnChest: "1-cm",
+            UpChest: "1-cm",
+            SHOES_MODE: "1",
+            FOOT_CIRCUM: "20",
+            CALF_CIRCUM: "30.4"
+          }
+        })
+      };
+    } else {
+      // product 類型保持原本的配置
+      const api_recom_product_url = brand.toLocaleUpperCase() === 'DABE' ? 'HTTP_stock_cdp_product_recommendation' : 'HTTP_inf_alpha_bhv_cdp_product_recommendation';
+      apiUrl = `https://api.inffits.com/${api_recom_product_url}/extension/recom_product`;
+      fetchOptions = options;
+    }
 
-    fetch(`https://api.inffits.com/${api_recom_product_url}/extension/recom_product`, options)
+    fetch(apiUrl, fetchOptions)
       .then(response => response.json())
       .then(response => {
         let size_tag = {};
