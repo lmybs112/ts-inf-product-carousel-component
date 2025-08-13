@@ -9,11 +9,12 @@
 
 <body>
     <style>
-        *{
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         .brand-switcher {
             position: fixed;
             top: 20px;
@@ -21,7 +22,7 @@
             background: white;
             padding: 15px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             border-radius: 12px;
             border: 1px solid #e9ecef;
             z-index: 1000;
@@ -29,11 +30,11 @@
             transform: translateX(calc(100% - 40px));
             transition: transform 0.3s ease;
         }
-        
+
         .brand-switcher:hover {
             transform: translateX(0);
         }
-        
+
         .brand-switcher h3 {
             color: #495057;
             margin: 0 0 15px 0;
@@ -41,11 +42,11 @@
             font-weight: 600;
             position: relative;
         }
-        
+
         .brand-section {
             margin-bottom: 15px;
         }
-        
+
         .section-label {
             color: #6c757d;
             font-size: 12px;
@@ -53,7 +54,7 @@
             margin-bottom: 8px;
             text-align: left;
         }
-        
+
         .brand-buttons {
             display: flex;
             gap: 8px;
@@ -61,7 +62,7 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        
+
         .brand-input-group {
             display: flex;
             gap: 8px;
@@ -69,7 +70,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-        
+
         .brand-input {
             padding: 8px 12px;
             border: 2px solid #dee2e6;
@@ -81,16 +82,16 @@
             background: white;
             color: #495057;
         }
-        
+
         .brand-input:focus {
             border-color: #495057;
             box-shadow: 0 0 0 3px rgba(73, 80, 87, 0.1);
         }
-        
+
         .brand-input::placeholder {
             color: #adb5bd;
         }
-        
+
         .custom-brand-btn {
             background: #495057;
             color: white;
@@ -103,11 +104,11 @@
             transition: all 0.2s ease;
             white-space: nowrap;
         }
-        
+
         .custom-brand-btn:active {
             transform: translateY(0);
         }
-        
+
         .brand-btn {
             background: white;
             border: 2px solid #dee2e6;
@@ -118,12 +119,12 @@
             color: #495057;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             min-width: 60px;
             position: relative;
             overflow: hidden;
         }
-        
+
         .brand-btn::before {
             content: '';
             position: absolute;
@@ -131,38 +132,38 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
             transition: left 0.5s;
         }
-        
+
         .brand-btn:hover::before {
             left: 100%;
         }
-        
+
         .brand-btn:hover {
             background: #495057;
             color: white;
             border-color: #495057;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .brand-btn:active {
             transform: translateY(0);
         }
-        
+
         .brand-btn.active {
             background: #495057;
             color: white;
             border-color: #495057;
             box-shadow: 0 2px 8px rgba(73, 80, 87, 0.3);
         }
-        
+
         .loading {
             opacity: 0.6;
             pointer-events: none;
         }
-        
+
         .success-message {
             background: #d4edda;
             color: #155724;
@@ -173,12 +174,19 @@
             display: none;
             animation: fadeIn 0.3s ease;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         .error-message {
             background: #f8d7da;
             color: #721c24;
@@ -189,7 +197,7 @@
             display: none;
             animation: fadeIn 0.3s ease;
         }
-        
+
         .current-brand-display {
             background: #f8f9fa;
             color: #495057;
@@ -199,31 +207,31 @@
             text-align: center;
             border: 2px solid #dee2e6;
         }
-        
+
         .current-brand-label {
             font-size: 14px;
             font-weight: 500;
             color: #6c757d;
             margin-bottom: 5px;
         }
-        
+
         .current-brand-value {
             font-size: 24px;
             font-weight: 700;
             color: #495057;
         }
-        
+
         .content-section {
             background: white;
             border: 2px solid #ecf0f1;
             border-radius: 8px;
             padding: 8px;
             margin: 20px 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-        
-        
+
+
         .section-header {
             background: #34495e;
             color: white;
@@ -232,40 +240,40 @@
             font-size: 18px;
             font-weight: 600;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        
+
         .section-content {
             background: #f8f9fa;
             border-radius: 6px;
             padding: 20px;
         }
-        
+
         .section-content h4 {
             color: #2c3e50;
             margin: 0 0 10px 0;
             font-size: 16px;
             font-weight: 600;
         }
-        
+
         .section-content p {
             color: #7f8c8d;
             margin: 0;
             line-height: 1.6;
         }
     </style>
-    
+
     <div class="brand-switcher">
         <h3>品牌設置</h3>
-        
+
         <div class="brand-section">
             <div class="section-label">快速選擇</div>
             <div class="brand-buttons">
                 <button class="brand-btn" onclick="changeBrand('ALMI')" id="btn-ALMI">ALMI</button>
                 <button class="brand-btn" onclick="changeBrand('RHI')" id="btn-RHI">RHI</button>
             </div>
-    </div>
-        
+        </div>
+
         <div class="brand-section">
             <div class="section-label">自定義品牌</div>
             <div class="brand-input-group">
@@ -273,16 +281,16 @@
                 <button class="custom-brand-btn" onclick="changeCustomBrand()">設定品牌</button>
             </div>
         </div>
-        
+
         <div class="success-message" id="successMessage"></div>
         <div class="error-message" id="errorMessage"></div>
     </div>
-    
+
     <div class="current-brand-display" id="currentBrandDisplay">
         <div class="current-brand-label">當前測試品牌</div>
         <div class="current-brand-value" id="currentBrandValue">ALMI</div>
     </div>
-    
+
     <div id="infFitsHeader" class="content-section">
         <div class="section-header">頂部廣告區域</div>
         <div class="section-content">
@@ -290,7 +298,7 @@
             <p>這裡將顯示頂部的產品輪播廣告內容</p>
         </div>
     </div>
-    
+
     <div id="content" class="content-section">
         <div class="section-header">頁面內容區域</div>
         <div class="section-content">
@@ -298,7 +306,7 @@
             <p>這是一個頁面內容區域</p>
         </div>
     </div>
-    
+
     <div id="infFitsFooter" class="content-section">
         <div class="section-header">底部廣告區域</div>
         <div class="section-content">
@@ -307,7 +315,218 @@
         </div>
     </div>
     <script>
-        (function() {
+        (function () {
+            // 整合的彈窗處理函數
+            function handlePopup() {
+                // 創建並添加 CSS 樣式
+                const popupStyles = `
+                #infPopupproductCarousel {
+                    position: fixed;
+                    left: -400px;
+                    bottom: 20px;
+                    width: 350px;
+                    max-width: calc(100vw - 40px);
+                    height: 200px;
+                    background: rgba(255, 255, 255, 0.98);
+                    border-radius: 16px;
+                    box-shadow: 
+                        0 8px 32px rgba(0, 0, 0, 0.08),
+                        0 2px 8px rgba(0, 0, 0, 0.04),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                    z-index: 1000;
+                    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                    border: 1px solid rgba(0, 0, 0, 0.06);
+                    backdrop-filter: blur(20px);
+                }
+
+                /* 小螢幕響應式設計 */
+                @media (max-width: 480px) {
+                    #infPopupproductCarousel {
+                        width: calc(100vw - 40px);
+                        left: -100vw;
+                        bottom: 16px;
+                        border-radius: 12px;
+                    }
+                    
+                    #infPopupproductCarousel.show {
+                        left: 20px;
+                    }
+                }
+
+                /* 超小螢幕響應式設計 */
+                @media (max-width: 360px) {
+                    #infPopupproductCarousel {
+                        width: calc(100vw - 24px);
+                        left: -100vw;
+                        bottom: 12px;
+                        border-radius: 10px;
+                    }
+                    
+                    #infPopupproductCarousel.show {
+                        left: 12px;
+                    }
+                }
+
+                #infPopupproductCarousel.show {
+                    left: 20px;
+                }
+
+                .popup-close-btn {
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    width: 24px;
+                    height: 24px;
+                    background: rgba(255, 255, 255, 0.95);
+                    border: 1px solid rgba(0, 0, 0, 0.08);
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: 300;
+                    color: rgba(0, 0, 0, 0.6);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: 10;
+                    backdrop-filter: blur(8px);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                    line-height: 1;
+                }
+
+                .popup-close-btn:hover {
+                    background: rgba(0, 0, 0, 0.05);
+                    border-color: rgba(0, 0, 0, 0.12);
+                    color: rgba(0, 0, 0, 0.8);
+                    transform: scale(1.05);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                .popup-close-btn:active {
+                    transform: scale(0.95);
+                    background: rgba(0, 0, 0, 0.08);
+                }
+
+                .popup-content {
+                    padding: 12px;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #666;
+                    font-size: 14px;
+                    max-width: 100%;
+                    overflow: hidden;
+                }
+                
+                /* 確保組件在 popup 內正確顯示 */
+                #infPopupproductCarousel {
+                    position: fixed;
+                    left: -500px;
+                    bottom: 20px;
+                    width: 450px;
+                    max-width: calc(100vw - 40px);
+                    height: 300px;
+                    background: rgba(255, 255, 255, 0.98);
+                    border-radius: 16px;
+                    box-shadow: 
+                        0 8px 32px rgba(0, 0, 0, 0.08),
+                        0 2px 8px rgba(0, 0, 0, 0.04),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                    z-index: 1000;
+                    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                    border: 1px solid rgba(0, 0, 0, 0.06);
+                    backdrop-filter: blur(20px);
+                    overflow: hidden;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                #infPopupproductCarousel.show {
+                    left: 20px;
+                }
+                
+                /* 確保組件不會超出 popup 範圍 */
+                #infPopupproductCarousel * {
+                    box-sizing: border-box;
+                }
+                
+                /* 限制組件在 popup 內的顯示 */
+                #infPopupproductCarousel inf-product-carousel-component {
+                    width: 100% !important;
+                    height: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 100% !important;
+                    overflow: hidden !important;
+                }
+                
+                /* 確保 popupProductContent 容器正確限制組件 */
+                #popupProductContent {
+                    width: 100% !important;
+                    height: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 100% !important;
+                    overflow: visible !important;
+                    position: relative !important;
+                }
+                
+                /* 防止組件內容溢出 */
+                #popupProductContent * {
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+            `;
+
+                // 添加樣式到 head
+                const styleElement = document.createElement('style');
+                styleElement.textContent = popupStyles;
+                document.head.appendChild(styleElement);
+
+                // 創建彈窗 HTML 元素
+                const popupHTML = `
+                <div id="infPopupproductCarousel">
+                    <button class="popup-close-btn" onclick="closePopup()">×</button>
+                    <div class="popup-content">
+                        <div id="popupProductContent" style="width: 100%; height: 100%; overflow: hidden;">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                // 添加彈窗到 body
+                document.body.insertAdjacentHTML('beforeend', popupHTML);
+
+                const popup = document.getElementById('infPopupproductCarousel');
+
+                // 顯示彈窗
+                function showPopup() {
+                    popup.classList.add('show');
+                }
+
+                // 關閉彈窗
+                function closePopup() {
+                    popup.classList.remove('show');
+                }
+
+                // 點擊彈窗外部關閉彈窗
+                document.addEventListener('click', function (event) {
+                    if (event.target === popup) {
+                        closePopup();
+                    }
+                });
+
+                // 延遲1秒後顯示彈窗
+                setTimeout(showPopup, 1000);
+
+                // 將 closePopup 函數設為全域可訪問，供關閉按鈕使用
+                window.closePopup = closePopup;
+            }
+
+
+
+
+
             const _config = {
                 brand: 'ALMI',
                 showPositionId: {
@@ -324,351 +543,388 @@
             function _validateConfig(config) {
                 const required = ['brand', 'showPositionId'];
                 const missing = required.filter(key => !(key in config));
-                
+
                 if (missing.length > 0) {
                     throw new Error(`缺少必要配置: ${missing.join(', ')}`);
                 }
-                
+
                 if (typeof config.brand !== 'string' || config.brand.trim() === '') {
                     throw new Error('brand 必須是非空字串');
                 }
-                
-                if (typeof config.showPositionId !== 'object' || !config.showPositionId.top || !config.showPositionId.bottom) {
+
+                if (typeof config.showPositionId !== 'object' || !config.showPositionId.top || !config
+                    .showPositionId.bottom) {
                     throw new Error('showPositionId 必須包含 top 和 bottom 屬性');
                 }
-                
+
                 return true;
             }
+
             function _checkDOMElements(config) {
-                const { top, bottom } = config.showPositionId;
+                const {
+                    top,
+                    bottom
+                } = config.showPositionId;
                 const topElement = document.getElementById(top);
                 const bottomElement = document.getElementById(bottom);
-                
+
                 if (!topElement) {
                     // 找不到頂部容器元素
                 }
                 if (!bottomElement) {
                     // 找不到底部容器元素
                 }
-                
-                return { topElement, bottomElement };
+
+                return {
+                    topElement,
+                    bottomElement
+                };
             }
-            
+
             function _loadScript(src) {
                 return new Promise((resolve, reject) => {
                     if (_state.isLoaded) {
                         resolve();
                         return;
                     }
-                    
+
                     const script = document.createElement('script');
                     script.src = src;
                     script.async = true;
-                    
+
                     script.onload = () => {
                         _state.isLoaded = true;
                         resolve();
                     };
-                    
+
                     script.onerror = (error) => {
                         _state.error = new Error(`腳本載入失敗: ${src}`);
                         reject(_state.error);
                     };
-                    
+
                     document.head.appendChild(script);
                 });
             }
-            
+
             // 私有方法：初始化組件
             function _initializeComponent(config) {
                 if (_state.isInitialized) {
                     // 組件已經初始化過
                     return;
                 }
-                
+
                 try {
                     // 檢查全局函數是否存在
                     if (typeof window.initInfProductCarouselComponent !== 'function') {
                         throw new Error('組件初始化函數未找到');
                     }
-                    
+
                     // 初始化組件
                     const carousel = window.initInfProductCarouselComponent(config);
+                    window.initInfProductCarouselComponent({
+                        brand: 'CLARKS',
+                        carousel: {
+                            type: 'popup',
+                            showPositionId: {
+                                top: 'popupProductContent',
+                                bottom: 'popupProductContent'
+                            },
+                            brandConfig: {
+                                "DisplayMode": "SocialProofNum",
+                                "CarouselButton": true,
+                                "Description": "",
+                                "RecommendMode": "bhv,corr,sp_atc_sp_trans",
+                                "CarouselLayout": 3,
+                                "Title": "您可能會喜歡",
+                                "Location": "bottom",
+                                "status": true
+                            }
+                        }
+                    });
                     _state.isInitialized = true;
-                    
+
                     return carousel;
-                    
+
                 } catch (error) {
                     _state.error = error;
                     throw error;
                 }
             }
-            
+
             // 公開的配置方法 - 使用 getter/setter 保護數據
             const CarouselManager = {
                 // 獲取當前配置（只讀副本）
                 getConfig() {
                     return JSON.parse(JSON.stringify(_config));
                 },
-                
+
                 // 更新配置
                 updateConfig(newConfig) {
                     try {
-                        const mergedConfig = { ..._config, ...newConfig };
+                        const mergedConfig = {
+                            ..._config,
+                            ...newConfig
+                        };
                         _validateConfig(mergedConfig);
-                        
+
                         Object.assign(_config, newConfig);
-                        
+
                         return true;
                     } catch (error) {
                         return false;
                     }
                 },
-                
-                            // 重置配置
-            resetConfig() {
-                Object.assign(_config, {
-                    brand: 'ALMI',
-                    showPositionId: {
-                        top: 'infFitsHeader',
-                        bottom: 'infFitsFooter'
-                    }
-                });
-            },
-                
-                // 獲取狀態
-                getState() {
-                    return { ..._state };
-                },
-                
-                            // 手動初始化
-            async init(customConfig = null) {
-                try {
-                    // 合併自定義配置
-                    if (customConfig) {
-                        this.updateConfig(customConfig);
-                    }
-                    
-                    // 檢查 DOM 元素
-                    _checkDOMElements(_config);
-                    
-                    // 載入腳本
-                    await _loadScript('./inf-product-carousel-component.js');
-                    
-                    // 等待 DOM 準備就緒
-                    if (document.readyState === 'loading') {
-                        await new Promise(resolve => {
-                            document.addEventListener('DOMContentLoaded', resolve, { once: true });
-                        });
-                    }
-                    
-                    // 初始化組件
-                    return _initializeComponent(_config);
-                    
-                } catch (error) {
-                    _state.error = error;
-                    throw error;
-                }
-            },
-            
-            // 銷毀組件
-            async destroy() {
-                try {
-                                    if (!_state.isInitialized) {
-                    // 組件未初始化，無需銷毀
-                    return;
-                }
-                    
-                    // 查找並移除組件元素
-                    const componentElements = document.querySelectorAll('inf-product-carousel-component');
-                    componentElements.forEach(element => {
-                        if (element && element.remove) {
-                            element.remove();
+
+                // 重置配置
+                resetConfig() {
+                    Object.assign(_config, {
+                        brand: 'ALMI',
+                        showPositionId: {
+                            top: 'infFitsHeader',
+                            bottom: 'infFitsFooter'
                         }
                     });
-                    
-                    // 清理 Swiper 實例（如果存在）
-                    if (window.Swiper) {
-                        const swiperContainers = document.querySelectorAll('.swiper');
-                        swiperContainers.forEach(container => {
-                            if (container.swiper) {
-                                container.swiper.destroy(true, true);
+                },
+
+                // 獲取狀態
+                getState() {
+                    return {
+                        ..._state
+                    };
+                },
+
+                // 手動初始化
+                async init(customConfig = null) {
+                    try {
+                        // 合併自定義配置
+                        if (customConfig) {
+                            this.updateConfig(customConfig);
+                        }
+
+                        // 檢查 DOM 元素
+                        _checkDOMElements(_config);
+
+                        // 載入腳本
+                        await _loadScript('./inf-product-carousel-component.js');
+
+                        // 等待 DOM 準備就緒
+                        if (document.readyState === 'loading') {
+                            await new Promise(resolve => {
+                                document.addEventListener('DOMContentLoaded', resolve, {
+                                    once: true
+                                });
+                            });
+                        }
+
+                        // 初始化組件
+                        return _initializeComponent(_config);
+
+                    } catch (error) {
+                        _state.error = error;
+                        throw error;
+                    }
+                },
+
+                // 銷毀組件
+                async destroy() {
+                    try {
+                        if (!_state.isInitialized) {
+                            // 組件未初始化，無需銷毀
+                            return;
+                        }
+
+                        // 查找並移除組件元素
+                        const componentElements = document.querySelectorAll(
+                            'inf-product-carousel-component');
+                        componentElements.forEach(element => {
+                            if (element && element.remove) {
+                                element.remove();
                             }
                         });
+
+                        // 清理 Swiper 實例（如果存在）
+                        if (window.Swiper) {
+                            const swiperContainers = document.querySelectorAll('.swiper');
+                            swiperContainers.forEach(container => {
+                                if (container.swiper) {
+                                    container.swiper.destroy(true, true);
+                                }
+                            });
+                        }
+
+                        // 重置狀態
+                        _state.isInitialized = false;
+                        _state.error = null;
+
+                    } catch (error) {
+                        // 即使銷毀失敗，也重置狀態
+                        _state.isInitialized = false;
+                        _state.error = null;
                     }
-                    
-                    // 重置狀態
-                    _state.isInitialized = false;
-                    _state.error = null;
-                    
-                } catch (error) {
-                    // 即使銷毀失敗，也重置狀態
-                    _state.isInitialized = false;
-                    _state.error = null;
                 }
-            }
             };
-            
-                    // 將管理器暴露到全局（只暴露必要的方法）
-        window.CarouselManager = CarouselManager;
-        
-        // 品牌切換函數
-        window.changeBrand = async function(newBrand) {
-            try {
-                // 顯示載入狀態
-                showLoading(true);
-                hideMessages();
-                
-                // 更新按鈕狀態
-                updateButtonStates(newBrand);
-                
-                // 清理現有組件
-                await CarouselManager.destroy();
-                
-                // 更新配置
-                CarouselManager.updateConfig({
-                    brand: newBrand
+
+            // 將管理器暴露到全局（只暴露必要的方法）
+            window.CarouselManager = CarouselManager;
+
+            // 品牌切換函數
+            window.changeBrand = async function (newBrand) {
+                try {
+                    // 顯示載入狀態
+                    showLoading(true);
+                    hideMessages();
+
+                    // 更新按鈕狀態
+                    updateButtonStates(newBrand);
+
+                    // 清理現有組件
+                    await CarouselManager.destroy();
+
+                    // 更新配置
+                    CarouselManager.updateConfig({
+                        brand: newBrand
+                    });
+
+                    // 重新初始化
+                    await CarouselManager.init();
+
+                    showSuccess(`品牌切換成功: ${newBrand}`);
+
+                } catch (error) {
+                    showError(`品牌切換失敗: ${error.message}`);
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            // 自定義品牌切換函數
+            window.changeCustomBrand = async function () {
+                const input = document.getElementById('customBrandInput');
+                const customBrand = input.value.trim().toUpperCase();
+
+                if (!customBrand) {
+                    alert('請輸入品牌名稱');
+                    input.focus();
+                    return;
+                }
+
+                try {
+                    await changeBrand(customBrand);
+                    input.value = ''; // 清空輸入框
+                } catch (error) {
+                    // 自定義品牌切換失敗
+                }
+            };
+
+            // UX 輔助函數
+            function showLoading(show) {
+                const buttons = document.querySelectorAll('.brand-btn, .custom-brand-btn');
+                buttons.forEach(btn => {
+                    if (show) {
+                        btn.classList.add('loading');
+                    } else {
+                        btn.classList.remove('loading');
+                    }
                 });
-                
-                // 重新初始化
-                await CarouselManager.init();
-                
-                showSuccess(`品牌切換成功: ${newBrand}`);
-                
-            } catch (error) {
-                showError(`品牌切換失敗: ${error.message}`);
-            } finally {
-                showLoading(false);
-            }
-        };
-        
-        // 自定義品牌切換函數
-        window.changeCustomBrand = async function() {
-            const input = document.getElementById('customBrandInput');
-            const customBrand = input.value.trim().toUpperCase();
-            
-            if (!customBrand) {
-                alert('請輸入品牌名稱');
-                input.focus();
-                return;
             }
 
-            try {
-                await changeBrand(customBrand);
-                input.value = ''; // 清空輸入框
-            } catch (error) {
-                // 自定義品牌切換失敗
+            function updateButtonStates(activeBrand) {
+                // 移除所有按鈕的 active 狀態
+                document.querySelectorAll('.brand-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // 為當前品牌按鈕添加 active 狀態
+                const activeBtn = document.getElementById(`btn-${activeBrand}`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+
+                // 更新當前品牌顯示
+                updateCurrentBrandDisplay(activeBrand);
             }
-        };
-        
-        // UX 輔助函數
-        function showLoading(show) {
-            const buttons = document.querySelectorAll('.brand-btn, .custom-brand-btn');
-            buttons.forEach(btn => {
-                if (show) {
-                    btn.classList.add('loading');
-                } else {
-                    btn.classList.remove('loading');
+
+            function updateCurrentBrandDisplay(brand) {
+                const brandValueEl = document.getElementById('currentBrandValue');
+
+                if (brandValueEl) {
+                    brandValueEl.textContent = brand;
+                }
+            }
+
+            function showSuccess(message) {
+                const successEl = document.getElementById('successMessage');
+                successEl.textContent = message;
+                successEl.style.display = 'block';
+
+                // 3秒後自動隱藏
+                setTimeout(() => {
+                    successEl.style.display = 'none';
+                }, 3000);
+            }
+
+            function showError(message) {
+                const errorEl = document.getElementById('errorMessage');
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+
+                // 5秒後自動隱藏
+                setTimeout(() => {
+                    errorEl.style.display = 'none';
+                }, 5000);
+            }
+
+            function hideMessages() {
+                document.getElementById('successMessage').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'none';
+            }
+
+            // 支援按 Enter 鍵提交
+            document.addEventListener('DOMContentLoaded', function () {
+                // 初始化彈窗
+                handlePopup();
+                const input = document.getElementById('customBrandInput');
+                if (input) {
+                    input.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            changeCustomBrand();
+                        }
+                    });
+
+                    // 添加輸入框聚焦效果
+                    input.addEventListener('focus', function () {
+                        this.parentElement.style.transform = 'scale(1.02)';
+                    });
+
+                    input.addEventListener('blur', function () {
+                        this.parentElement.style.transform = 'scale(1)';
+                    });
+
+                    // 輸入時自動轉大寫
+                    input.addEventListener('input', function () {
+                        this.value = this.value.toUpperCase();
+                    });
                 }
             });
-        }
-        
-        function updateButtonStates(activeBrand) {
-            // 移除所有按鈕的 active 狀態
-            document.querySelectorAll('.brand-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // 為當前品牌按鈕添加 active 狀態
-            const activeBtn = document.getElementById(`btn-${activeBrand}`);
-            if (activeBtn) {
-                activeBtn.classList.add('active');
-            }
-            
-            // 更新當前品牌顯示
-            updateCurrentBrandDisplay(activeBrand);
-        }
-        
-        function updateCurrentBrandDisplay(brand) {
-            const brandValueEl = document.getElementById('currentBrandValue');
-            
-            if (brandValueEl) {
-                brandValueEl.textContent = brand;
-            }
-        }
-        
-        function showSuccess(message) {
-            const successEl = document.getElementById('successMessage');
-            successEl.textContent = message;
-            successEl.style.display = 'block';
-            
-            // 3秒後自動隱藏
-            setTimeout(() => {
-                successEl.style.display = 'none';
-            }, 3000);
-        }
-        
-        function showError(message) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = message;
-            errorEl.style.display = 'block';
-            
-            // 5秒後自動隱藏
-            setTimeout(() => {
-                errorEl.style.display = 'none';
-            }, 5000);
-        }
-        
-        function hideMessages() {
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-        
-        // 支援按 Enter 鍵提交
-        document.addEventListener('DOMContentLoaded', function() {
-            const input = document.getElementById('customBrandInput');
-            if (input) {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        changeCustomBrand();
-                    }
+
+            // 自動初始化（如果沒有手動調用）
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    // 設置預設品牌顯示
+                    updateCurrentBrandDisplay('ALMI');
+
+                    CarouselManager.init().catch(error => {
+                        // 自動初始化失敗
+                    });
                 });
-                
-                // 添加輸入框聚焦效果
-                input.addEventListener('focus', function() {
-                    this.parentElement.style.transform = 'scale(1.02)';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentElement.style.transform = 'scale(1)';
-                });
-                
-                // 輸入時自動轉大寫
-                input.addEventListener('input', function() {
-                    this.value = this.value.toUpperCase();
-                });
-            }
-        });
-            
-                    // 自動初始化（如果沒有手動調用）
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
+            } else {
                 // 設置預設品牌顯示
                 updateCurrentBrandDisplay('ALMI');
-                
+
                 CarouselManager.init().catch(error => {
                     // 自動初始化失敗
                 });
-            });
-        } else {
-            // 設置預設品牌顯示
-            updateCurrentBrandDisplay('ALMI');
-            
-            CarouselManager.init().catch(error => {
-                // 自動初始化失敗
-            });
-        }
-            
+            }
         })();
     </script>
 </body>
