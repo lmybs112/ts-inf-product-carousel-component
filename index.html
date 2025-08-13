@@ -620,7 +620,18 @@
                     }
 
                     // 初始化組件
-                    const carousel = window.initInfProductCarouselComponent(config);
+                    console.error('config----', config);
+                    const data = {
+                        brand: config.brand,
+                        carousel:{
+                            type: 'product',
+                            showPositionId: {
+                                top: 'infFitsHeader',
+                                bottom: 'infFitsFooter'
+                            }
+                        }
+                    }
+                    const carousel = window.initInfProductCarouselComponent(data);
                     window.initInfProductCarouselComponent({
                         brand: 'CLARKS',
                         carousel: {
