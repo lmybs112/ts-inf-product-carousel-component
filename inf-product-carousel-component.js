@@ -125,7 +125,11 @@ class InfProductCarouselComponent extends HTMLElement {
                 max-width: calc(100vw - 40px);
                 min-height: 240px;
                 max-height: 80vh;
-                background: rgba(255, 255, 255, 0.98);
+                background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.75) 0%, 
+            rgba(255, 255, 255, 0.5) 100%);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
                 border-radius: 16px;
                 box-shadow: 
                     0 8px 32px rgba(0, 0, 0, 0.08),
@@ -134,7 +138,6 @@ class InfProductCarouselComponent extends HTMLElement {
                 z-index: 1000;
                 transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
                 border: 1px solid rgba(0, 0, 0, 0.06);
-                backdrop-filter: blur(20px);
                 overflow: hidden;
                 display: flex;
                 justify-content: center;
@@ -330,6 +333,10 @@ class InfProductCarouselComponent extends HTMLElement {
     if (config.carousel.bid) {
       convertedConfig.bid = config.carousel.bid;
     }
+    // background
+    if (config.carousel.background) {
+      convertedConfig.backgroundColor = config.carousel.background;
+    }
 
     // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
     if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
@@ -388,7 +395,7 @@ class InfProductCarouselComponent extends HTMLElement {
       brand: 'JERSCY',
       containerId: 'infFitsFooter',
       customEdm: [],
-      backgroundColor: '#fff',
+      backgroundColor: 'rgba(255,255,255,0.3)',
       title: '推薦您也可以這樣搭配',
       description: '',
       displayMode: 'SaleRate',
@@ -467,6 +474,7 @@ class InfProductCarouselComponent extends HTMLElement {
       arrowPosition,
       customPadding
     } = finalConfig;
+    console.error('finalConfig-----', finalConfig);
 
     const sortedBreakpoints = Object.keys(finalConfig.breakpoints)
       .map(Number)
@@ -540,7 +548,7 @@ class InfProductCarouselComponent extends HTMLElement {
     if (targetContainer) {
       // 如果目標容器存在，將組件內容移動到目標容器
       const componentContent = `
-        <div id="${containerId}" style="background-color: ${backgroundColor}; border-radius: 8px;max-width: 1280px;margin: 0 auto;height: 100%;width: 100%;">
+        <div id="${containerId}" style="background-color: ${backgroundColor};backdrop-filter: blur(12px);border-radius: 16px;max-width: 1280px;margin: 0 auto;height: 100%;width: 100%;">
           <div id="recommendation-loading" style="height: 100%;">
             <span class="loading-text">Loading...</span>
           </div>
