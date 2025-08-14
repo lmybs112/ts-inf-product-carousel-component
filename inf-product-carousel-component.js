@@ -473,7 +473,7 @@ class InfProductCarouselComponent extends HTMLElement {
       arrowPosition,
       customPadding
     } = finalConfig;
-    console.error('finalConfig-----', finalConfig);
+    // console.error('finalConfig-----', finalConfig);
 
     const sortedBreakpoints = Object.keys(finalConfig.breakpoints)
       .map(Number)
@@ -490,7 +490,7 @@ class InfProductCarouselComponent extends HTMLElement {
     let GA4Key = '';
 
     // 輸出最終配置以供調試
-    console.log('最終配置:', finalConfig);
+    // console.log('最終配置:', finalConfig);
     // console.log('原始品牌配置:', config.brandConfig);
 
     // 如果需要自動 append 且品牌配置指定了 Location，則自動移動到目標容器
@@ -1700,7 +1700,7 @@ class InfProductCarouselComponent extends HTMLElement {
         sale_price: null
       }];
     }
-    console.log('displayImages', displayImages);
+    // console.log('displayImages', displayImages);
     const items = displayImages.map(img => `
       <a class="embeddedItem swiper-slide" href="${img.link}" target="_blank" data-title="${img.title}" data-link="${img.link}">
         <div class="embeddedItem__img" style="position: relative;">
