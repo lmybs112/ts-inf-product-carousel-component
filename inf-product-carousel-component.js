@@ -8,6 +8,227 @@ class InfProductCarouselComponent extends HTMLElement {
     return ['config'];
   }
 
+          // 整合的彈窗處理函數
+          handlePopup() {
+            // 創建並添加 CSS 樣式
+            const popupStyles = `
+            #infPopupproductCarousel *{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            #infPopupproductCarousel {
+                position: fixed;
+                left: -400px;
+                bottom: 20px;
+                width: 350px;
+                max-width: calc(100vw - 40px);
+                min-height: 240px;
+                max-height: 80vh;
+                background: rgba(255, 255, 255, 0.98);
+                border-radius: 16px;
+                box-shadow: 
+                    0 8px 32px rgba(0, 0, 0, 0.08),
+                    0 2px 8px rgba(0, 0, 0, 0.04),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                z-index: 1000;
+                transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid rgba(0, 0, 0, 0.06);
+                backdrop-filter: blur(20px);
+            }
+
+            /* 小螢幕響應式設計 */
+            @media (max-width: 480px) {
+                #infPopupproductCarousel {
+                    width: calc(100vw - 40px);
+                    left: -100vw;
+                    bottom: 16px;
+                    border-radius: 12px;
+                    min-height: 240px;
+                    max-height: 70vh;
+                }
+                
+                #infPopupproductCarousel.show {
+                    left: 20px;
+                }
+            }
+
+            /* 超小螢幕響應式設計 */
+            @media (max-width: 360px) {
+                #infPopupproductCarousel {
+                    width: calc(100vw - 24px);
+                    left: -100vw;
+                    bottom: 12px;
+                    border-radius: 10px;
+                }
+                
+                #infPopupproductCarousel.show {
+                    left: 12px;
+                }
+            }
+
+            #infPopupproductCarousel.show {
+                left: 20px;
+            }
+
+            .popup-close-btn {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 24px;
+                height: 24px;
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                font-weight: 300;
+                color: rgba(0, 0, 0, 0.6);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 10;
+                backdrop-filter: blur(8px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                line-height: 1;
+            }
+
+            .popup-close-btn:hover {
+                background: rgba(0, 0, 0, 0.05);
+                border-color: rgba(0, 0, 0, 0.12);
+                color: rgba(0, 0, 0, 0.8);
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .popup-close-btn:active {
+                transform: scale(0.95);
+                background: rgba(0, 0, 0, 0.08);
+            }
+
+            .popup-content {
+                padding: 12px;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                max-width: 100%;
+                overflow: auto;
+            }
+            
+            /* 確保組件在 popup 內正確顯示 */
+            #infPopupproductCarousel {
+                position: fixed;
+                left: -500px;
+                bottom: 20px;
+                width: 450px;
+                max-width: calc(100vw - 40px);
+                min-height: 240px;
+                max-height: 80vh;
+                background: rgba(255, 255, 255, 0.98);
+                border-radius: 16px;
+                box-shadow: 
+                    0 8px 32px rgba(0, 0, 0, 0.08),
+                    0 2px 8px rgba(0, 0, 0, 0.04),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                z-index: 1000;
+                transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid rgba(0, 0, 0, 0.06);
+                backdrop-filter: blur(20px);
+                overflow: hidden;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            #infPopupproductCarousel.show {
+                left: 20px;
+            }
+            
+            /* 限制組件在 popup 內的顯示 */
+            #infPopupproductCarousel inf-product-carousel-component {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                overflow: hidden !important;
+            }
+            /* 確保 popupProductContent 容器正確限制組件 */
+              #popupProductContent #recommendation-loading,
+              #popupProductContent .embeddedAdContainer__wrapper {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                overflow: visible !important;
+                position: relative !important;
+            }
+            
+            /* 讓 loading 在彈窗中置中顯示 */
+            #popupProductContent #recommendation-loading {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-height: 200px !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+            
+            /* 防止組件內容溢出 */
+             #popupProductContent * {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+        `;
+
+            // 添加樣式到 head
+            const styleElement = document.createElement('style');
+            styleElement.textContent = popupStyles;
+            document.head.appendChild(styleElement);
+
+            // 創建彈窗 HTML 元素
+            const popupHTML = `
+            <div id="infPopupproductCarousel">
+                <button class="popup-close-btn" onclick="closePopup()">×</button>
+                <div class="popup-content">
+                    <div id="popupProductContent" style="width: 100%; height: auto; overflow: visible;">
+                    </div>
+                </div>
+            </div>
+        `;
+
+            // 添加彈窗到 body
+            document.body.insertAdjacentHTML('beforeend', popupHTML);
+
+            const popup = document.getElementById('infPopupproductCarousel');
+
+            // 顯示彈窗
+            function showPopup() {
+                popup.classList.add('show');
+            }
+
+            // 關閉彈窗
+            function closePopup() {
+                popup.classList.remove('show');
+            }
+
+            // 點擊彈窗外部關閉彈窗
+            document.addEventListener('click', function (event) {
+                if (event.target === popup) {
+                    closePopup();
+                }
+            });
+
+            // 延遲1秒後顯示彈窗
+            setTimeout(showPopup, 1000);
+
+            // 將 closePopup 函數設為全域可訪問，供關閉按鈕使用
+            window.closePopup = closePopup;
+        }
+
+
+
   connectedCallback() {
     // 元素被加入 DOM 時不需要初始化，由 attributeChangedCallback 處理
   }
@@ -49,7 +270,6 @@ class InfProductCarouselComponent extends HTMLElement {
       // 將 brandConfig 轉換為標準配置格式
       const convertedBrandConfig = this.convertBrandConfig(brandConfig, config);
       console.log('轉換後的品牌配置:', convertedBrandConfig);
-
       // 將轉換後的品牌配置合併到原有配置中
       const mergedConfig = {
         ...config,
@@ -57,6 +277,10 @@ class InfProductCarouselComponent extends HTMLElement {
         brandConfig: brandConfig, // 保留原始 brandConfig 供其他地方使用
         carouselType: carousel.type // 添加 carousel 類型
       };
+
+      if(mergedConfig.brandConfig?.status && mergedConfig.carouselType === 'popup'){
+        this.handlePopup();
+      }
 
       // 使用合併後的配置進行初始化，並在初始化後自動移動到目標容器
       this.initProductRecommendation(mergedConfig, true);
@@ -94,13 +318,12 @@ class InfProductCarouselComponent extends HTMLElement {
     }
 
     // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
-    console.error('brandConfig.CarouselLayout------', brandConfig);
     if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
       convertedConfig.breakpoints = {
         768: {
           slidesPerView: brandConfig.CarouselLayout,
           slidesPerGroup: Math.floor(brandConfig.CarouselLayout),
-          spaceBetween: brandConfig.type === 'product' ? 24 : 12,
+          spaceBetween: 24,
           resistanceRatio: 0,
           loopFillGroupWithBlank: true
         },
