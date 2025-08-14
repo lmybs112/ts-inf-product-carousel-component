@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Component 測試</title>
+</head>
+
+<body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .config-editor {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            z-index: 1000;
+            width: 350px;
+            height: 90vh;
+            transform: translateX(calc(100% - 60px));
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-editor:hover {
+            transform: translateX(0);
+        }
+
+        .config-header {
+            padding: 20px 20px 15px 20px;
+            border-bottom: 2px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .config-editor h3 {
+            color: #495057;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .config-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+        }
+
+        .config-footer {
+            border-top: 2px solid #e9ecef;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+            flex-shrink: 0;
+        }
+
+        .config-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section-label {
+            color: #495057;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: left;
+            display: block;
+        }
+
+        .config-input-group {
+            margin-bottom: 12px;
+        }
+
+        .config-input-group label {
+            display: block;
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .config-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+            background: white;
+            color: #495057;
+        }
+
+        .config-input:focus {
+            border-color: #495057;
+            box-shadow: 0 0 0 3px rgba(73, 80, 87, 0.1);
+        }
+
+        .config-input::placeholder {
+            color: #adb5bd;
+        }
+
+        .config-input[readonly] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+            border-color: #dee2e6;
+        }
+
+        .config-input[readonly]:focus {
+            border-color: #dee2e6;
+            box-shadow: none;
+        }
+
+        .config-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: all 0.2s ease;
+            background: white;
+            color: #495057;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .config-textarea:focus {
+            border-color: #495057;
+            box-shadow: 0 0 0 3px rgba(73, 80, 87, 0.1);
+        }
+
+        .config-textarea::placeholder {
+            color: #adb5bd;
+        }
+
+        .color-picker-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .color-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 32px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+        }
+
+        .color-picker:hover {
+            border-color: #495057;
+        }
+
+        .opacity-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #dee2e6;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .opacity-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #495057;
+            cursor: pointer;
+        }
+
+        .opacity-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #495057;
+            cursor: pointer;
+            border: none;
+        }
+
+        .config-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .config-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid;
+            min-width: 80px;
+        }
+
+        .config-btn.primary {
+            background: #495057;
+            color: white;
+            border-color: #495057;
+        }
+
+        .config-btn.primary:hover {
+            background: #343a40;
+            border-color: #343a40;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .config-btn.secondary {
+            background: white;
+            color: #495057;
+            border-color: #dee2e6;
+        }
+
+        .config-btn.secondary:hover {
+            background: #f8f9fa;
+            border-color: #495057;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 8px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 8px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .current-config-display {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid #dee2e6;
+        }
+
+        .current-config-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .current-config-value {
+            font-size: 12px;
+            font-weight: 400;
+            color: #495057;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .current-config-value pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.4;
+        }
+
+        .content-section {
+            background: white;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+
+        .section-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .id-editor {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .id-input {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            color: #333;
+            width: 120px;
+        }
+
+        .id-input:focus {
+            outline: none;
+            border-color: #fff;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .id-btn {
+            padding: 4px 8px;
+            background: #fff;
+            color: #34495e;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .id-btn:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+        }
+
+        .id-btn:active {
+            transform: translateY(0);
+        }
+
+        .section-content {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .section-content h4 {
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .section-content p {
+            color: #7f8c8d;
+            margin: 0;
+            line-height: 1.6;
+        }
+    </style>
+
+    <div class="config-editor">
+        <div class="config-header">
+            <h3>組件配置編輯器</h3>
+        </div>
+
+        <div class="config-content">
+            <div class="config-section">
+                <div class="section-label">品牌</div>
+                <div class="config-input-group">
+                    <input type="text" class="config-input" id="brandInput" value="ALMI" placeholder="輸入品牌名稱">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <div class="section-label">彈窗輪播設定</div>
+                <div class="config-input-group" style="display: none;">
+                    <label for="backgroundColorInput">背景:</label>
+                    <div class="color-picker-group">
+                        <div class="color-controls">
+                            <input type="color" class="color-picker" id="colorPicker" value="#ece4d9">
+                            <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="100" value="30">
+                        </div>
+                        <input type="text" class="config-input" id="backgroundColorInput" value="rgba(236,228,217,0.3)" placeholder="rgba(236,228,217,0.3)" readonly>
+                    </div>
+                </div>
+                <div class="config-input-group">
+                    <label for="titleInput">title:</label>
+                    <input type="text" class="config-input" id="titleInput" value="您可能會喜歡" placeholder="您可能會喜歡">
+                </div>
+                <div class="config-input-group">
+                    <label for="statusInput">啟用組件:</label>
+                    <select class="config-input" id="statusInput">
+                        <option value="true">啟用 (true)</option>
+                        <option value="false">禁用 (false)</option>
+                    </select>
+                </div>
+                <div class="config-input-group">
+                    <label for="hideSizeInput">尺寸標籤:</label>
+                    <select class="config-input" id="hideSizeInput">
+                        <option value="false">顯示尺寸</option>
+                        <option value="true">隱藏尺寸</option>
+                    </select>
+                </div>
+                <div class="config-input-group">
+                    <label for="displayModeInput">DisplayMode:</label>
+                    <select class="config-input" id="displayModeInput">
+                        <option value="SaleRate">折扣率 (SaleRate)</option>
+                        <option value="SocialProofNum">購買人數 (SocialProofNum)</option>
+                    </select>
+                </div>
+                <div class="config-input-group">
+                    <label for="recommendModeInput">RecommendMode:</label>
+                    <input type="text" class="config-input" id="recommendModeInput" value="bhv" placeholder="bhv">
+                </div>
+                <div class="config-input-group">
+                    <label for="carouselButtonInput">CarouselButton (是否顯示輪播控制按鈕):</label>
+                    <select class="config-input" id="carouselButtonInput">
+                        <option value="true">顯示 (true)</option>
+                        <option value="false">隱藏 (false)</option>
+                    </select>
+                </div>
+                <div class="config-input-group">
+                    <label for="bidInput">bid (JSON 格式):</label>
+                    <textarea class="config-textarea" id="bidInput" placeholder='{"HV": "25.5", "Brand": "CLARKS", "Gender": "F", ...}' rows="4">{
+  "HV": "25.5",
+  "WV": "0",
+  "CC": "",
+  "DataItem": "0010",
+  "ClothSize": "",
+  "GVID": "INF",
+  "Sizes": "",
+  "Brand": "CLARKS",
+  "ml_out": "",
+  "Hip": "1-cm",
+  "TID": "162410.45086",
+  "FitP": "2,2,2,2",
+  "LGVID": "INF",
+  "ga_id": "INF",
+  "MRID": "INF",
+  "Gender": "F",
+  "Waist": "1-cm",
+  "ClothID": "",
+  "FMLpath": "FMLSep",
+  "Shoulder": "1-cm",
+  "AvatarSizeSCWH": "",
+  "Transaction": "34",
+  "comment": "try_on_report_online",
+  "ORDERID": "",
+  "DnChest": "1-cm",
+  "UpChest": "1-cm",
+  "SHOES_MODE": "1",
+  "FOOT_CIRCUM": "20",
+  "CALF_CIRCUM": "30.4"
+}</textarea>
+                </div>
+                <div class="config-input-group">
+                    <label for="carouselLayoutInput">CarouselLayout:</label>
+                    <input type="text" class="config-input" id="carouselLayoutInput" value="2.5" readonly>
+                </div>
+                <div class="config-input-group">
+                    <label for="locationInput">顯示位置:</label>
+                    <input type="text" class="config-input" id="locationInput" value="bottom" readonly>
+                </div>
+                <div class="config-input-group">
+                    <label for="bottomIdInput">底部廣告區域:</label>
+                    <input type="text" class="config-input" id="bottomIdInput" value="popupProductContent" placeholder="popupProductContent" readonly>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <div class="section-label">產品輪播設定 (顯示位置)</div>
+                <div class="config-input-group">
+                    <label for="topIdInput">頂部廣告區域:</label>
+                    <input type="text" class="config-input" id="topIdInput" value="infFitsHeader" readonly>
+                </div>
+                <div class="config-input-group">
+                    <label for="productBottomIdInput">底部廣告區域:</label>
+                    <input type="text" class="config-input" id="productBottomIdInput" value="infFitsFooter" readonly>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-footer">
+            <div class="config-section">
+                <div class="section-label">操作</div>
+                <div class="config-buttons">
+                    <button class="config-btn primary" id="applyConfigBtn">應用配置</button>
+                    <button class="config-btn secondary" id="resetConfigBtn">重置配置</button>
+                    <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
+                </div>
+            </div>
+
+            <div class="success-message" id="successMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <div class="current-config-display" id="currentConfigDisplay">
+        <div class="current-config-label">當前配置狀態</div>
+        <div class="current-config-value" id="currentConfigValue">未應用配置</div>
+    </div>
+
+    <div id="infFitsHeader" class="content-section">
+        <div class="section-header">
+            <span>頂部廣告區域</span>
+            <div class="id-editor">
+                <input type="text" class="id-input" id="topIdEditor" value="infFitsHeader" placeholder="輸入ID">
+                <button class="id-btn" onclick="updateTopId()">更新</button>
+            </div>
+        </div>
+        <div class="section-content">
+            <h4 id="topIdDisplay">infFitsHeader</h4>
+            <p>這裡將顯示頂部的產品輪播廣告內容</p>
+        </div>
+    </div>
+
+    <div id="content" class="content-section">
+        <div class="section-header">頁面內容區域</div>
+        <div class="section-content">
+            <h4>content</h4>
+            <p>這是一個頁面內容區域</p>
+        </div>
+    </div>
+
+    <div id="infFitsFooter" class="content-section">
+        <div class="section-header">
+            <span>底部廣告區域</span>
+            <div class="id-editor">
+                <input type="text" class="id-input" id="bottomIdEditor" value="infFitsFooter" placeholder="輸入ID">
+                <button class="id-btn" onclick="updateBottomId()">更新</button>
+            </div>
+        </div>
+        <div class="section-content">
+            <h4 id="bottomIdDisplay">infFitsFooter</h4>
+            <p>這裡將顯示底部的產品輪播廣告內容</p>
+        </div>
+    </div>
+
+    <script>
+        // 更新頂部 ID
+        function updateTopId() {
+            const input = document.getElementById('topIdEditor');
+            const display = document.getElementById('topIdDisplay');
+            const newId = input.value.trim();
+            
+            if (newId) {
+                // 更新顯示
+                display.textContent = newId;
+                
+                // 更新表單中的 topid
+                const topIdInput = document.getElementById('topIdInput');
+                if (topIdInput) {
+                    topIdInput.value = newId;
+                }
+                
+                // 保存到 sessionStorage
+                sessionStorage.setItem('topId', newId);
+                
+                // 更新當前配置顯示
+                updateConfigDisplay();
+                
+                showSuccess('頂部 ID 已更新: ' + newId);
+            } else {
+                showError('請輸入有效的 ID');
+            }
+        }
+
+        // 更新底部 ID
+        function updateBottomId() {
+            const input = document.getElementById('bottomIdEditor');
+            const display = document.getElementById('bottomIdDisplay');
+            const newId = input.value.trim();
+            
+            if (newId) {
+                // 更新顯示
+                display.textContent = newId;
+                
+                // 更新表單中的 bottomid
+                const bottomIdInput = document.getElementById('productBottomIdInput');
+                if (bottomIdInput) {
+                    bottomIdInput.value = newId;
+                }
+                
+                // 保存到 sessionStorage
+                sessionStorage.setItem('bottomId', newId);
+                
+                // 更新當前配置顯示
+                updateConfigDisplay();
+                
+                showSuccess('底部 ID 已更新: ' + newId);
+            } else {
+                showError('請輸入有效的 ID');
+            }
+        }
+
+        // 更新配置顯示
+        function updateConfigDisplay() {
+            const topId = document.getElementById('topIdDisplay').textContent;
+            const bottomId = document.getElementById('bottomIdDisplay').textContent;
+            const brand = document.getElementById('brandInput').value;
+            
+            // 構建完整的配置物件
+            const config = {
+                brand: brand,
+                carousels: [{
+                    type: 'popup',
+                    hide_size: document.getElementById('hideSizeInput').value === 'true',
+                    // backgroundColor: document.getElementById('backgroundColorInput').value,
+                    showPositionId: {
+                        bottom: document.getElementById('bottomIdInput').value
+                    },
+                    brandConfig: {
+                        DisplayMode: document.getElementById('displayModeInput').value,
+                        CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
+                        RecommendMode: document.getElementById('recommendModeInput').value,
+                        CarouselLayout: 2.5,
+                        Title: document.getElementById('titleInput').value,
+                        Location: document.getElementById('locationInput').value,
+                        status: document.getElementById('statusInput').value === 'true'
+                    }
+                }, {
+                    type: 'product',
+                    showPositionId: {
+                        top: topId,
+                        bottom: bottomId
+                    }
+                }]
+            };
+            
+            // 嘗試解析並添加 bid
+            try {
+                const bidText = document.getElementById('bidInput').value;
+                if (bidText.trim()) {
+                    config.carousels[0].bid = JSON.parse(bidText);
+                }
+            } catch (error) {
+                console.error('解析 bid 失敗:', error);
+            }
+            
+            const configValue = document.getElementById('currentConfigValue');
+            if (configValue) {
+                // 顯示格式化的 JSON
+                configValue.innerHTML = `<pre style="margin: 0; font-size: 12px; text-align: left; white-space: pre-wrap; word-break: break-word;">${JSON.stringify(config, null, 2)}</pre>`;
+            }
+        }
+
+        // 顯示成功訊息
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            if (successEl) {
+                successEl.textContent = message;
+                successEl.style.display = 'block';
+                setTimeout(() => {
+                    successEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // 顯示載入狀態
+        function showLoading(show) {
+            const buttons = document.querySelectorAll('.config-btn');
+            buttons.forEach(btn => {
+                if (show) {
+                    btn.classList.add('loading');
+                    btn.disabled = true;
+                } else {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // 顯示錯誤訊息
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+                setTimeout(() => {
+                    errorEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // 保存配置到 sessionStorage
+        function saveConfig() {
+            // 解析 bid JSON
+            let bidData = {};
+            try {
+                const bidText = document.getElementById('bidInput').value;
+                if (bidText.trim()) {
+                    bidData = JSON.parse(bidText);
+                }
+            } catch (error) {
+                console.error('保存時 bid JSON 解析失敗:', error);
+                // 如果解析失敗，保存原始字串
+                bidData = document.getElementById('bidInput').value;
+            }
+
+            const config = {
+                brand: document.getElementById('brandInput').value,
+                backgroundColor: document.getElementById('backgroundColorInput').value,
+                bottomId: document.getElementById('bottomIdInput').value,
+                title: document.getElementById('titleInput').value,
+                status: document.getElementById('statusInput').value,
+                hideSize: document.getElementById('hideSizeInput').value,
+                displayMode: document.getElementById('displayModeInput').value,
+                recommendMode: document.getElementById('recommendModeInput').value,
+                carouselButton: document.getElementById('carouselButtonInput').value,
+                bid: bidData
+            };
+            
+            sessionStorage.setItem('config', JSON.stringify(config));
+        }
+
+        // 從 sessionStorage 載入保存的配置
+        function loadSavedConfig() {
+            const savedConfig = sessionStorage.getItem('config');
+            if (savedConfig) {
+                try {
+                    const config = JSON.parse(savedConfig);
+                    
+                    // 載入配置到表單
+                    if (config.brand) document.getElementById('brandInput').value = config.brand;
+                    if (config.backgroundColor) document.getElementById('backgroundColorInput').value = config.backgroundColor;
+                    if (config.bottomId) document.getElementById('bottomIdInput').value = config.bottomId;
+                    if (config.title) document.getElementById('titleInput').value = config.title;
+                    if (config.status) document.getElementById('statusInput').value = config.status;
+                    if (config.hideSize) document.getElementById('hideSizeInput').value = config.hideSize;
+                    if (config.displayMode) document.getElementById('displayModeInput').value = config.displayMode;
+                    if (config.recommendMode) document.getElementById('recommendModeInput').value = config.recommendMode;
+                    if (config.carouselButton) document.getElementById('carouselButtonInput').value = config.carouselButton;
+                    if (config.bid) {
+                        // 如果 bid 是 object，轉換為格式化的 JSON 字串
+                        if (typeof config.bid === 'object') {
+                            document.getElementById('bidInput').value = JSON.stringify(config.bid, null, 2);
+                        } else {
+                            document.getElementById('bidInput').value = config.bid;
+                        }
+                    }
+                } catch (e) {
+                    console.error('載入配置失敗:', e);
+                }
+            }
+        }
+
+        // 從 sessionStorage 載入保存的 ID
+        function loadSavedIds() {
+            const savedTopId = sessionStorage.getItem('topId');
+            const savedBottomId = sessionStorage.getItem('bottomId');
+            
+            if (savedTopId) {
+                const topIdEditor = document.getElementById('topIdEditor');
+                const topIdDisplay = document.getElementById('topIdDisplay');
+                const topIdInput = document.getElementById('topIdInput');
+                
+                if (topIdEditor) topIdEditor.value = savedTopId;
+                if (topIdDisplay) topIdDisplay.textContent = savedTopId;
+                if (topIdInput) topIdInput.value = savedTopId;
+            }
+            
+            if (savedBottomId) {
+                const bottomIdEditor = document.getElementById('bottomIdEditor');
+                const bottomIdDisplay = document.getElementById('bottomIdDisplay');
+                const productBottomIdInput = document.getElementById('productBottomIdInput');
+                
+                if (bottomIdEditor) bottomIdEditor.value = savedBottomId;
+                if (bottomIdDisplay) bottomIdDisplay.textContent = savedBottomId;
+                if (productBottomIdInput) productBottomIdInput.value = savedBottomId;
+            }
+        }
+
+        // 清理現有組件
+        function cleanupComponents() {
+            try {
+                // 清理組件元素
+                const componentElements = document.querySelectorAll('inf-product-carousel-component');
+                componentElements.forEach(element => {
+                    if (element && element.remove) {
+                        element.remove();
+                    }
+                });
+                
+                // 清理 Swiper 實例（如果存在）
+                if (window.Swiper) {
+                    const swiperContainers = document.querySelectorAll('.swiper');
+                    swiperContainers.forEach(container => {
+                        if (container.swiper) {
+                            container.swiper.destroy(true, true);
+                        }
+                    });
+                }
+                
+                // 清理彈窗元素
+                const popupElements = document.querySelectorAll('.popup-container, .popup-overlay');
+                popupElements.forEach(element => element.remove());
+                
+            } catch (error) {
+                console.error('清理組件時發生錯誤:', error);
+            }
+        }
+
+        // 重新載入腳本
+        function reloadScript() {
+            return new Promise((resolve, reject) => {
+                // 移除現有的腳本標籤
+                if (scriptElement) {
+                    scriptElement.remove();
+                }
+                
+                // 重置狀態
+                scriptLoaded = false;
+                scriptLoading = false;
+                
+                // 創建新的腳本標籤，使用時間戳避免快取
+                scriptElement = document.createElement('script');
+                scriptElement.src = './inf-product-carousel-component.js?v=' + Date.now();
+                scriptElement.async = true;
+                
+                scriptElement.onload = function () {
+                    scriptLoaded = true;
+                    scriptLoading = false;
+                    resolve();
+                };
+                
+                scriptElement.onerror = function () {
+                    scriptLoading = false;
+                    reject(new Error('腳本載入失敗'));
+                };
+                
+                scriptLoading = true;
+                document.head.appendChild(scriptElement);
+            });
+        }
+
+        // 使用 iframe 重新載入腳本
+        function reloadScriptWithIframe() {
+            return new Promise((resolve, reject) => {
+                // 創建一個隱藏的 iframe
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = './inf-product-carousel-component.js';
+                
+                iframe.onload = function () {
+                    try {
+                        // 從 iframe 中獲取腳本內容
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const scriptContent = iframeDoc.body.textContent || iframeDoc.body.innerText;
+                        
+                        // 創建新的 script 標籤並執行
+                        const script = document.createElement('script');
+                        script.textContent = scriptContent;
+                        document.head.appendChild(script);
+                        
+                        // 清理 iframe
+                        iframe.remove();
+                        
+                        scriptLoaded = true;
+                        scriptLoading = false;
+                        resolve();
+                    } catch (error) {
+                        iframe.remove();
+                        reject(error);
+                    }
+                };
+                
+                iframe.onerror = function () {
+                    iframe.remove();
+                    reject(new Error('iframe 載入失敗'));
+                };
+                
+                scriptLoading = true;
+                document.body.appendChild(iframe);
+            });
+        }
+
+        // 檢查腳本是否已載入
+        let scriptLoaded = false;
+        let scriptLoading = false;
+        let scriptElement = null;
+
+        // 應用配置
+        async function applyConfig() {
+            try {
+                // 顯示載入狀態
+                showLoading(true);
+                
+                // 解析 bid JSON
+                let bidData = {};
+                try {
+                    const bidText = document.getElementById('bidInput').value;
+                    if (bidText.trim()) {
+                        bidData = JSON.parse(bidText);
+                    }
+                } catch (error) {
+                    showError('bid JSON 格式錯誤: ' + error.message);
+                    showLoading(false);
+                    return;
+                }
+
+                const config = {
+                    brand: document.getElementById('brandInput').value,
+                    carousels: [{
+                        type: 'popup',
+                        hide_size: document.getElementById('hideSizeInput').value === 'true',
+                        backgroundColor: document.getElementById('backgroundColorInput').value,
+                        showPositionId: {
+                            bottom: document.getElementById('bottomIdInput').value
+                        },
+                        bid: bidData,
+                        brandConfig: {
+                            DisplayMode: document.getElementById('displayModeInput').value,
+                            CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
+                            RecommendMode: document.getElementById('recommendModeInput').value,
+                            CarouselLayout: 2.5,
+                            Title: document.getElementById('titleInput').value,
+                            Location: document.getElementById('locationInput').value,
+                            status: document.getElementById('statusInput').value === 'true'
+                        }
+                    }, {
+                        type: 'product',
+                        showPositionId: {
+                            top: document.getElementById('topIdInput').value,
+                            bottom: document.getElementById('productBottomIdInput').value
+                        }
+                    }]
+                };
+                
+                // 更新配置顯示
+                updateConfigDisplay();
+                
+                // 將配置保存到 sessionStorage，然後重新整理頁面
+                sessionStorage.setItem('pendingConfig', JSON.stringify(config));
+                
+                // 顯示訊息
+                showSuccess('配置已保存，正在重新載入頁面...');
+                
+                // 延遲一下讓使用者看到訊息
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+            } catch (error) {
+                showError('應用配置失敗: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // 重置配置
+        function resetConfig() {
+            if (confirm('確定要重置所有配置嗎？這將清除所有自定義設定。')) {
+                // 清除 sessionStorage
+                sessionStorage.removeItem('config');
+                sessionStorage.removeItem('topId');
+                sessionStorage.removeItem('bottomId');
+                
+                // 重置表單到預設值
+                document.getElementById('brandInput').value = 'ALMI';
+                document.getElementById('backgroundColorInput').value = 'rgba(236,228,217,0.3)';
+                document.getElementById('bottomIdInput').value = 'popupProductContent';
+                document.getElementById('titleInput').value = '您可能會喜歡';
+                document.getElementById('statusInput').value = 'true';
+                document.getElementById('hideSizeInput').value = 'false';
+                document.getElementById('displayModeInput').value = 'SaleRate';
+                document.getElementById('recommendModeInput').value = 'bhv';
+                document.getElementById('carouselButtonInput').value = 'true';
+                document.getElementById('bidInput').value = `{
+  "HV": "25.5",
+  "WV": "0",
+  "CC": "",
+  "DataItem": "0010",
+  "ClothSize": "",
+  "GVID": "INF",
+  "Sizes": "",
+  "Brand": "CLARKS",
+  "ml_out": "",
+  "Hip": "1-cm",
+  "TID": "162410.45086",
+  "FitP": "2,2,2,2",
+  "LGVID": "INF",
+  "ga_id": "INF",
+  "MRID": "INF",
+  "Gender": "F",
+  "Waist": "1-cm",
+  "ClothID": "",
+  "FMLpath": "FMLSep",
+  "Shoulder": "1-cm",
+  "AvatarSizeSCWH": "",
+  "Transaction": "34",
+  "comment": "try_on_report_online",
+  "ORDERID": "",
+  "DnChest": "1-cm",
+  "UpChest": "1-cm",
+  "SHOES_MODE": "1",
+  "FOOT_CIRCUM": "20",
+  "CALF_CIRCUM": "30.4"
+}`;
+                
+                // 重置 ID
+                document.getElementById('topIdEditor').value = 'infFitsHeader';
+                document.getElementById('topIdDisplay').textContent = 'infFitsHeader';
+                document.getElementById('topIdInput').value = 'infFitsHeader';
+                
+                document.getElementById('bottomIdEditor').value = 'infFitsFooter';
+                document.getElementById('bottomIdDisplay').textContent = 'infFitsFooter';
+                document.getElementById('productBottomIdInput').value = 'infFitsFooter';
+                
+                // 更新顯示
+                updateConfigDisplay();
+                
+                showSuccess('配置已重置為預設值！');
+            }
+        }
+
+        // 匯出配置
+        function exportConfig() {
+            try {
+                const config = {
+                    brand: document.getElementById('brandInput').value,
+                    carousels: [{
+                        type: 'popup',
+                        hide_size: document.getElementById('hideSizeInput').value === 'true',
+                        backgroundColor: document.getElementById('backgroundColorInput').value,
+                        showPositionId: {
+                            bottom: document.getElementById('bottomIdInput').value
+                        },
+                        brandConfig: {
+                            DisplayMode: document.getElementById('displayModeInput').value,
+                            CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
+                            RecommendMode: document.getElementById('recommendModeInput').value,
+                            CarouselLayout: 2.5,
+                            Title: document.getElementById('titleInput').value,
+                            Location: document.getElementById('locationInput').value,
+                            status: document.getElementById('statusInput').value === 'true'
+                        }
+                    }, {
+                        type: 'product',
+                        showPositionId: {
+                            top: document.getElementById('topIdInput').value,
+                            bottom: document.getElementById('productBottomIdInput').value
+                        }
+                    }]
+                };
+                
+                // 複製到剪貼簿
+                const configText = JSON.stringify(config, null, 2);
+                navigator.clipboard.writeText(configText).then(() => {
+                    showSuccess('配置已複製到剪貼簿！');
+                }).catch(() => {
+                    // 如果剪貼簿 API 不可用，顯示配置內容
+                    alert('配置內容:\n\n' + configText);
+                });
+                
+            } catch (error) {
+                showError('匯出配置失敗: ' + error.message);
+            }
+        }
+
+        // 應用待處理的配置
+        async function applyPendingConfig() {
+            const pendingConfig = sessionStorage.getItem('pendingConfig');
+            if (pendingConfig) {
+                try {
+                    const config = JSON.parse(pendingConfig);
+                    
+                    // 載入腳本
+                    const script = document.createElement('script');
+                    script.src = './inf-product-carousel-component.js';
+                    script.async = true;
+                    
+                    script.onload = function () {
+                        try {
+                            // 初始化每個輪播組件
+                            config.carousels.forEach(carousel => {
+                                const productCarouselconfig = {
+                                    brand: config.brand,
+                                    carousel
+                                };
+                                window.initInfProductCarouselComponent(productCarouselconfig);
+                            });
+                            
+                            showSuccess('配置已成功應用！');
+                        } catch (error) {
+                            showError('組件初始化失敗: ' + error.message);
+                        }
+                    };
+                    
+                    script.onerror = function () {
+                        showError('腳本載入失敗: inf-product-carousel-component.js');
+                    };
+                    
+                    document.head.appendChild(script);
+                    
+                    // 清除待處理的配置
+                    sessionStorage.removeItem('pendingConfig');
+                    
+                } catch (error) {
+                    console.error('應用待處理配置失敗:', error);
+                    sessionStorage.removeItem('pendingConfig');
+                }
+            }
+        }
+
+        // 將 hex 顏色轉換為 rgba
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // 將 rgba 轉換為 hex 和 alpha
+        function rgbaToHexAndAlpha(rgba) {
+            const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+            if (match) {
+                const r = parseInt(match[1]);
+                const g = parseInt(match[2]);
+                const b = parseInt(match[3]);
+                const alpha = match[4] ? parseFloat(match[4]) : 1;
+                
+                const hex = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                return { hex, alpha: Math.round(alpha * 100) };
+            }
+            return { hex: '#ece4d9', alpha: 30 };
+        }
+
+        // 更新背景顏色
+        function updateBackgroundColor() {
+            const colorPicker = document.getElementById('colorPicker');
+            const opacitySlider = document.getElementById('opacitySlider');
+            const backgroundColorInput = document.getElementById('backgroundColorInput');
+            
+            const hex = colorPicker.value;
+            const alpha = opacitySlider.value / 100;
+            const rgba = hexToRgba(hex, alpha);
+            
+            backgroundColorInput.value = rgba;
+            saveConfig();
+        }
+
+        // 支援按 Enter 鍵更新 ID
+        document.addEventListener('DOMContentLoaded', function() {
+            // 載入保存的配置和 ID
+            loadSavedConfig();
+            loadSavedIds();
+            
+            // 初始化調色盤
+            const backgroundColorInput = document.getElementById('backgroundColorInput');
+            const colorPicker = document.getElementById('colorPicker');
+            const opacitySlider = document.getElementById('opacitySlider');
+            
+            if (backgroundColorInput && colorPicker && opacitySlider) {
+                const { hex, alpha } = rgbaToHexAndAlpha(backgroundColorInput.value);
+                colorPicker.value = hex;
+                opacitySlider.value = alpha;
+                
+                // 添加事件監聽器
+                colorPicker.addEventListener('change', updateBackgroundColor);
+                colorPicker.addEventListener('input', updateBackgroundColor);
+                opacitySlider.addEventListener('change', updateBackgroundColor);
+                opacitySlider.addEventListener('input', updateBackgroundColor);
+            }
+            
+            const topIdInput = document.getElementById('topIdEditor');
+            const bottomIdInput = document.getElementById('bottomIdEditor');
+            
+            if (topIdInput) {
+                topIdInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        updateTopId();
+                    }
+                });
+            }
+            
+            if (bottomIdInput) {
+                bottomIdInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        updateBottomId();
+                    }
+                });
+            }
+
+            // 為配置表單欄位添加自動保存功能
+            const configInputs = [
+                'brandInput', 'bottomIdInput', 'titleInput',
+                'statusInput', 'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput'
+            ];
+            
+            configInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('change', saveConfig);
+                    input.addEventListener('input', saveConfig);
+                }
+            });
+
+            // 為操作按鈕添加事件監聽器
+            document.getElementById('applyConfigBtn').addEventListener('click', applyConfig);
+            document.getElementById('resetConfigBtn').addEventListener('click', resetConfig);
+            document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
+
+            // 初始化配置顯示
+            updateConfigDisplay();
+            
+            // 檢查並應用待處理的配置
+            applyPendingConfig();
+        });
+    </script>
+
+</body>
+
+</html>

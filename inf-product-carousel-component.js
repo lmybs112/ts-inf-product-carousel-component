@@ -547,7 +547,7 @@ class InfProductCarouselComponent extends HTMLElement {
     if (targetContainer) {
       // 如果目標容器存在，將組件內容移動到目標容器
       const componentContent = `
-        <div id="${containerId}" style="background-color: ${backgroundColor};backdrop-filter: blur(12px);border-radius: 16px;max-width: 1280px;margin: 0 auto;height: 100%;width: 100%;">
+        <div id="${containerId}" style="background-color: ${backgroundColor};margin: 0 auto;height: 100%;width: 100%;">
           <div id="recommendation-loading" style="height: 100%;">
             <span class="loading-text">Loading...</span>
           </div>
