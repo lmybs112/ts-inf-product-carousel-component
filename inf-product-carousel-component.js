@@ -314,15 +314,14 @@ class InfProductCarouselComponent extends HTMLElement {
     if (brandConfig.Description) {
       convertedConfig.description = brandConfig.Description;
     }
-
-    // RecommendMode: 直接使用
-    if (brandConfig.RecommendMode) {
-      convertedConfig.recommendMode = brandConfig.RecommendMode;
-    }
-
       // Title: 變更 title
     if (brandConfig.Title) {
       convertedConfig.title = brandConfig.Title;
+    }
+
+    //  RecommendMode: 變更 eecommendMode
+    if(brandConfig.RecommendMode) {
+      convertedConfig.recommendMode = brandConfig.RecommendMode;
     }
 
     // hide_size
@@ -1300,6 +1299,7 @@ class InfProductCarouselComponent extends HTMLElement {
         autoplay,
         sortedBreakpoints,
         displayMode,
+        recommendMode,
         carouselType: config.carouselType || 'product' // 添加 carousel 類型
       });
 
@@ -1433,7 +1433,7 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
   getEmbeddedAds(ids, containerId, config) {
-    const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType } = config;
+    const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
     
     // 調試日誌：確認 displayMode 的值
     // console.log('getEmbeddedAds - displayMode:', displayMode);
@@ -1446,7 +1446,7 @@ class InfProductCarouselComponent extends HTMLElement {
       series_out: "[\"成長型\"]",
       PID: ids.skuContent,
       SP_PID: "xxSOCIAL PROOF",
-      SIZEAI_ptr: "bhv"
+      SIZEAI_ptr: recommendMode||"bhv"
     } : {
       Brand: brand,
       LGVID: ids.lgiven_id,
@@ -1454,7 +1454,7 @@ class InfProductCarouselComponent extends HTMLElement {
       recom_num: '12',
       PID: ids.skuContent,
       SP_PID: "xxSOCIAL PROOF",
-      SIZEAI_ptr: "bhv"
+      SIZEAI_ptr: recommendMode||"bhv"
     };
 
     if (ctype_val && ctype_val.length > 0) {
@@ -1502,7 +1502,7 @@ class InfProductCarouselComponent extends HTMLElement {
         recom_num: "6",
         PID: "10662339",
         SP_PID: "xxSOCIAL PROOF", // FIXME
-        SIZEAI_ptr: "bhv",
+        SIZEAI_ptr: recommendMode||"bhv",
       }
       if (!hide_size) {
         requestPopupData.SIZEAI = 'True';
@@ -1525,7 +1525,13 @@ class InfProductCarouselComponent extends HTMLElement {
     }
 
     fetch(apiUrl, fetchOptions)
-      .then(response => response.json())
+      .then(response => {
+        // 檢查 HTTP 狀態碼，如果是錯誤狀態碼（如 500），則拋出錯誤
+        if (!response.ok) {
+          throw new Error(`API 調用失敗: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(response => {
         let size_tag = {};
 
@@ -1660,7 +1666,20 @@ class InfProductCarouselComponent extends HTMLElement {
           }
         }
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error('API 調用錯誤:', err);
+        // 當 API 調用失敗時，隱藏 loading 但不顯示 popup
+        $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
+          // 不顯示 popup，因為 API 調用失敗
+          console.log('API 調用失敗，不顯示 popup');
+        });
+        if (containerId === 'personalized-recommendations') {
+          $('#jump-recom').hide();
+        }
+        if (containerId === 'more-recommendations') {
+          $('#jump-more').hide();
+        }
+      });
   }
 
   updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode) {
