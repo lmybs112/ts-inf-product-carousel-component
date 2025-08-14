@@ -333,8 +333,8 @@ class InfProductCarouselComponent extends HTMLElement {
       convertedConfig.bid = config.carousel.bid;
     }
     // background
-    if (config.carousel.background) {
-      convertedConfig.backgroundColor = config.carousel.background;
+    if (config.carousel.backgroundColor) {
+      convertedConfig.backgroundColor = config.carousel.backgroundColor;
     }
 
     // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
@@ -1446,7 +1446,8 @@ class InfProductCarouselComponent extends HTMLElement {
       series_out: "[\"成長型\"]",
       PID: ids.skuContent,
       SP_PID: "xxSOCIAL PROOF",
-      SIZEAI_ptr: recommendMode||"bhv"
+      SIZEAI_ptr: "bhv"
+      // SIZEAI_ptr: recommendMode||"bhv"
     } : {
       Brand: brand,
       LGVID: ids.lgiven_id,
@@ -1454,7 +1455,8 @@ class InfProductCarouselComponent extends HTMLElement {
       recom_num: '12',
       PID: ids.skuContent,
       SP_PID: "xxSOCIAL PROOF",
-      SIZEAI_ptr: recommendMode||"bhv"
+      SIZEAI_ptr: "bhv"
+      // SIZEAI_ptr: recommendMode||"bhv"
     };
 
     if (ctype_val && ctype_val.length > 0) {
@@ -1671,7 +1673,7 @@ class InfProductCarouselComponent extends HTMLElement {
         // 當 API 調用失敗時，隱藏 loading 但不顯示 popup
         $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
           // 不顯示 popup，因為 API 調用失敗
-          console.log('API 調用失敗，不顯示 popup');
+          // console.log('API 調用失敗，不顯示 popup');
         });
         if (containerId === 'personalized-recommendations') {
           $('#jump-recom').hide();
@@ -1698,6 +1700,7 @@ class InfProductCarouselComponent extends HTMLElement {
         sale_price: null
       }];
     }
+    console.log('displayImages', displayImages);
     const items = displayImages.map(img => `
       <a class="embeddedItem swiper-slide" href="${img.link}" target="_blank" data-title="${img.title}" data-link="${img.link}">
         <div class="embeddedItem__img" style="position: relative;">
@@ -1708,7 +1711,6 @@ class InfProductCarouselComponent extends HTMLElement {
         </div>
         <div class="embeddedItemInfo">
           <h3 class="embeddedItemInfo__title">${img.title}</h3>
-          
           ${displayMode === 'SocialProofNum'?
               `<div class="embeddedItemInfo__content">
                 <p class="embeddedItemInfo__discount">${img.record_cnt}人購買</p>
