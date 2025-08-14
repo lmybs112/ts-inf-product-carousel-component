@@ -94,12 +94,14 @@ class InfProductCarouselComponent extends HTMLElement {
     }
 
     // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
+    console.error('brandConfig.CarouselLayout------', brandConfig);
     if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
       convertedConfig.breakpoints = {
         768: {
           slidesPerView: brandConfig.CarouselLayout,
-          slidesPerGroup: brandConfig.CarouselLayout,
-          spaceBetween: 24,
+          slidesPerGroup: Math.floor(brandConfig.CarouselLayout),
+          spaceBetween: brandConfig.type === 'product' ? 24 : 12,
+          resistanceRatio: 0,
           loopFillGroupWithBlank: true
         },
       };
@@ -523,7 +525,7 @@ class InfProductCarouselComponent extends HTMLElement {
         box-sizing: border-box;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer {
+        #${containerId}:not(.small-container) .embeddedAdContainer {
           padding: 16px 18px;
         }
       }
@@ -627,13 +629,13 @@ class InfProductCarouselComponent extends HTMLElement {
       }
 
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
+        #${containerId}:not(.small-container) .embeddedAdContainer__wrapper .embeddedAdContainer__title {
           margin-top: 0px;
           margin-bottom: 0px;
         }
       }
       @media (min-width: 1025px) {
-        #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
+        #${containerId}:not(.small-container) .embeddedAdContainer__wrapper .embeddedAdContainer__title {
           color: var(--inf-embedded-ad-dark-yellow), var(--inf-embedded-ad-dark-gray);
           font-size: 22px;
           letter-spacing: 0.84px;
@@ -666,7 +668,7 @@ class InfProductCarouselComponent extends HTMLElement {
         gap: 10px;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
+        #${containerId}:not(.small-container) .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
           top: 8px;
           left: 8px;
         }
@@ -686,7 +688,7 @@ class InfProductCarouselComponent extends HTMLElement {
         font-weight: 400;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag div {
+        #${containerId}:not(.small-container) .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag div {
           padding: 5px 8px;
           font-size: var(--inf-embedded-ad-font-14);
           line-height: 17px;
@@ -983,6 +985,8 @@ class InfProductCarouselComponent extends HTMLElement {
 
       $(window).resize(() => {
         const newContainerWidth = $(shadowRoot.querySelector(show_up_position_before)).width();
+        console.error('newContainer------',  $(shadowRoot.querySelector(show_up_position_before)));
+        console.error('newContainerWidth------', newContainerWidth);
         if (arrowPosition === 'none') {
           $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
           $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
