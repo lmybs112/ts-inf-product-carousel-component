@@ -122,7 +122,6 @@ class InfProductCarouselComponent extends HTMLElement {
                 position: fixed;
                 left: -500px;
                 bottom: 20px;
-                width: 450px;
                 max-width: calc(100vw - 40px);
                 min-height: 240px;
                 max-height: 80vh;
@@ -215,9 +214,15 @@ class InfProductCarouselComponent extends HTMLElement {
 
             // 點擊彈窗外部關閉彈窗
             document.addEventListener('click', function (event) {
-                if (event.target === popup) {
+                // 檢查點擊的元素是否在 popup 內部
+                if (popup && !popup.contains(event.target)) {
                     closePopup();
                 }
+            });
+
+            // 防止點擊 popup 內部時觸發外部點擊事件
+            popup.addEventListener('click', function (event) {
+                event.stopPropagation();
             });
 
             // 將 showPopup 和 closePopup 函數設為全域可訪問
