@@ -270,11 +270,11 @@ class InfProductCarouselComponent extends HTMLElement {
           item => item.Module === 'Product_Carousel_Widget'
         )?.ConfigData.Section_Info[0];
       brandConfig.type = carousel.type;
-      console.log('品牌配置資料:', brandConfig);
+      // console.log('品牌配置資料:', brandConfig);
 
       // 將 brandConfig 轉換為標準配置格式
       const convertedBrandConfig = this.convertBrandConfig(brandConfig, config);
-      console.log('轉換後的品牌配置:', convertedBrandConfig);
+      // console.log('轉換後的品牌配置:', convertedBrandConfig);
       // 將轉換後的品牌配置合併到原有配置中
       const mergedConfig = {
         ...config,
@@ -322,13 +322,22 @@ class InfProductCarouselComponent extends HTMLElement {
       convertedConfig.title = brandConfig.Title;
     }
 
+    // hide_size
+    if (config.carousel.hide_size) {
+      convertedConfig.hide_size = config.carousel.hide_size;
+    }
+    // bid
+    if (config.carousel.bid) {
+      convertedConfig.bid = config.carousel.bid;
+    }
+
     // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
     if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
       convertedConfig.breakpoints = {
         768: {
           slidesPerView: brandConfig.CarouselLayout,
           slidesPerGroup: Math.floor(brandConfig.CarouselLayout),
-          spaceBetween: 24,
+          spaceBetween: config.carousel.type === 'product' ? 24 : 12,
           resistanceRatio: 0,
           loopFillGroupWithBlank: true
         },
@@ -355,9 +364,9 @@ class InfProductCarouselComponent extends HTMLElement {
     // DisplayMode: 保留 (您已經寫好了)
     if (brandConfig.DisplayMode) {
       convertedConfig.displayMode = brandConfig.DisplayMode;
-      console.log('convertBrandConfig - 從品牌配置讀取 DisplayMode:', brandConfig.DisplayMode);
+      // console.log('convertBrandConfig - 從品牌配置讀取 DisplayMode:', brandConfig.DisplayMode);
     } else {
-      console.log('convertBrandConfig - 品牌配置中沒有 DisplayMode');
+      // console.log('convertBrandConfig - 品牌配置中沒有 DisplayMode');
     }
 
     // status: 組件啟用狀態
@@ -371,7 +380,7 @@ class InfProductCarouselComponent extends HTMLElement {
   initProductRecommendation(config = {}, shouldAutoAppend = false) {
     // 檢查組件是否啟用
     if (config.enabled === false) {
-      console.log('組件已停用，不進行初始化');
+      // console.log('組件已停用，不進行初始化');
       return;
     }
     
@@ -475,7 +484,7 @@ class InfProductCarouselComponent extends HTMLElement {
 
     // 輸出最終配置以供調試
     console.log('最終配置:', finalConfig);
-    console.log('原始品牌配置:', config.brandConfig);
+    // console.log('原始品牌配置:', config.brandConfig);
 
     // 如果需要自動 append 且品牌配置指定了 Location，則自動移動到目標容器
     if (shouldAutoAppend && config.brandConfig && config.brandConfig.Location) {
@@ -544,10 +553,10 @@ class InfProductCarouselComponent extends HTMLElement {
       // 將整個組件 append 到目標容器
       targetContainer.appendChild(this);
       
-      console.log(`組件已自動 append 到容器: ${containerId}`);
+      // console.log(`組件已自動 append 到容器: ${containerId}`);
       return true;
     } else {
-      console.warn(`目標容器 ${containerId} 不存在，組件將保持在當前位置`);
+      // console.warn(`目標容器 ${containerId} 不存在，組件將保持在當前位置`);
       return false;
     }
   }
@@ -710,7 +719,7 @@ class InfProductCarouselComponent extends HTMLElement {
         --inf-embedded-ad-dark-gray: #3B3B32;
         --inf-embedded-ad-dark-red: #EB7454;
         --inf-embedded-ad-light-gray: rgba(59, 59, 50, 0.30);
-        --swiper-wrapper-transition-timing-function: linear !important;
+        --swiper-wrapper-transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
       }
       #${containerId} #recommendation-loading {
         height: 131.71px;
@@ -954,7 +963,7 @@ class InfProductCarouselComponent extends HTMLElement {
         letter-spacing: -0.12px;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
+        #${containerId}:not(.small-container) .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
           bottom: 12px;
           right: 12px;
           padding: 14px 20px;
@@ -963,7 +972,7 @@ class InfProductCarouselComponent extends HTMLElement {
           letter-spacing: -0.136px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img img {
+      #${containerId}:not(.small-container)  .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img img {
         position: absolute;
         top: 0;
         bottom: 0;
@@ -975,7 +984,7 @@ class InfProductCarouselComponent extends HTMLElement {
         will-change: transform;
         border-radius: 8px; /* 直接使用值，確保圓角生效 */
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
+      #${containerId}:not(.small-container)  .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -1214,8 +1223,6 @@ class InfProductCarouselComponent extends HTMLElement {
 
       $(window).resize(() => {
         const newContainerWidth = $(shadowRoot.querySelector(show_up_position_before)).width();
-        console.error('newContainer------',  $(shadowRoot.querySelector(show_up_position_before)));
-        console.error('newContainerWidth------', newContainerWidth);
         if (arrowPosition === 'none') {
           $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
           $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
@@ -1421,8 +1428,8 @@ class InfProductCarouselComponent extends HTMLElement {
     const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType } = config;
     
     // 調試日誌：確認 displayMode 的值
-    console.log('getEmbeddedAds - displayMode:', displayMode);
-    console.log('getEmbeddedAds - 完整配置:', config);
+    // console.log('getEmbeddedAds - displayMode:', displayMode);
+    // console.log('getEmbeddedAds - 完整配置:', config);
     const requestData = brand.toLocaleUpperCase() === 'DABE' ? {
       Brand: brand,
       LGVID: ids.lgiven_id,
@@ -1474,60 +1481,34 @@ class InfProductCarouselComponent extends HTMLElement {
     };
 
     // 根據 carouselType 決定使用不同的 API URL 和選項
-    console.log('getEmbeddedAds - carouselType:', carouselType);
+    // console.log('getEmbeddedAds - carouselType:', carouselType);
     let apiUrl, fetchOptions;
     
     if (carouselType === 'popup') {
       // popup 類型使用特殊的 URL 和選項
       apiUrl = 'https://api.inffits.com/HTTP_pidinfo_cdp_product_recommendation/extension/recom_product';
+      const requestPopupData = {
+        Brand: "CLARKS",
+        LGVID: "x",
+        MRID: "",
+        recom_num: "6",
+        PID: "10662339",
+        SP_PID: "xxSOCIAL PROOF", // FIXME
+        SIZEAI_ptr: "bhv",
+      }
+      if (!hide_size) {
+        requestPopupData.SIZEAI = 'True';
+        requestPopupData.bid = bid;
+      }
       fetchOptions = {
         method: 'POST',
         headers: {
           accept: 'application/json',
           'content-type': 'application/json'
         },
-        body: JSON.stringify({
-          Brand: "CLARKS",
-          LGVID: "x",
-          MRID: "",
-          recom_num: "6",
-          PID: "10662339",
-          SIZEAI: "True",
-          SP_PID: "xxSOCIAL PROOF", // FIXME
-          SIZEAI_ptr: "bhv",
-          bid: {
-            HV: "25.5",
-            WV: "0",
-            CC: "",
-            DataItem: "0010",
-            ClothSize: "",
-            GVID: "INF",
-            Sizes: "",
-            Brand: "CLARKS",
-            ml_out: "",
-            Hip: "1-cm",
-            TID: "162410.45086",
-            FitP: "2,2,2,2",
-            LGVID: "INF",
-            ga_id: "INF",
-            MRID: "INF",
-            Gender: "F",
-            Waist: "1-cm",
-            ClothID: "",
-            FMLpath: "FMLSep",
-            Shoulder: "1-cm",
-            AvatarSizeSCWH: "",
-            Transaction: "34",
-            comment: "try_on_report_online",
-            ORDERID: "",
-            DnChest: "1-cm",
-            UpChest: "1-cm",
-            SHOES_MODE: "1",
-            FOOT_CIRCUM: "20",
-            CALF_CIRCUM: "30.4"
-          }
-        })
+        body: JSON.stringify(requestPopupData)
       };
+
     } else {
       // product 類型保持原本的配置
       const api_recom_product_url = brand.toLocaleUpperCase() === 'DABE' ? 'HTTP_stock_cdp_product_recommendation' : 'HTTP_inf_alpha_bhv_cdp_product_recommendation';
@@ -1565,6 +1546,16 @@ class InfProductCarouselComponent extends HTMLElement {
           }
           if (response['corr']) {
             response['corr'].forEach(item => {
+              item.size_tag = size_tag[item.id];
+            });
+          }
+          if (response['sp_atc']) {
+            response['sp_atc'].forEach(item => {
+              item.size_tag = size_tag[item.id];
+            });
+          }
+          if (response['sp_trans']) {
+            response['sp_trans'].forEach(item => {
               item.size_tag = size_tag[item.id];
             });
           }
@@ -1666,7 +1657,7 @@ class InfProductCarouselComponent extends HTMLElement {
 
   updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode) {
     // 調試日誌：確認 updatePopAd 中的 displayMode 值
-    console.log('updatePopAd - displayMode:', displayMode);
+    // console.log('updatePopAd - displayMode:', displayMode);
     
     let displayImages = images;
 
@@ -1680,7 +1671,6 @@ class InfProductCarouselComponent extends HTMLElement {
         sale_price: null
       }];
     }
-
     const items = displayImages.map(img => `
       <a class="embeddedItem swiper-slide" href="${img.link}" target="_blank" data-title="${img.title}" data-link="${img.link}">
         <div class="embeddedItem__img" style="position: relative;">
@@ -1716,6 +1706,7 @@ class InfProductCarouselComponent extends HTMLElement {
       direction: 'horizontal',
       loop: true,
       pagination: false,
+      speed: 750,
       autoplay: !autoplay ? false : {
         delay: 4000,
         disableOnInteraction: false,
