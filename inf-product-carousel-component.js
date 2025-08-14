@@ -220,11 +220,11 @@ class InfProductCarouselComponent extends HTMLElement {
                 }
             });
 
-            // 延遲1秒後顯示彈窗
-            setTimeout(showPopup, 1000);
-
-            // 將 closePopup 函數設為全域可訪問，供關閉按鈕使用
+            // 將 showPopup 和 closePopup 函數設為全域可訪問
+            window.showPopup = showPopup;
             window.closePopup = closePopup;
+            
+            // 注意：在 popup 模式下，彈窗不會立即顯示，而是等待 loading 完成後再顯示
         }
 
 
@@ -1111,6 +1111,7 @@ class InfProductCarouselComponent extends HTMLElement {
         font-style: normal;
         font-weight: 500;
         line-height: 17px;
+        text-wrap-mode: nowrap;
       }
       @media (min-width: 768px) {
         #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price {
@@ -1641,7 +1642,12 @@ class InfProductCarouselComponent extends HTMLElement {
         if (jsonData.length > 0) {
           this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
         } else {
-          $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
+          $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
+            // 如果是 popup 模式，在沒有資料時也要顯示彈窗
+            if (window.showPopup && typeof window.showPopup === 'function') {
+              window.showPopup();
+            }
+          });
           if (containerId === 'personalized-recommendations') {
             $('#jump-recom').hide();
           }
@@ -1776,6 +1782,11 @@ class InfProductCarouselComponent extends HTMLElement {
             $(this.shadowRoot.querySelector(`#${containerId} .embeddedAdContainer`)).show();
             // 載入完成後顯示文字區域
             $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
+            
+            // 如果是 popup 模式，在 loading 完成後顯示彈窗
+            if (window.showPopup && typeof window.showPopup === 'function') {
+              window.showPopup();
+            }
           });
         },
         resize: function() {
