@@ -1448,6 +1448,7 @@ class InfProductCarouselComponent extends HTMLElement {
       SP_PID: "xxSOCIAL PROOF",
       SIZEAI_ptr: "bhv"
       // SIZEAI_ptr: recommendMode||"bhv"
+      
     } : {
       Brand: brand,
       LGVID: ids.lgiven_id,

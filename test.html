@@ -50,6 +50,49 @@
             text-align: center;
         }
 
+        /* 標籤頁樣式 */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #495057;
+            border-bottom-color: #495057;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
         .config-content {
             flex: 1;
             overflow-y: auto;
@@ -147,6 +190,74 @@
 
         .config-textarea::placeholder {
             color: #adb5bd;
+        }
+
+        /* JSON 查看器樣式 */
+        .json-viewer {
+            flex: 1;
+            padding: 15px 20px;
+            overflow-y: auto;
+        }
+
+        .json-display {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #495057;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: calc(90vh - 200px);
+            overflow-y: auto;
+        }
+
+        .json-display.empty {
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .json-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .json-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid;
+        }
+
+        .json-btn.primary {
+            background: #495057;
+            color: white;
+            border-color: #495057;
+        }
+
+        .json-btn.primary:hover {
+            background: #343a40;
+            border-color: #343a40;
+        }
+
+        .json-btn.secondary {
+            background: white;
+            color: #495057;
+            border-color: #dee2e6;
+        }
+
+        .json-btn.secondary:hover {
+            background: #f8f9fa;
+            border-color: #495057;
         }
 
         .color-picker-group {
@@ -288,41 +399,7 @@
             animation: fadeIn 0.3s ease;
         }
 
-        .current-config-display {
-            background: #f8f9fa;
-            color: #495057;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-            border: 2px solid #dee2e6;
-        }
 
-        .current-config-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .current-config-value {
-            font-size: 12px;
-            font-weight: 400;
-            color: #495057;
-            word-break: break-word;
-            max-height: 200px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 10px;
-        }
-
-        .current-config-value pre {
-            margin: 0;
-            font-family: 'Courier New', monospace;
-            line-height: 1.4;
-        }
 
         .content-section {
             background: white;
@@ -417,65 +494,73 @@
             <h3>組件配置編輯器</h3>
         </div>
 
-        <div class="config-content">
-            <div class="config-section">
-                <div class="section-label">品牌</div>
-                <div class="config-input-group">
-                    <input type="text" class="config-input" id="brandInput" value="ALMI" placeholder="輸入品牌名稱">
-                </div>
-            </div>
+        <!-- 標籤頁容器 -->
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="edit">編輯配置</button>
+            <button class="tab-button" data-tab="json">JSON 查看</button>
+        </div>
 
-            <div class="config-section">
-                <div class="section-label">彈窗輪播設定</div>
-                <div class="config-input-group" style="display: none;">
-                    <label for="backgroundColorInput">背景:</label>
-                    <div class="color-picker-group">
-                        <div class="color-controls">
-                            <input type="color" class="color-picker" id="colorPicker" value="#ece4d9">
-                            <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="100" value="30">
-                        </div>
-                        <input type="text" class="config-input" id="backgroundColorInput" value="rgba(236,228,217,0.3)" placeholder="rgba(236,228,217,0.3)" readonly>
+        <!-- 編輯配置標籤頁 -->
+        <div class="tab-content active" id="edit-tab">
+            <div class="config-content">
+                <div class="config-section">
+                    <div class="section-label">品牌</div>
+                    <div class="config-input-group">
+                        <input type="text" class="config-input" id="brandInput" value="ALMI" placeholder="輸入品牌名稱">
                     </div>
                 </div>
-                <div class="config-input-group">
-                    <label for="titleInput">title:</label>
-                    <input type="text" class="config-input" id="titleInput" value="您可能會喜歡" placeholder="您可能會喜歡">
-                </div>
-                <div class="config-input-group">
-                    <label for="statusInput">啟用組件:</label>
-                    <select class="config-input" id="statusInput">
-                        <option value="true">啟用 (true)</option>
-                        <option value="false">禁用 (false)</option>
-                    </select>
-                </div>
-                <div class="config-input-group">
-                    <label for="hideSizeInput">尺寸標籤:</label>
-                    <select class="config-input" id="hideSizeInput">
-                        <option value="false">顯示尺寸</option>
-                        <option value="true">隱藏尺寸</option>
-                    </select>
-                </div>
-                <div class="config-input-group">
-                    <label for="displayModeInput">DisplayMode:</label>
-                    <select class="config-input" id="displayModeInput">
-                        <option value="SaleRate">折扣率 (SaleRate)</option>
-                        <option value="SocialProofNum">購買人數 (SocialProofNum)</option>
-                    </select>
-                </div>
-                <div class="config-input-group">
-                    <label for="recommendModeInput">RecommendMode:</label>
-                    <input type="text" class="config-input" id="recommendModeInput" value="bhv" placeholder="bhv">
-                </div>
-                <div class="config-input-group">
-                    <label for="carouselButtonInput">CarouselButton (是否顯示輪播控制按鈕):</label>
-                    <select class="config-input" id="carouselButtonInput">
-                        <option value="true">顯示 (true)</option>
-                        <option value="false">隱藏 (false)</option>
-                    </select>
-                </div>
-                <div class="config-input-group">
-                    <label for="bidInput">bid (JSON 格式):</label>
-                    <textarea class="config-textarea" id="bidInput" placeholder='{"HV": "25.5", "Brand": "CLARKS", "Gender": "F", ...}' rows="4">{
+
+                <div class="config-section">
+                    <div class="section-label">彈窗輪播設定</div>
+                    <div class="config-input-group" style="display: none;">
+                        <label for="backgroundColorInput">背景:</label>
+                        <div class="color-picker-group">
+                            <div class="color-controls">
+                                <input type="color" class="color-picker" id="colorPicker" value="#ece4d9">
+                                <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="100" value="30">
+                            </div>
+                            <input type="text" class="config-input" id="backgroundColorInput" value="rgba(236,228,217,0.3)" placeholder="rgba(236,228,217,0.3)" readonly>
+                        </div>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="titleInput">title:</label>
+                        <input type="text" class="config-input" id="titleInput" value="您可能會喜歡" placeholder="您可能會喜歡">
+                    </div>
+                    <div class="config-input-group">
+                        <label for="statusInput">啟用組件:</label>
+                        <select class="config-input" id="statusInput">
+                            <option value="true">啟用 (true)</option>
+                            <option value="false">禁用 (false)</option>
+                        </select>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="hideSizeInput">尺寸標籤:</label>
+                        <select class="config-input" id="hideSizeInput">
+                            <option value="false">顯示尺寸</option>
+                            <option value="true">隱藏尺寸</option>
+                        </select>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="displayModeInput">DisplayMode:</label>
+                        <select class="config-input" id="displayModeInput">
+                            <option value="SaleRate">折扣率 (SaleRate)</option>
+                            <option value="SocialProofNum">購買人數 (SocialProofNum)</option>
+                        </select>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="recommendModeInput">RecommendMode:</label>
+                        <input type="text" class="config-input" id="recommendModeInput" value="bhv" placeholder="bhv">
+                    </div>
+                    <div class="config-input-group">
+                        <label for="carouselButtonInput">CarouselButton (是否顯示輪播控制按鈕):</label>
+                        <select class="config-input" id="carouselButtonInput">
+                            <option value="true">顯示 (true)</option>
+                            <option value="false">隱藏 (false)</option>
+                        </select>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="bidInput">bid (JSON 格式):</label>
+                        <textarea class="config-textarea" id="bidInput" placeholder='{"HV": "25.5", "Brand": "CLARKS", "Gender": "F", ...}' rows="32">{
   "HV": "25.5",
   "WV": "0",
   "CC": "",
@@ -506,53 +591,63 @@
   "FOOT_CIRCUM": "20",
   "CALF_CIRCUM": "30.4"
 }</textarea>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="carouselLayoutInput">CarouselLayout:</label>
+                        <input type="text" class="config-input" id="carouselLayoutInput" value="2.5" readonly>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="locationInput">顯示位置:</label>
+                        <input type="text" class="config-input" id="locationInput" value="bottom" readonly>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="bottomIdInput">底部廣告區域:</label>
+                        <input type="text" class="config-input" id="bottomIdInput" value="popupProductContent" placeholder="popupProductContent" readonly>
+                    </div>
                 </div>
-                <div class="config-input-group">
-                    <label for="carouselLayoutInput">CarouselLayout:</label>
-                    <input type="text" class="config-input" id="carouselLayoutInput" value="2.5" readonly>
-                </div>
-                <div class="config-input-group">
-                    <label for="locationInput">顯示位置:</label>
-                    <input type="text" class="config-input" id="locationInput" value="bottom" readonly>
-                </div>
-                <div class="config-input-group">
-                    <label for="bottomIdInput">底部廣告區域:</label>
-                    <input type="text" class="config-input" id="bottomIdInput" value="popupProductContent" placeholder="popupProductContent" readonly>
+
+                <div class="config-section">
+                    <div class="section-label">產品輪播設定 (顯示位置)</div>
+                    <div class="config-input-group">
+                        <label for="topIdInput">頂部廣告區域:</label>
+                        <input type="text" class="config-input" id="topIdInput" value="infFitsHeader" readonly>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="productBottomIdInput">底部廣告區域:</label>
+                        <input type="text" class="config-input" id="productBottomIdInput" value="infFitsFooter" readonly>
+                    </div>
                 </div>
             </div>
 
-            <div class="config-section">
-                <div class="section-label">產品輪播設定 (顯示位置)</div>
-                <div class="config-input-group">
-                    <label for="topIdInput">頂部廣告區域:</label>
-                    <input type="text" class="config-input" id="topIdInput" value="infFitsHeader" readonly>
+            <div class="config-footer">
+                <div class="config-section">
+                    <div class="section-label">操作</div>
+                    <div class="config-buttons">
+                        <button class="config-btn primary" id="applyConfigBtn">應用配置</button>
+                        <button class="config-btn secondary" id="resetConfigBtn">重置配置</button>
+                        <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
+                    </div>
                 </div>
-                <div class="config-input-group">
-                    <label for="productBottomIdInput">底部廣告區域:</label>
-                    <input type="text" class="config-input" id="productBottomIdInput" value="infFitsFooter" readonly>
-                </div>
+
+                <div class="success-message" id="successMessage"></div>
+                <div class="error-message" id="errorMessage"></div>
             </div>
         </div>
 
-        <div class="config-footer">
-            <div class="config-section">
-                <div class="section-label">操作</div>
-                <div class="config-buttons">
-                    <button class="config-btn primary" id="applyConfigBtn">應用配置</button>
-                    <!-- <button class="config-btn secondary" id="resetConfigBtn">重置配置</button> -->
-                    <!-- <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button> -->
+        <!-- JSON 查看標籤頁 -->
+        <div class="tab-content" id="json-tab">
+            <div class="json-viewer">
+                <div class="json-display" id="jsonDisplay">載入中...</div>
+                <div class="json-actions">
+                    <button class="json-btn primary" id="refreshJsonBtn">重新整理</button>
+                    <button class="json-btn secondary" id="copyJsonBtn">複製 JSON</button>
+                    <button class="json-btn secondary" id="copyCodeBtn">複製代碼</button>
                 </div>
             </div>
-
-            <div class="success-message" id="successMessage"></div>
-            <div class="error-message" id="errorMessage"></div>
         </div>
     </div>
 
-    <div class="current-config-display" id="currentConfigDisplay">
-        <div class="current-config-label">當前配置狀態</div>
-        <div class="current-config-value" id="currentConfigValue">未應用配置</div>
-    </div>
+
 
     <div id="infFitsHeader" class="content-section">
         <div class="section-header">
@@ -610,8 +705,10 @@
                 // 保存到 sessionStorage
                 sessionStorage.setItem('topId', newId);
                 
-                // 更新當前配置顯示
-                updateConfigDisplay();
+                // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                if (document.getElementById('json-tab').classList.contains('active')) {
+                    updateJsonDisplay();
+                }
                 
                 showSuccess('頂部 ID 已更新: ' + newId);
             } else {
@@ -638,8 +735,10 @@
                 // 保存到 sessionStorage
                 sessionStorage.setItem('bottomId', newId);
                 
-                // 更新當前配置顯示
-                updateConfigDisplay();
+                // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                if (document.getElementById('json-tab').classList.contains('active')) {
+                    updateJsonDisplay();
+                }
                 
                 showSuccess('底部 ID 已更新: ' + newId);
             } else {
@@ -647,56 +746,7 @@
             }
         }
 
-        // 更新配置顯示
-        function updateConfigDisplay() {
-            const topId = document.getElementById('topIdDisplay').textContent;
-            const bottomId = document.getElementById('bottomIdDisplay').textContent;
-            const brand = document.getElementById('brandInput').value;
-            
-            // 構建完整的配置物件
-            const config = {
-                brand: brand,
-                carousels: [{
-                    type: 'popup',
-                    hide_size: document.getElementById('hideSizeInput').value === 'true',
-                    // backgroundColor: document.getElementById('backgroundColorInput').value,
-                    showPositionId: {
-                        bottom: document.getElementById('bottomIdInput').value
-                    },
-                    brandConfig: {
-                        DisplayMode: document.getElementById('displayModeInput').value,
-                        CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
-                        RecommendMode: document.getElementById('recommendModeInput').value,
-                        CarouselLayout: 2.5,
-                        Title: document.getElementById('titleInput').value,
-                        Location: document.getElementById('locationInput').value,
-                        status: document.getElementById('statusInput').value === 'true'
-                    }
-                }, {
-                    type: 'product',
-                    showPositionId: {
-                        top: topId,
-                        bottom: bottomId
-                    }
-                }]
-            };
-            
-            // 嘗試解析並添加 bid
-            try {
-                const bidText = document.getElementById('bidInput').value;
-                if (bidText.trim()) {
-                    config.carousels[0].bid = JSON.parse(bidText);
-                }
-            } catch (error) {
-                console.error('解析 bid 失敗:', error);
-            }
-            
-            const configValue = document.getElementById('currentConfigValue');
-            if (configValue) {
-                // 顯示格式化的 JSON
-                configValue.innerHTML = `<pre style="margin: 0; font-size: 12px; text-align: left; white-space: pre-wrap; word-break: break-word;">${JSON.stringify(config, null, 2)}</pre>`;
-            }
-        }
+
 
         // 顯示成功訊息
         function showSuccess(message) {
@@ -939,49 +989,8 @@
                 // 顯示載入狀態
                 showLoading(true);
                 
-                // 解析 bid JSON
-                let bidData = {};
-                try {
-                    const bidText = document.getElementById('bidInput').value;
-                    if (bidText.trim()) {
-                        bidData = JSON.parse(bidText);
-                    }
-                } catch (error) {
-                    showError('bid JSON 格式錯誤: ' + error.message);
-                    showLoading(false);
-                    return;
-                }
-
-                const config = {
-                    brand: document.getElementById('brandInput').value,
-                    carousels: [{
-                        type: 'popup',
-                        hide_size: document.getElementById('hideSizeInput').value === 'true',
-                        backgroundColor: document.getElementById('backgroundColorInput').value,
-                        showPositionId: {
-                            bottom: document.getElementById('bottomIdInput').value
-                        },
-                        bid: bidData,
-                        brandConfig: {
-                            DisplayMode: document.getElementById('displayModeInput').value,
-                            CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
-                            RecommendMode: document.getElementById('recommendModeInput').value,
-                            CarouselLayout: 2.5,
-                            Title: document.getElementById('titleInput').value,
-                            Location: document.getElementById('locationInput').value,
-                            status: document.getElementById('statusInput').value === 'true'
-                        }
-                    }, {
-                        type: 'product',
-                        showPositionId: {
-                            top: document.getElementById('topIdInput').value,
-                            bottom: document.getElementById('productBottomIdInput').value
-                        }
-                    }]
-                };
-                
-                // 更新配置顯示
-                updateConfigDisplay();
+                // 使用 buildCurrentConfig 函數構建配置
+                const config = buildCurrentConfig();
                 
                 // 將配置保存到 sessionStorage，然後重新整理頁面
                 sessionStorage.setItem('pendingConfig', JSON.stringify(config));
@@ -1059,8 +1068,10 @@
                 document.getElementById('bottomIdDisplay').textContent = 'infFitsFooter';
                 document.getElementById('productBottomIdInput').value = 'infFitsFooter';
                 
-                // 更新顯示
-                updateConfigDisplay();
+                // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                if (document.getElementById('json-tab').classList.contains('active')) {
+                    updateJsonDisplay();
+                }
                 
                 showSuccess('配置已重置為預設值！');
             }
@@ -1069,32 +1080,7 @@
         // 匯出配置
         function exportConfig() {
             try {
-                const config = {
-                    brand: document.getElementById('brandInput').value,
-                    carousels: [{
-                        type: 'popup',
-                        hide_size: document.getElementById('hideSizeInput').value === 'true',
-                        backgroundColor: document.getElementById('backgroundColorInput').value,
-                        showPositionId: {
-                            bottom: document.getElementById('bottomIdInput').value
-                        },
-                        brandConfig: {
-                            DisplayMode: document.getElementById('displayModeInput').value,
-                            CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
-                            RecommendMode: document.getElementById('recommendModeInput').value,
-                            CarouselLayout: 2.5,
-                            Title: document.getElementById('titleInput').value,
-                            Location: document.getElementById('locationInput').value,
-                            status: document.getElementById('statusInput').value === 'true'
-                        }
-                    }, {
-                        type: 'product',
-                        showPositionId: {
-                            top: document.getElementById('topIdInput').value,
-                            bottom: document.getElementById('productBottomIdInput').value
-                        }
-                    }]
-                };
+                const config = buildCurrentConfig();
                 
                 // 複製到剪貼簿
                 const configText = JSON.stringify(config, null, 2);
@@ -1192,6 +1178,157 @@
             saveConfig();
         }
 
+        // 標籤頁切換功能
+        function switchTab(tabName) {
+            // 移除所有標籤頁的 active 類別
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 添加 active 類別到選中的標籤頁
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // 如果切換到 JSON 標籤頁，更新 JSON 顯示
+            if (tabName === 'json') {
+                updateJsonDisplay();
+            }
+        }
+
+        // 更新 JSON 顯示
+        function updateJsonDisplay() {
+            const jsonDisplay = document.getElementById('jsonDisplay');
+            if (!jsonDisplay) return;
+            
+            try {
+                // 構建完整的配置物件
+                const config = buildCurrentConfig();
+                
+                // 格式化 JSON 顯示
+                const formattedJson = JSON.stringify(config, null, 2);
+                jsonDisplay.textContent = formattedJson;
+                jsonDisplay.classList.remove('empty');
+                
+            } catch (error) {
+                jsonDisplay.textContent = '載入配置失敗: ' + error.message;
+                jsonDisplay.classList.add('empty');
+            }
+        }
+
+        // 構建當前配置物件
+        function buildCurrentConfig() {
+            const topId = document.getElementById('topIdDisplay').textContent;
+            const bottomId = document.getElementById('bottomIdDisplay').textContent;
+            const brand = document.getElementById('brandInput').value;
+            
+            // 構建完整的配置物件
+            const config = {
+                brand: brand,
+                carousels: [{
+                    type: 'popup',
+                    hide_size: document.getElementById('hideSizeInput').value === 'true',
+                    // backgroundColor: document.getElementById('backgroundColorInput').value,
+                    showPositionId: {
+                        bottom: document.getElementById('bottomIdInput').value
+                    },
+                    brandConfig: {
+                        DisplayMode: document.getElementById('displayModeInput').value,
+                        CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
+                        RecommendMode: document.getElementById('recommendModeInput').value,
+                        CarouselLayout: 2.5,
+                        Title: document.getElementById('titleInput').value,
+                        Location: document.getElementById('locationInput').value,
+                        status: document.getElementById('statusInput').value === 'true'
+                    }
+                }, {
+                    type: 'product',
+                    showPositionId: {
+                        top: topId,
+                        bottom: bottomId
+                    }
+                }]
+            };
+            
+            // 嘗試解析並添加 bid
+            try {
+                const bidText = document.getElementById('bidInput').value;
+                if (bidText.trim()) {
+                    config.carousels[0].bid = JSON.parse(bidText);
+                }
+            } catch (error) {
+                console.error('解析 bid 失敗:', error);
+            }
+            
+            return config;
+        }
+
+        // 複製 JSON 到剪貼簿
+        function copyJsonToClipboard() {
+            try {
+                const config = buildCurrentConfig();
+                const jsonText = JSON.stringify(config, null, 2);
+                
+                navigator.clipboard.writeText(jsonText).then(() => {
+                    showSuccess('JSON 配置已複製到剪貼簿！');
+                }).catch(() => {
+                    // 如果剪貼簿 API 不可用，顯示配置內容
+                    alert('JSON 配置內容:\n\n' + jsonText);
+                });
+            } catch (error) {
+                showError('複製 JSON 失敗: ' + error.message);
+            }
+        }
+
+        // 複製完整代碼到剪貼簿
+        function copyCodeToClipboard() {
+            try {
+                console.log('複製代碼按鈕被點擊');
+                const config = buildCurrentConfig();
+                console.log('配置構建成功:', config);
+                
+                const configJson = JSON.stringify(config, null, 8);
+                console.log('JSON 字符串生成成功');
+                
+                // 生成完整的代碼片段
+                const codeTemplate = `// 頁面載入完成後初始化
+document.addEventListener('DOMContentLoaded', function () {
+    // 載入腳本
+    const script = document.createElement('script');
+    script.src = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-component.js';
+    script.async = true;
+    script.onload = function () {
+        const config = ${configJson};
+        config.carousels.forEach(carousel => {
+            const productCarouselconfig = {
+                brand: config.brand,
+                carousel
+            };
+            // 初始化組件
+            window.initInfProductCarouselComponent(productCarouselconfig);
+        });
+    };
+    document.head.appendChild(script);
+});`;
+                
+                console.log('代碼模板生成成功');
+                
+                navigator.clipboard.writeText(codeTemplate).then(() => {
+                    console.log('剪貼簿寫入成功');
+                    showSuccess('完整代碼已複製到剪貼簿！');
+                }).catch((clipboardError) => {
+                    console.log('剪貼簿 API 失敗，使用 alert:', clipboardError);
+                    // 如果剪貼簿 API 不可用，顯示代碼內容
+                    alert('完整代碼內容:\n\n' + codeTemplate);
+                });
+            } catch (error) {
+                console.error('複製代碼過程中發生錯誤:', error);
+                showError('複製代碼失敗: ' + error.message);
+            }
+        }
+
         // 支援按 Enter 鍵更新 ID
         document.addEventListener('DOMContentLoaded', function() {
             // 載入保存的配置和 ID
@@ -1243,8 +1380,20 @@
             configInputs.forEach(inputId => {
                 const input = document.getElementById(inputId);
                 if (input) {
-                    input.addEventListener('change', saveConfig);
-                    input.addEventListener('input', saveConfig);
+                    input.addEventListener('change', function() {
+                        saveConfig();
+                        // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                        if (document.getElementById('json-tab').classList.contains('active')) {
+                            updateJsonDisplay();
+                        }
+                    });
+                    input.addEventListener('input', function() {
+                        saveConfig();
+                        // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                        if (document.getElementById('json-tab').classList.contains('active')) {
+                            updateJsonDisplay();
+                        }
+                    });
                 }
             });
 
@@ -1253,9 +1402,27 @@
             document.getElementById('resetConfigBtn').addEventListener('click', resetConfig);
             document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
 
-            // 初始化配置顯示
-            updateConfigDisplay();
+            // 為標籤頁按鈕添加事件監聽器
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // 為 JSON 標籤頁按鈕添加事件監聽器
+            document.getElementById('refreshJsonBtn').addEventListener('click', updateJsonDisplay);
+            document.getElementById('copyJsonBtn').addEventListener('click', copyJsonToClipboard);
             
+            // 為複製代碼按鈕添加事件監聽器
+            const copyCodeBtn = document.getElementById('copyCodeBtn');
+            if (copyCodeBtn) {
+                copyCodeBtn.addEventListener('click', copyCodeToClipboard);
+                console.log('複製代碼按鈕事件監聽器已添加');
+            } else {
+                console.error('找不到複製代碼按鈕');
+            }
+
             // 檢查並應用待處理的配置
             applyPendingConfig();
         });
