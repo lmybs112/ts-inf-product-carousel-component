@@ -26,14 +26,57 @@
             z-index: 1000;
             width: 350px;
             height: 90vh;
-            transform: translateX(calc(100% - 60px));
+            transform: translateX(110%);
             transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
         }
 
-        .config-editor:hover {
+        .config-editor.expanded {
             transform: translateX(0);
+        }
+
+        /* 設定按鈕樣式 */
+        .settings-toggle {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            background: #495057;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            z-index: 1001;
+        }
+
+        .settings-toggle:hover {
+            background: #343a40;
+            transform: scale(1.1);
+        }
+
+        .settings-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* 設定圖標 */
+        .settings-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* 關閉圖標 */
+        .close-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
 
         .config-header {
@@ -489,7 +532,19 @@
         }
     </style>
 
-    <div class="config-editor">
+    <!-- 設定按鈕 -->
+    <button class="settings-toggle" id="settingsToggle" title="關閉配置編輯器">
+        <!-- 設定圖標 -->
+        <svg class="settings-icon" id="settingsIcon" viewBox="0 0 24 24">
+            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+        </svg>
+        <!-- 關閉圖標 -->
+        <svg class="close-icon" id="closeIcon" viewBox="0 0 24 24" style="display: none;">
+            <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+        </svg>
+    </button>
+
+    <div class="config-editor expanded" id="configEditor">
         <div class="config-header">
             <h3>組件配置編輯器</h3>
         </div>
@@ -498,7 +553,7 @@
         <div class="tab-container">
             <button class="tab-button active" data-tab="edit">編輯配置</button>
             <button class="tab-button" data-tab="json">JSON 查看</button>
-        </div>
+            </div>
 
         <!-- 編輯配置標籤頁 -->
         <div class="tab-content active" id="edit-tab">
@@ -615,24 +670,24 @@
                     <div class="config-input-group">
                         <label for="productBottomIdInput">底部廣告區域:</label>
                         <input type="text" class="config-input" id="productBottomIdInput" value="infFitsFooter" readonly>
-                    </div>
                 </div>
-            </div>
-
-            <div class="config-footer">
-                <div class="config-section">
-                    <div class="section-label">操作</div>
-                    <div class="config-buttons">
-                        <button class="config-btn primary" id="applyConfigBtn">應用配置</button>
-                        <button class="config-btn secondary" id="resetConfigBtn">重置配置</button>
-                        <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
-                    </div>
-                </div>
-
-                <div class="success-message" id="successMessage"></div>
-                <div class="error-message" id="errorMessage"></div>
             </div>
         </div>
+
+        <div class="config-footer">
+            <div class="config-section">
+                <div class="section-label">操作</div>
+                <div class="config-buttons">
+                    <button class="config-btn primary" id="applyConfigBtn">應用配置</button>
+                    <button class="config-btn secondary" id="resetConfigBtn">重置配置</button>
+                    <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
+                </div>
+            </div>
+
+            <div class="success-message" id="successMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
 
         <!-- JSON 查看標籤頁 -->
         <div class="tab-content" id="json-tab">
@@ -1225,33 +1280,33 @@
             const brand = document.getElementById('brandInput').value;
             
             // 構建完整的配置物件
-            const config = {
+                const config = {
                 brand: brand,
-                carousels: [{
-                    type: 'popup',
-                    hide_size: document.getElementById('hideSizeInput').value === 'true',
+                    carousels: [{
+                        type: 'popup',
+                        hide_size: document.getElementById('hideSizeInput').value === 'true',
                     // backgroundColor: document.getElementById('backgroundColorInput').value,
-                    showPositionId: {
-                        bottom: document.getElementById('bottomIdInput').value
-                    },
-                    brandConfig: {
-                        DisplayMode: document.getElementById('displayModeInput').value,
-                        CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
-                        RecommendMode: document.getElementById('recommendModeInput').value,
-                        CarouselLayout: 2.5,
-                        Title: document.getElementById('titleInput').value,
-                        Location: document.getElementById('locationInput').value,
-                        status: document.getElementById('statusInput').value === 'true'
-                    }
-                }, {
-                    type: 'product',
-                    showPositionId: {
+                        showPositionId: {
+                            bottom: document.getElementById('bottomIdInput').value
+                        },
+                        brandConfig: {
+                            DisplayMode: document.getElementById('displayModeInput').value,
+                            CarouselButton: document.getElementById('carouselButtonInput').value === 'true',
+                            RecommendMode: document.getElementById('recommendModeInput').value,
+                            CarouselLayout: 2.5,
+                            Title: document.getElementById('titleInput').value,
+                            Location: document.getElementById('locationInput').value,
+                            status: document.getElementById('statusInput').value === 'true'
+                        }
+                    }, {
+                        type: 'product',
+                        showPositionId: {
                         top: topId,
                         bottom: bottomId
-                    }
-                }]
-            };
-            
+                        }
+                    }]
+                };
+                
             // 嘗試解析並添加 bid
             try {
                 const bidText = document.getElementById('bidInput').value;
@@ -1326,6 +1381,32 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (error) {
                 console.error('複製代碼過程中發生錯誤:', error);
                 showError('複製代碼失敗: ' + error.message);
+            }
+        }
+
+                // 設定按鈕收合功能
+        function toggleConfigEditor() {
+            const configEditor = document.getElementById('configEditor');
+            const settingsToggle = document.getElementById('settingsToggle');
+            const settingsIcon = document.getElementById('settingsIcon');
+            const closeIcon = document.getElementById('closeIcon');
+            
+            if (configEditor.classList.contains('expanded')) {
+                // 收合編輯器
+                configEditor.classList.remove('expanded');
+                settingsToggle.title = '開啟配置編輯器';
+                
+                // 切換圖標：顯示設定圖標，隱藏關閉圖標
+                settingsIcon.style.display = 'block';
+                closeIcon.style.display = 'none';
+            } else {
+                // 展開編輯器
+                configEditor.classList.add('expanded');
+                settingsToggle.title = '關閉配置編輯器';
+                
+                // 切換圖標：隱藏設定圖標，顯示關閉圖標
+                settingsIcon.style.display = 'none';
+                closeIcon.style.display = 'block';
             }
         }
 
@@ -1419,10 +1500,27 @@ document.addEventListener('DOMContentLoaded', function () {
             if (copyCodeBtn) {
                 copyCodeBtn.addEventListener('click', copyCodeToClipboard);
                 console.log('複製代碼按鈕事件監聽器已添加');
-            } else {
+                } else {
                 console.error('找不到複製代碼按鈕');
             }
 
+            // 為設定按鈕添加事件監聽器
+            const settingsToggle = document.getElementById('settingsToggle');
+            if (settingsToggle) {
+                settingsToggle.addEventListener('click', toggleConfigEditor);
+                console.log('設定按鈕事件監聽器已添加');
+                
+                // 初始化圖標狀態（預設展開，顯示關閉圖標）
+                const settingsIcon = document.getElementById('settingsIcon');
+                const closeIcon = document.getElementById('closeIcon');
+                if (settingsIcon && closeIcon) {
+                    settingsIcon.style.display = 'none';
+                    closeIcon.style.display = 'block';
+                }
+            } else {
+                console.error('找不到設定按鈕');
+            }
+            
             // 檢查並應用待處理的配置
             applyPendingConfig();
         });
