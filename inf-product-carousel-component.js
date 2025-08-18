@@ -756,7 +756,7 @@ class InfProductCarouselComponent extends HTMLElement {
         0% { filter: blur(0px); transform: skew(0deg); }
         100% { filter: blur(3px); transform: skew(-4deg); }
       }
-      #${containerId} .embeddedAdContainer {
+      #${containerId} .infEmbeddedAdContainer {
         padding: 0px;
         margin: 0 auto;
         width: 100%;
@@ -766,13 +766,13 @@ class InfProductCarouselComponent extends HTMLElement {
         position: relative;
         width: fit-content;
       }
-      #${containerId} .embeddedAdContainer * {
+      #${containerId} .infEmbeddedAdContainer * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
       @media (min-width: 768px) {
-        #${containerId}:not(.small-container) .embeddedAdContainer {
+        #${containerId}:not(.small-container) .infEmbeddedAdContainer {
           padding: 16px 18px;
         }
       }
@@ -840,7 +840,7 @@ class InfProductCarouselComponent extends HTMLElement {
           height: 20px;
         }
       }
-      #${containerId} .embeddedAdContainer a {
+      #${containerId} .infEmbeddedAdContainer a {
         text-decoration: none !important;
         color: inherit;
         background: none;
@@ -851,13 +851,13 @@ class InfProductCarouselComponent extends HTMLElement {
         font-style: normal;
         display: inline;
       }
-      #${containerId} .embeddedAdContainer a:hover,
-      #${containerId} .embeddedAdContainer a:visited,
-      #${containerId} .embeddedAdContainer a:link,
-      #${containerId} .embeddedAdContainer a:active {
+      #${containerId} .infEmbeddedAdContainer a:hover,
+      #${containerId} .infEmbeddedAdContainer a:visited,
+      #${containerId} .infEmbeddedAdContainer a:link,
+      #${containerId} .infEmbeddedAdContainer a:active {
         text-decoration: none;
       }
-      #${containerId} .embeddedAdContainer a:focus {
+      #${containerId} .infEmbeddedAdContainer a:focus {
         outline: none;
       }
       #${containerId} .embeddedAdContainer__wrapper .embeddedAdContainer__title {
@@ -890,7 +890,7 @@ class InfProductCarouselComponent extends HTMLElement {
           margin-top: 0px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem {
         cursor: pointer;
         display: flex;
         flex-direction: column;
@@ -900,12 +900,12 @@ class InfProductCarouselComponent extends HTMLElement {
         row-gap: 12px;
         padding: 0;
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img {
         position: relative;
         width: 100%;
         border-radius: 8px; /* 直接使用值，確保圓角生效 */
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
         position: absolute;
         top: 4px;
         left: 4px;
@@ -915,12 +915,12 @@ class InfProductCarouselComponent extends HTMLElement {
         gap: 10px;
       }
       @media (min-width: 768px) {
-        #${containerId}:not(.small-container) .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
+        #${containerId}:not(.small-container) .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag {
           top: 8px;
           left: 8px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag div {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag div {
         z-index: 1;
         padding: 3px 4px;
         border-radius: 100px;
@@ -935,13 +935,13 @@ class InfProductCarouselComponent extends HTMLElement {
         font-weight: 400;
       }
       @media (min-width: 768px) {
-        #${containerId}:not(.small-container) .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag div {
+        #${containerId}:not(.small-container) .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__img--tag div {
           padding: 5px 8px;
           font-size: var(--inf-embedded-ad-font-14);
           line-height: 17px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__imgBox {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__imgBox {
         width: 100%;
         position: relative;
         overflow: hidden;
@@ -951,7 +951,7 @@ class InfProductCarouselComponent extends HTMLElement {
         border-radius: 8px; /* 直接使用值，確保圓角生效 */
         will-change: transform;
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
         position: absolute;
         bottom: 3%;
         right: 3%;
@@ -973,7 +973,7 @@ class InfProductCarouselComponent extends HTMLElement {
         letter-spacing: -0.12px;
       }
       @media (min-width: 768px) {
-        #${containerId}:not(.small-container) .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
+        #${containerId}:not(.small-container) .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
           bottom: 12px;
           right: 12px;
           padding: 14px 20px;
@@ -982,7 +982,7 @@ class InfProductCarouselComponent extends HTMLElement {
           letter-spacing: -0.136px;
         }
       }
-      #${containerId}:not(.small-container)  .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img img {
+      #${containerId}:not(.small-container)  .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img img {
         position: absolute;
         top: 0;
         bottom: 0;
@@ -994,18 +994,18 @@ class InfProductCarouselComponent extends HTMLElement {
         will-change: transform;
         border-radius: 8px; /* 直接使用值，確保圓角生效 */
       }
-      #${containerId}:not(.small-container)  .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
+      #${containerId}:not(.small-container)  .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
         width: 100%;
         display: flex;
         flex-direction: column;
         gap: 2px;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
+        #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo {
           gap: 2px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title {
         color: var(--inf-embedded-ad-dark-gray);
         text-align: center;
         font-family: "Noto Sans TC", "Figtree", sans-serif;
@@ -1080,13 +1080,13 @@ class InfProductCarouselComponent extends HTMLElement {
       }
     }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title {
+        #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title {
           font-size: var(--inf-embedded-ad-font-custom);
           line-height: 23px;
           letter-spacing: 0.36px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original {
         color: var(--inf-embedded-ad-dark-red);
         text-align: center;
         font-family: "Noto Sans TC", "Figtree", sans-serif;
@@ -1096,18 +1096,18 @@ class InfProductCarouselComponent extends HTMLElement {
         line-height: 17px;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original {
+        #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original {
           font-size: var(--inf-embedded-ad-font-custom);
           line-height: 23px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content {
         display: flex;
         justify-content: center;
         align-items: baseline;
         gap: 2px;
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__discount {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__discount {
         color: #eb7454;
         background: white;
         border: 1px solid #eb7454;
@@ -1118,7 +1118,7 @@ class InfProductCarouselComponent extends HTMLElement {
         transform: scale(0.8);
         text-wrap-mode: nowrap;
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__sptext {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__sptext {
         color: #333;
         background: white;
         padding: 0 4px;
@@ -1127,7 +1127,7 @@ class InfProductCarouselComponent extends HTMLElement {
         opacity: 1;
         text-align: center;
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price {
         margin-right: 8px;
         color: var(--inf-embedded-ad-dark-red);
         font-family: "Noto Sans TC", "Figtree", sans-serif;
@@ -1138,12 +1138,12 @@ class InfProductCarouselComponent extends HTMLElement {
         text-wrap-mode: nowrap;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price {
+        #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price {
           font-size: var(--inf-embedded-ad-font-custom);
           line-height: 23px;
         }
       }
-      #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
+      #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
         color: var(--inf-embedded-ad-light-gray);
         font-family: "Noto Sans TC", "Figtree", sans-serif;
         font-size: var(--inf-embedded-ad-font-9);
@@ -1151,16 +1151,16 @@ class InfProductCarouselComponent extends HTMLElement {
         line-height: 14px;
       }
       @media (min-width: 768px) {
-        #${containerId} .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
+        #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
           font-size: var(--inf-embedded-ad-font-12);
           line-height: 17px;
         }
       }
-      #${containerId} .embeddedAdContainer .swiper-slide {
+      #${containerId} .infEmbeddedAdContainer .swiper-slide {
         -webkit-backface-visibility: hidden;
         -webkit-transform: translate3d(0,0,0);
       }
-      #${containerId} .embeddedAdContainer .swiper-wrapper {
+      #${containerId} .infEmbeddedAdContainer .swiper-wrapper {
         -webkit-transform-style: preserve-3d;
         height: fit-content;
         max-height: fit-content;
@@ -1175,22 +1175,22 @@ class InfProductCarouselComponent extends HTMLElement {
       #${containerId}.small-container {
         padding: 8px;
       }
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdContainer__title {
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdContainer__title {
         font-size: 16px;
       }
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem {
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem {
         row-gap: 8px;
       }
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title,
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original,
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price,
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__title,
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original,
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price,
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
         font-size: 12px;
         line-height: 16px;
       }
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original,
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price,
-      #${containerId}.small-container .embeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__price--original,
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price,
+      #${containerId}.small-container .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItemInfo .embeddedItemInfo__content .embeddedItemInfo__price--original {
         text-wrap-mode: nowrap;
       }
     `;
@@ -1205,7 +1205,7 @@ class InfProductCarouselComponent extends HTMLElement {
              <h2 class="${description && false ? 'embeddedAdContainer__title-v2' : 'embeddedAdContainer__title'}">${title}</h2>
              ${description && false ? `<p class="embeddedAdContainer__desc">${description}</p>` : ''}
            </div>
-        <div class="embeddedAdContainer" id="embedded-ad-container-${containerId}">
+        <div class="infEmbeddedAdContainer" id="embedded-ad-container-${containerId}">
           <div style="margin-bottom: 6px;">
             <div class="title-navigation" style="width: 100%;justify-content: flex-end">
               <div class="title-nav-prev">
@@ -1810,7 +1810,7 @@ class InfProductCarouselComponent extends HTMLElement {
           }
 
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-            $(this.shadowRoot.querySelector(`#${containerId} .embeddedAdContainer`)).show();
+            $(this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`)).show();
             // 載入完成後顯示文字區域
             $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
             
