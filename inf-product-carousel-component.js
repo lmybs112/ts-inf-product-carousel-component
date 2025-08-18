@@ -25,7 +25,8 @@ class InfProductCarouselComponent extends HTMLElement {
                 max-width: calc(100vw - 40px);
                 min-height: 240px;
                 max-height: 80vh;
-                background: rgba(255, 255, 255, 0.98);
+                background: rgba(255, 255, 255, 1);
+                // background: rgba(255, 255, 255, 0.98);
                 border-radius: 16px;
                 box-shadow: 
                     0 8px 32px rgba(0, 0, 0, 0.08),
@@ -125,9 +126,10 @@ class InfProductCarouselComponent extends HTMLElement {
                 max-width: calc(100vw - 40px);
                 min-height: 240px;
                 max-height: 80vh;
-                background: linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.75) 0%, 
-            rgba(255, 255, 255, 0.5) 100%);
+                background: rgba(255, 255, 255, 1);
+            //     background: linear-gradient(135deg, 
+            // rgba(255, 255, 255, 0.75) 0%, 
+            // rgba(255, 255, 255, 0.5) 100%);
           backdrop-filter: blur(20px) saturate(180%);
           -webkit-backdrop-filter: blur(20px) saturate(180%);
                 border-radius: 16px;
@@ -1443,23 +1445,24 @@ class InfProductCarouselComponent extends HTMLElement {
       Brand: brand,
       LGVID: ids.lgiven_id,
       MRID: ids.member_id,
-      recom_num: "12",
+      recom_num: "10",
       series_out: "[\"成長型\"]",
       PID: ids.skuContent,
       SP_PID: "xxSOCIAL PROOF",
-      SIZEAI_ptr: "bhv"
+      SIZEAI_ptr: "bhv,corr,sp_atc,sp_trans"||"bhv"
       // SIZEAI_ptr: recommendMode||"bhv"
       
     } : {
       Brand: brand,
       LGVID: ids.lgiven_id,
       MRID: ids.member_id,
-      recom_num: '12',
+      recom_num: '10',
       PID: ids.skuContent,
       SP_PID: "xxSOCIAL PROOF",
-      SIZEAI_ptr: "bhv"
+      SIZEAI_ptr: "bhv,corr,sp_atc,sp_trans"||"bhv"
       // SIZEAI_ptr: recommendMode||"bhv"
     };
+    bid.Brand = brand;
 
     if (ctype_val && ctype_val.length > 0) {
       requestData.ctype_val = JSON.stringify(ctype_val);
@@ -1497,6 +1500,7 @@ class InfProductCarouselComponent extends HTMLElement {
     let apiUrl, fetchOptions;
     
     if (carouselType === 'popup') {
+      bid.Brand = 'CLARKS';
       // popup 類型使用特殊的 URL 和選項
       apiUrl = 'https://api.inffits.com/HTTP_pidinfo_cdp_product_recommendation/extension/recom_product';
       const requestPopupData = {

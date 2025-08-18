@@ -579,7 +579,7 @@
                     </div>
                     <div class="config-input-group">
                         <label for="titleInput">title:</label>
-                        <input type="text" class="config-input" id="titleInput" value="您可能會喜歡" placeholder="您可能會喜歡">
+                        <input type="text" class="config-input" id="titleInput" value="這些商品有合適您的尺寸" placeholder="這些商品有合適您的尺寸">
                     </div>
                     <div class="config-input-group">
                         <label for="statusInput">啟用組件:</label>
@@ -589,10 +589,10 @@
                         </select>
                     </div>
                     <div class="config-input-group">
-                        <label for="hideSizeInput">尺寸標籤:</label>
+                        <label for="hideSizeInput">尺寸推薦:</label>
                         <select class="config-input" id="hideSizeInput">
-                            <option value="false">顯示尺寸</option>
-                            <option value="true">隱藏尺寸</option>
+                            <option value="true">隱藏尺寸推薦</option>
+                            <option value="false">顯示尺寸推薦</option>
                         </select>
                     </div>
                     <div class="config-input-group">
@@ -661,7 +661,7 @@
                     </div>
                 </div>
 
-                <div class="config-section">
+                                <div class="config-section">
                     <div class="section-label">產品輪播設定 (顯示位置)</div>
                     <div class="config-input-group">
                         <label for="topIdInput">頂部廣告區域:</label>
@@ -670,8 +670,15 @@
                     <div class="config-input-group">
                         <label for="productBottomIdInput">底部廣告區域:</label>
                         <input type="text" class="config-input" id="productBottomIdInput" value="infFitsFooter" readonly>
+                    </div>
+                    <div class="config-input-group">
+                        <label for="productHideSizeInput">尺寸推薦:</label>
+                        <select class="config-input" id="productHideSizeInput">
+                            <option value="false">顯示尺寸推薦</option>
+                            <option value="true">隱藏尺寸推薦</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
         </div>
 
         <div class="config-footer">
@@ -866,6 +873,7 @@
                 displayMode: document.getElementById('displayModeInput').value,
                 recommendMode: document.getElementById('recommendModeInput').value,
                 carouselButton: document.getElementById('carouselButtonInput').value,
+                productHideSize: document.getElementById('productHideSizeInput').value,
                 bid: bidData
             };
             
@@ -889,6 +897,7 @@
                     if (config.displayMode) document.getElementById('displayModeInput').value = config.displayMode;
                     if (config.recommendMode) document.getElementById('recommendModeInput').value = config.recommendMode;
                     if (config.carouselButton) document.getElementById('carouselButtonInput').value = config.carouselButton;
+                    if (config.productHideSize) document.getElementById('productHideSizeInput').value = config.productHideSize;
                     if (config.bid) {
                         // 如果 bid 是 object，轉換為格式化的 JSON 字串
                         if (typeof config.bid === 'object') {
@@ -1076,9 +1085,9 @@
                 document.getElementById('brandInput').value = 'ALMI';
                 document.getElementById('backgroundColorInput').value = 'rgba(236,228,217,0.3)';
                 document.getElementById('bottomIdInput').value = 'popupProductContent';
-                document.getElementById('titleInput').value = '您可能會喜歡';
+                document.getElementById('titleInput').value = '這些商品有合適您的尺寸';
                 document.getElementById('statusInput').value = 'true';
-                document.getElementById('hideSizeInput').value = 'false';
+                document.getElementById('hideSizeInput').value = 'true';
                 document.getElementById('displayModeInput').value = 'SaleRate';
                 document.getElementById('recommendModeInput').value = 'bhv';
                 document.getElementById('carouselButtonInput').value = 'true';
@@ -1122,6 +1131,9 @@
                 document.getElementById('bottomIdEditor').value = 'infFitsFooter';
                 document.getElementById('bottomIdDisplay').textContent = 'infFitsFooter';
                 document.getElementById('productBottomIdInput').value = 'infFitsFooter';
+                
+                // 重置產品輪播設定
+                document.getElementById('productHideSizeInput').value = 'false';
                 
                 // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
                 if (document.getElementById('json-tab').classList.contains('active')) {
@@ -1298,11 +1310,12 @@
                             Location: document.getElementById('locationInput').value,
                             status: document.getElementById('statusInput').value === 'true'
                         }
-                    }, {
+                                        }, {
                         type: 'product',
+                        hide_size: document.getElementById('productHideSizeInput').value === 'true',
                         showPositionId: {
-                        top: topId,
-                        bottom: bottomId
+                            top: topId,
+                            bottom: bottomId
                         }
                     }]
                 };
@@ -1455,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // 為配置表單欄位添加自動保存功能
             const configInputs = [
                 'brandInput', 'bottomIdInput', 'titleInput',
-                'statusInput', 'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput'
+                'statusInput', 'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput'
             ];
             
             configInputs.forEach(inputId => {
