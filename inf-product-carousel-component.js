@@ -660,7 +660,7 @@ class InfProductCarouselComponent extends HTMLElement {
       const swiperScript = document.createElement('script');
       swiperScript.src = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js';
       swiperScript.onload = () => {
-        console.log('Swiper 腳本已載入到 Shadow DOM');
+        // console.log('Swiper 腳本已載入到 Shadow DOM');
       };
       swiperScript.onerror = () => console.error('Error loading Swiper script');
       // 將腳本添加到 shadowRoot 而不是 document.head
@@ -1818,7 +1818,30 @@ class InfProductCarouselComponent extends HTMLElement {
           }
 
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-            $(this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`)).show();
+            console.log('🔄 Loading fadeOut 完成，準備顯示 embeddedAdContainer');
+            
+            const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+            console.log('🔍 找到 embeddedAdContainer 元素:', embeddedContainer);
+            
+            if (embeddedContainer) {
+              console.log('📊 embeddedAdContainer 當前樣式:', {
+                display: embeddedContainer.style.display,
+                visibility: embeddedContainer.style.visibility,
+                opacity: embeddedContainer.style.opacity
+              });
+              
+              $(embeddedContainer).show();
+              
+              console.log('✅ embeddedAdContainer.show() 已執行');
+              console.log('📊 執行後樣式:', {
+                display: embeddedContainer.style.display,
+                visibility: embeddedContainer.style.visibility,
+                opacity: embeddedContainer.style.opacity
+              });
+            } else {
+              console.error('❌ 找不到 embeddedAdContainer 元素');
+            }
+            
             // 載入完成後顯示文字區域
             $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
             
@@ -1851,6 +1874,40 @@ window.initInfProductCarouselComponent = function(config = {}) {
   
   // 添加到 body，組件會自動處理後續邏輯
   document.body.appendChild(carousel);
+  
+  // 添加調試方法到全域
+  window.debugCarousel = function() {
+    console.log('🔍 調試 Carousel 組件狀態:');
+    console.log('組件實例:', carousel);
+    console.log('Shadow Root:', carousel.shadowRoot);
+    
+    if (carousel.shadowRoot) {
+      const containers = carousel.shadowRoot.querySelectorAll('[id*="infFits"]');
+      console.log('找到的容器:', containers);
+      
+      containers.forEach(container => {
+        const containerId = container.id;
+        console.log(`\n📦 容器 ${containerId}:`);
+        
+        const loading = container.querySelector('#recommendation-loading');
+        const embeddedContainer = container.querySelector('.infEmbeddedAdContainer');
+        const textSection = container.querySelector('.text-section');
+        
+        console.log('Loading 元素:', loading);
+        console.log('Embedded Container 元素:', embeddedContainer);
+        console.log('Text Section 元素:', textSection);
+        
+        if (embeddedContainer) {
+          console.log('Embedded Container 樣式:', {
+            display: embeddedContainer.style.display,
+            visibility: embeddedContainer.style.visibility,
+            opacity: embeddedContainer.style.opacity,
+            computedDisplay: window.getComputedStyle(embeddedContainer).display
+          });
+        }
+      });
+    }
+  };
   
   return carousel;
 };
