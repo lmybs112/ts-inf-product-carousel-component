@@ -661,7 +661,7 @@
                     </div>
                 </div>
 
-                                <div class="config-section">
+                <div class="config-section">
                     <div class="section-label">產品輪播設定 (顯示位置)</div>
                     <div class="config-input-group">
                         <label for="topIdInput">頂部廣告區域:</label>
@@ -677,8 +677,8 @@
                             <option value="false">顯示尺寸推薦</option>
                             <option value="true">隱藏尺寸推薦</option>
                         </select>
-                    </div>
                 </div>
+            </div>
         </div>
 
         <div class="config-footer">
@@ -1310,7 +1310,7 @@
                             Location: document.getElementById('locationInput').value,
                             status: document.getElementById('statusInput').value === 'true'
                         }
-                                        }, {
+                    }, {
                         type: 'product',
                         hide_size: document.getElementById('productHideSizeInput').value === 'true',
                         showPositionId: {
@@ -1412,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // 切換圖標：顯示設定圖標，隱藏關閉圖標
                 settingsIcon.style.display = 'block';
                 closeIcon.style.display = 'none';
-            } else {
+                } else {
                 // 展開編輯器
                 configEditor.classList.add('expanded');
                 settingsToggle.title = '關閉配置編輯器';

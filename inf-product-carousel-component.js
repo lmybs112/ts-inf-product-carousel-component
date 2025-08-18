@@ -655,11 +655,19 @@ class InfProductCarouselComponent extends HTMLElement {
     swiperStylesheet.href = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css';
     this.shadowRoot.appendChild(swiperStylesheet);
 
-    const swiperScript = document.createElement('script');
-    swiperScript.src = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js';
-    swiperScript.onload = () => {};
-    swiperScript.onerror = () => console.error('Error loading Swiper script');
-    document.head.appendChild(swiperScript);
+    // 檢查 Swiper 是否已經載入
+    if (typeof Swiper === 'undefined') {
+      const swiperScript = document.createElement('script');
+      swiperScript.src = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js';
+      swiperScript.onload = () => {
+        console.log('Swiper 腳本已載入到 Shadow DOM');
+      };
+      swiperScript.onerror = () => console.error('Error loading Swiper script');
+      // 將腳本添加到 shadowRoot 而不是 document.head
+      this.shadowRoot.appendChild(swiperScript);
+    } else {
+      console.log('Swiper 已存在，跳過載入');
+    }
   }
 
   loadEmbeddedScript(containerId, config) {
