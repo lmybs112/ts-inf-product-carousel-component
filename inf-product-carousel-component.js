@@ -576,8 +576,6 @@ class InfProductCarouselComponent extends HTMLElement {
     if (typeof dataLayer !== 'undefined') {
       for (let i = 0; i < dataLayer.length; i++) {
         if (dataLayer[i].Action === 'Product-Detail') {
-          console.log('找到了符合 "gtm.load" 的事件，執行後續動作');
-          console.log('FOUND!!');
           member_id = dataLayer[i].Uid !== '' ? dataLayer[i].Uid : '';
           break;
         } else {
@@ -598,8 +596,6 @@ class InfProductCarouselComponent extends HTMLElement {
     if (typeof dataLayer !== 'undefined') {
       for (let i = 0; i < dataLayer.length; i++) {
         if (dataLayer[i].Action === 'Product-Detail') {
-          console.log('找到了符合 "gtm.load" 的事件，執行後續動作');
-          console.log('FOUND!!');
           member_id = dataLayer[i].Uid !== '' ? dataLayer[i].Uid : '';
           break;
         } else {
@@ -615,11 +611,10 @@ class InfProductCarouselComponent extends HTMLElement {
     const metaTag = document.querySelector('meta[property="og:sku"]');
     if (metaTag) {
       skuContent = metaTag.getAttribute('content').split('-')[0];
-      console.log(skuContent);
     } else if (document.querySelector('.prodnoBox') !== null) {
       skuContent = document.querySelector('.prodnoBox').innerText.split(':')[1].split('-')[0];
     } else {
-      console.log('Meta tag not found');
+      // Meta tag not found
     }
     return skuContent;
   }
@@ -666,7 +661,7 @@ class InfProductCarouselComponent extends HTMLElement {
       // 將腳本添加到 shadowRoot 而不是 document.head
       this.shadowRoot.appendChild(swiperScript);
     } else {
-      console.log('Swiper 已存在，跳過載入');
+      // Swiper 已存在，跳過載入
     }
   }
 
@@ -1818,30 +1813,11 @@ class InfProductCarouselComponent extends HTMLElement {
           }
 
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-            console.log('🔄 Loading fadeOut 完成，準備顯示 embeddedAdContainer');
-            
             const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
-            console.log('🔍 找到 embeddedAdContainer 元素:', embeddedContainer);
             
             if (embeddedContainer) {
-              console.log('📊 embeddedAdContainer 當前樣式:', {
-                display: embeddedContainer.style.display,
-                visibility: embeddedContainer.style.visibility,
-                opacity: embeddedContainer.style.opacity
-              });
-              
               // 強制設定 display: block 來覆蓋 CSS 規則
               embeddedContainer.style.setProperty('display', 'block', 'important');
-              
-              console.log('✅ embeddedAdContainer 強制顯示已執行');
-              console.log('📊 執行後樣式:', {
-                display: embeddedContainer.style.display,
-                visibility: embeddedContainer.style.visibility,
-                opacity: embeddedContainer.style.opacity,
-                computedDisplay: window.getComputedStyle(embeddedContainer).display
-              });
-            } else {
-              console.error('❌ 找不到 embeddedAdContainer 元素');
             }
             
             // 載入完成後顯示文字區域
@@ -1877,40 +1853,21 @@ window.initInfProductCarouselComponent = function(config = {}) {
   // 添加到 body，組件會自動處理後續邏輯
   document.body.appendChild(carousel);
   
-  // 添加調試方法到全域
+    // 添加調試方法到全域
   window.debugCarousel = function() {
-    console.log('🔍 調試 Carousel 組件狀態:');
-    console.log('組件實例:', carousel);
-    console.log('Shadow Root:', carousel.shadowRoot);
-    
     if (carousel.shadowRoot) {
       const containers = carousel.shadowRoot.querySelectorAll('[id*="infFits"]');
-      console.log('找到的容器:', containers);
       
       containers.forEach(container => {
         const containerId = container.id;
-        console.log(`\n📦 容器 ${containerId}:`);
-        
         const loading = container.querySelector('#recommendation-loading');
         const embeddedContainer = container.querySelector('.infEmbeddedAdContainer');
         const textSection = container.querySelector('.text-section');
         
-        console.log('Loading 元素:', loading);
-        console.log('Embedded Container 元素:', embeddedContainer);
-        console.log('Text Section 元素:', textSection);
-        
-                 if (embeddedContainer) {
-           console.log('Embedded Container 樣式:', {
-             display: embeddedContainer.style.display,
-             visibility: embeddedContainer.style.visibility,
-             opacity: embeddedContainer.style.opacity,
-             computedDisplay: window.getComputedStyle(embeddedContainer).display
-           });
-           
-           // 提供手動修復方法
-           console.log('🔧 手動修復方法:');
-           console.log('embeddedContainer.style.setProperty("display", "block", "important");');
-         }
+        if (embeddedContainer) {
+          // 提供手動修復方法
+          embeddedContainer.style.setProperty('display', 'block', 'important');
+        }
       });
     }
   };

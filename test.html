@@ -1353,12 +1353,9 @@
         // 複製完整代碼到剪貼簿
         function copyCodeToClipboard() {
             try {
-                console.log('複製代碼按鈕被點擊');
                 const config = buildCurrentConfig();
-                console.log('配置構建成功:', config);
                 
                 const configJson = JSON.stringify(config, null, 8);
-                console.log('JSON 字符串生成成功');
                 
                 // 生成完整的代碼片段
                 const codeTemplate = `// 頁面載入完成後初始化
@@ -1381,18 +1378,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.head.appendChild(script);
 });`;
                 
-                console.log('代碼模板生成成功');
-                
                 navigator.clipboard.writeText(codeTemplate).then(() => {
-                    console.log('剪貼簿寫入成功');
                     showSuccess('完整代碼已複製到剪貼簿！');
                 }).catch((clipboardError) => {
-                    console.log('剪貼簿 API 失敗，使用 alert:', clipboardError);
                     // 如果剪貼簿 API 不可用，顯示代碼內容
                     alert('完整代碼內容:\n\n' + codeTemplate);
                 });
             } catch (error) {
-                console.error('複製代碼過程中發生錯誤:', error);
                 showError('複製代碼失敗: ' + error.message);
             }
         }
@@ -1512,16 +1504,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const copyCodeBtn = document.getElementById('copyCodeBtn');
             if (copyCodeBtn) {
                 copyCodeBtn.addEventListener('click', copyCodeToClipboard);
-                console.log('複製代碼按鈕事件監聽器已添加');
-                } else {
-                console.error('找不到複製代碼按鈕');
             }
 
             // 為設定按鈕添加事件監聽器
             const settingsToggle = document.getElementById('settingsToggle');
             if (settingsToggle) {
                 settingsToggle.addEventListener('click', toggleConfigEditor);
-                console.log('設定按鈕事件監聽器已添加');
                 
                 // 初始化圖標狀態（預設展開，顯示關閉圖標）
                 const settingsIcon = document.getElementById('settingsIcon');
@@ -1530,8 +1518,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     settingsIcon.style.display = 'none';
                     closeIcon.style.display = 'block';
                 }
-            } else {
-                console.error('找不到設定按鈕');
             }
             
             // 檢查並應用待處理的配置
