@@ -1830,13 +1830,15 @@ class InfProductCarouselComponent extends HTMLElement {
                 opacity: embeddedContainer.style.opacity
               });
               
-              $(embeddedContainer).show();
+              // 強制設定 display: block 來覆蓋 CSS 規則
+              embeddedContainer.style.setProperty('display', 'block', 'important');
               
-              console.log('✅ embeddedAdContainer.show() 已執行');
+              console.log('✅ embeddedAdContainer 強制顯示已執行');
               console.log('📊 執行後樣式:', {
                 display: embeddedContainer.style.display,
                 visibility: embeddedContainer.style.visibility,
-                opacity: embeddedContainer.style.opacity
+                opacity: embeddedContainer.style.opacity,
+                computedDisplay: window.getComputedStyle(embeddedContainer).display
               });
             } else {
               console.error('❌ 找不到 embeddedAdContainer 元素');
@@ -1897,14 +1899,18 @@ window.initInfProductCarouselComponent = function(config = {}) {
         console.log('Embedded Container 元素:', embeddedContainer);
         console.log('Text Section 元素:', textSection);
         
-        if (embeddedContainer) {
-          console.log('Embedded Container 樣式:', {
-            display: embeddedContainer.style.display,
-            visibility: embeddedContainer.style.visibility,
-            opacity: embeddedContainer.style.opacity,
-            computedDisplay: window.getComputedStyle(embeddedContainer).display
-          });
-        }
+                 if (embeddedContainer) {
+           console.log('Embedded Container 樣式:', {
+             display: embeddedContainer.style.display,
+             visibility: embeddedContainer.style.visibility,
+             opacity: embeddedContainer.style.opacity,
+             computedDisplay: window.getComputedStyle(embeddedContainer).display
+           });
+           
+           // 提供手動修復方法
+           console.log('🔧 手動修復方法:');
+           console.log('embeddedContainer.style.setProperty("display", "block", "important");');
+         }
       });
     }
   };
