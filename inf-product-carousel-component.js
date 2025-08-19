@@ -11,7 +11,7 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
           // 整合的彈窗處理函數
-          handlePopup(showMode = true) {
+          handlePopup(autoShow = true) {
             // 創建並添加 CSS 樣式
             const popupStyles = `
             #infPopupproductCarousel *{
@@ -251,13 +251,13 @@ class InfProductCarouselComponent extends HTMLElement {
             // 將 showPopup 和 closePopup 函數設為全域可訪問
             window.showPopup = showPopup;
             window.closePopup = closePopup;
-            window.popupShowMode = showMode; // 保存 showMode 到全域變數
+            window.popupautoShow = autoShow; // 保存 autoShow 到全域變數
             
-            // 根據 showMode 決定是否自動顯示彈窗
-            if (showMode === true) {
+            // 根據 autoShow 決定是否自動顯示彈窗
+            if (autoShow === true) {
                 // true 模式：等待 loading 完成後自動顯示
                 // 注意：在 popup 模式下，彈窗不會立即顯示，而是等待 loading 完成後再顯示
-            } else if (showMode === false) {
+            } else if (autoShow === false) {
                 // false 模式：不自動顯示，由使用者手動調用 showPopup()
                 // console.log('彈窗已設置為手動模式，請手動調用 window.showPopup() 來顯示彈窗');
             }
@@ -315,7 +315,7 @@ class InfProductCarouselComponent extends HTMLElement {
       };
 
       if(mergedConfig.brandConfig?.status && mergedConfig.carouselType === 'popup'){
-        this.handlePopup(mergedConfig.brandConfig.showMode);
+        this.handlePopup(mergedConfig.brandConfig.autoShow);
       }
 
       // 使用合併後的配置進行初始化，並在初始化後自動移動到目標容器
@@ -1691,7 +1691,7 @@ class InfProductCarouselComponent extends HTMLElement {
         } else {
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
             // 如果是 popup 模式且為 true 模式，在沒有資料時也要顯示彈窗
-            if (window.showPopup && typeof window.showPopup === 'function' && window.popupShowMode === true) {
+            if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true) {
               window.showPopup();
             }
           });
@@ -1850,7 +1850,7 @@ class InfProductCarouselComponent extends HTMLElement {
             $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
             
             // 如果是 popup 模式且為 true 模式，在 loading 完成後顯示彈窗
-            if (window.showPopup && typeof window.showPopup === 'function' && window.popupShowMode === true) {
+            if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true) {
               window.showPopup();
             }
           });

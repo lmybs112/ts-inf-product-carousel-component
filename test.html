@@ -642,10 +642,10 @@
                         </div>
                     </div>
                     <div class="config-input-group">
-                        <label for="showModeInput">自動顯示彈窗:</label>
+                        <label for="autoShowInput">自動顯示彈窗:</label>
                         <div class="toggle-switch">
-                            <input type="checkbox" id="showModeInput" class="toggle-input" checked>
-                            <label for="showModeInput" class="toggle-label">
+                            <input type="checkbox" id="autoShowInput" class="toggle-input" checked>
+                            <label for="autoShowInput" class="toggle-label">
                                 <span class="toggle-slider"></span>
                             </label>
                             <span class="toggle-text">啟用</span>
@@ -938,7 +938,7 @@
                 recommendMode: document.getElementById('recommendModeInput').value,
                 carouselButton: document.getElementById('carouselButtonInput').value,
                 productHideSize: document.getElementById('productHideSizeInput').value,
-                showMode: document.getElementById('showModeInput').checked,
+                autoShow: document.getElementById('autoShowInput').checked,
                 bid: bidData
             };
             
@@ -963,7 +963,7 @@
                     if (config.recommendMode) document.getElementById('recommendModeInput').value = config.recommendMode;
                     if (config.carouselButton) document.getElementById('carouselButtonInput').value = config.carouselButton;
                     if (config.productHideSize) document.getElementById('productHideSizeInput').value = config.productHideSize;
-                    if (config.showMode !== undefined) document.getElementById('showModeInput').checked = config.showMode === 'true' || config.showMode === true;
+                    if (config.autoShow !== undefined) document.getElementById('autoShowInput').checked = config.autoShow === 'true' || config.autoShow === true;
                     if (config.bid) {
                         // 如果 bid 是 object，轉換為格式化的 JSON 字串
                         if (typeof config.bid === 'object') {
@@ -1200,16 +1200,16 @@
                 
                 // 重置產品輪播設定
                 document.getElementById('productHideSizeInput').value = 'false';
-                document.getElementById('showModeInput').checked = true;
+                document.getElementById('autoShowInput').checked = true;
                 
                 // 重置後更新自動顯示彈窗欄位的顯示狀態
                 const statusToggle = document.getElementById('statusInput');
-                const showModeGroup = document.getElementById('showModeInput').closest('.config-input-group');
-                if (statusToggle && showModeGroup) {
+                const autoShowGroup = document.getElementById('autoShowInput').closest('.config-input-group');
+                if (statusToggle && autoShowGroup) {
                     if (statusToggle.checked) {
-                        showModeGroup.style.display = 'block';
+                        autoShowGroup.style.display = 'block';
                     } else {
-                        showModeGroup.style.display = 'none';
+                        autoShowGroup.style.display = 'none';
                     }
                 }
                 
@@ -1535,7 +1535,7 @@
                             Title: document.getElementById('titleInput').value,
                             Location: document.getElementById('locationInput').value,
                             status: document.getElementById('statusInput').checked.toString(),
-                            showMode: document.getElementById('showModeInput').checked
+                            autoShow: document.getElementById('autoShowInput').checked
                         }
                     }, {
                         type: 'product',
@@ -1703,7 +1703,7 @@ if (document.readyState === 'loading') {
             // 為配置表單欄位添加自動保存功能
             const configInputs = [
                 'brandInput', 'bottomIdInput', 'titleInput',
-                'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput', 'showModeInput'
+                'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput', 'autoShowInput'
             ];
             
             configInputs.forEach(inputId => {
@@ -1737,12 +1737,12 @@ if (document.readyState === 'loading') {
                     }
                     
                     // 控制自動顯示彈窗欄位的顯示/隱藏
-                    const showModeGroup = document.getElementById('showModeInput').closest('.config-input-group');
-                    if (showModeGroup) {
+                    const autoShowGroup = document.getElementById('autoShowInput').closest('.config-input-group');
+                    if (autoShowGroup) {
                         if (this.checked) {
-                            showModeGroup.style.display = 'block';
+                            autoShowGroup.style.display = 'block';
                         } else {
-                            showModeGroup.style.display = 'none';
+                            autoShowGroup.style.display = 'none';
                         }
                     }
                     
@@ -1760,20 +1760,20 @@ if (document.readyState === 'loading') {
                 }
                 
                 // 初始化自動顯示彈窗欄位的顯示/隱藏
-                const showModeGroup = document.getElementById('showModeInput').closest('.config-input-group');
-                if (showModeGroup) {
+                const autoShowGroup = document.getElementById('autoShowInput').closest('.config-input-group');
+                if (autoShowGroup) {
                     if (statusToggle.checked) {
-                        showModeGroup.style.display = 'block';
+                        autoShowGroup.style.display = 'block';
                     } else {
-                        showModeGroup.style.display = 'none';
+                        autoShowGroup.style.display = 'none';
                     }
                 }
             }
 
-            // 為 showMode toggle 開關添加事件監聽器
-            const showModeToggle = document.getElementById('showModeInput');
-            if (showModeToggle) {
-                showModeToggle.addEventListener('change', function() {
+            // 為 autoShow toggle 開關添加事件監聽器
+            const autoShowToggle = document.getElementById('autoShowInput');
+            if (autoShowToggle) {
+                autoShowToggle.addEventListener('change', function() {
                     // 更新 toggle 文字
                     const toggleText = this.parentElement.querySelector('.toggle-text');
                     if (toggleText) {
@@ -1788,9 +1788,9 @@ if (document.readyState === 'loading') {
                 });
                 
                 // 初始化 toggle 文字
-                const toggleText = showModeToggle.parentElement.querySelector('.toggle-text');
+                const toggleText = autoShowToggle.parentElement.querySelector('.toggle-text');
                 if (toggleText) {
-                    toggleText.textContent = showModeToggle.checked ? '啟用' : '禁用';
+                    toggleText.textContent = autoShowToggle.checked ? '啟用' : '禁用';
                 }
             }
 
