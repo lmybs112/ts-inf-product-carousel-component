@@ -1036,7 +1036,7 @@
                 // 創建新的腳本標籤，使用時間戳避免快取
                 scriptElement = document.createElement('script');
                 scriptElement.src = './inf-product-carousel-component.js?v=' + Date.now();
-                scriptElement.async = true;
+                scriptElement.defer = true;
                 
                 scriptElement.onload = function () {
                     scriptLoaded = true;
