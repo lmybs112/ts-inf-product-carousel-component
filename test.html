@@ -199,6 +199,56 @@
             color: #adb5bd;
         }
 
+        /* Toggle 開關樣式 */
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-input {
+            display: none;
+        }
+
+        .toggle-label {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            user-select: none;
+            background: #e9ecef;
+            border-radius: 20px;
+            width: 50px;
+            height: 26px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-input:checked + .toggle-label {
+            background: #495057;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-input:checked + .toggle-label .toggle-slider {
+            left: calc(100% - 24px);
+        }
+
+        .toggle-text {
+            margin-left: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #495057;
+        }
+
         .config-input[readonly] {
             background-color: #f8f9fa;
             color: #6c757d;
@@ -583,10 +633,13 @@
                     </div>
                     <div class="config-input-group">
                         <label for="statusInput">啟用組件:</label>
-                        <select class="config-input" id="statusInput">
-                            <option value="true">啟用 (true)</option>
-                            <option value="false">禁用 (false)</option>
-                        </select>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="statusInput" class="toggle-input">
+                            <label for="statusInput" class="toggle-label">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-text">禁用</span>
+                        </div>
                     </div>
                     <div class="config-input-group">
                         <label for="hideSizeInput">尺寸推薦:</label>
@@ -868,7 +921,7 @@
                 backgroundColor: document.getElementById('backgroundColorInput').value,
                 bottomId: document.getElementById('bottomIdInput').value,
                 title: document.getElementById('titleInput').value,
-                status: document.getElementById('statusInput').value,
+                status: document.getElementById('statusInput').checked.toString(),
                 hideSize: document.getElementById('hideSizeInput').value,
                 displayMode: document.getElementById('displayModeInput').value,
                 recommendMode: document.getElementById('recommendModeInput').value,
@@ -889,10 +942,10 @@
                     
                     // 載入配置到表單
                     if (config.brand) document.getElementById('brandInput').value = config.brand;
-                    if (config.backgroundColor) document.getElementById('backgroundColorInput').value = config.backgroundColor;
+                    // if (config.backgroundColor) document.getElementById('backgroundColorInput').value = config.backgroundColor;
                     if (config.bottomId) document.getElementById('bottomIdInput').value = config.bottomId;
                     if (config.title) document.getElementById('titleInput').value = config.title;
-                    if (config.status) document.getElementById('statusInput').value = config.status;
+                    if (config.status) document.getElementById('statusInput').checked = config.status === 'true';
                     if (config.hideSize) document.getElementById('hideSizeInput').value = config.hideSize;
                     if (config.displayMode) document.getElementById('displayModeInput').value = config.displayMode;
                     if (config.recommendMode) document.getElementById('recommendModeInput').value = config.recommendMode;
@@ -1086,7 +1139,7 @@
                 document.getElementById('backgroundColorInput').value = 'rgba(236,228,217,0.3)';
                 document.getElementById('bottomIdInput').value = 'popupProductContent';
                 document.getElementById('titleInput').value = '這些商品有合適您的尺寸';
-                document.getElementById('statusInput').value = 'true';
+                document.getElementById('statusInput').checked = false;
                 document.getElementById('hideSizeInput').value = 'true';
                 document.getElementById('displayModeInput').value = 'SaleRate';
                 document.getElementById('recommendModeInput').value = 'bhv';
@@ -1177,6 +1230,16 @@
                     
                     script.onload = function () {
                         try {
+                            // 檢查組件是否啟用
+                            const isEnabled = config.carousels.some(carousel => 
+                                carousel.brandConfig && carousel.brandConfig.status === 'true'
+                            );
+                            
+                            if (!isEnabled) {
+                                showSuccess('彈窗輪播已禁用，不會顯示彈窗！');
+                                return;
+                            }
+                            
                             // 初始化每個輪播組件
                             config.carousels.forEach(carousel => {
                                 const productCarouselconfig = {
@@ -1308,7 +1371,7 @@
                             CarouselLayout: 2.5,
                             Title: document.getElementById('titleInput').value,
                             Location: document.getElementById('locationInput').value,
-                            status: document.getElementById('statusInput').value === 'true'
+                            status: document.getElementById('statusInput').checked.toString()
                         }
                     }, {
                         type: 'product',
@@ -1460,7 +1523,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // 為配置表單欄位添加自動保存功能
             const configInputs = [
                 'brandInput', 'bottomIdInput', 'titleInput',
-                'statusInput', 'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput'
+                'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput'
             ];
             
             configInputs.forEach(inputId => {
@@ -1482,6 +1545,30 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 }
             });
+
+            // 為 toggle 開關添加事件監聽器
+            const statusToggle = document.getElementById('statusInput');
+            if (statusToggle) {
+                statusToggle.addEventListener('change', function() {
+                    // 更新 toggle 文字
+                    const toggleText = this.parentElement.querySelector('.toggle-text');
+                    if (toggleText) {
+                        toggleText.textContent = this.checked ? '啟用' : '禁用';
+                    }
+                    
+                    saveConfig();
+                    // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                    if (document.getElementById('json-tab').classList.contains('active')) {
+                        updateJsonDisplay();
+                    }
+                });
+                
+                // 初始化 toggle 文字
+                const toggleText = statusToggle.parentElement.querySelector('.toggle-text');
+                if (toggleText) {
+                    toggleText.textContent = statusToggle.checked ? '啟用' : '禁用';
+                }
+            }
 
             // 為操作按鈕添加事件監聽器
             document.getElementById('applyConfigBtn').addEventListener('click', applyConfig);
