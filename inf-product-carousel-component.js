@@ -1,3 +1,5 @@
+// 檢查是否已經定義過，避免重複定義
+if (!customElements.get('inf-product-carousel-component')) {
 class InfProductCarouselComponent extends HTMLElement {
   constructor() {
     super();
@@ -9,7 +11,7 @@ class InfProductCarouselComponent extends HTMLElement {
   }
 
           // 整合的彈窗處理函數
-          handlePopup() {
+          handlePopup(showMode = true) {
             // 創建並添加 CSS 樣式
             const popupStyles = `
             #infPopupproductCarousel *{
@@ -19,7 +21,7 @@ class InfProductCarouselComponent extends HTMLElement {
             }
             #infPopupproductCarousel {
                 position: fixed;
-                left: -400px;
+                left: -500px;
                 bottom: 20px;
                 width: 350px;
                 max-width: calc(100vw - 40px);
@@ -209,18 +211,34 @@ class InfProductCarouselComponent extends HTMLElement {
 
             // 顯示彈窗
             function showPopup() {
-                popup.classList.add('show');
+                if (popup) {
+                    popup.classList.add('show');
+                    // 直接設置樣式確保彈窗顯示
+                    popup.style.left = '20px';
+                } else {
+                    console.error('彈窗元素不存在');
+                }
             }
 
             // 關閉彈窗
             function closePopup() {
-                popup.classList.remove('show');
+                if (popup) {
+                    popup.classList.remove('show');
+                    // 重置樣式確保彈窗完全隱藏
+                    popup.style.left = '-500px';
+                } else {
+                    console.error('彈窗元素不存在，無法關閉');
+                }
             }
 
             // 點擊彈窗外部關閉彈窗
             document.addEventListener('click', function (event) {
                 // 檢查點擊的元素是否在 popup 內部
                 if (popup && !popup.contains(event.target)) {
+                    // 檢查是否點擊了顯示彈窗按鈕，如果是則不關閉彈窗
+                    if (event.target.id === 'showPopupBtn' || event.target.closest('#showPopupBtn')) {
+                        return;
+                    }
                     closePopup();
                 }
             });
@@ -233,8 +251,16 @@ class InfProductCarouselComponent extends HTMLElement {
             // 將 showPopup 和 closePopup 函數設為全域可訪問
             window.showPopup = showPopup;
             window.closePopup = closePopup;
+            window.popupShowMode = showMode; // 保存 showMode 到全域變數
             
-            // 注意：在 popup 模式下，彈窗不會立即顯示，而是等待 loading 完成後再顯示
+            // 根據 showMode 決定是否自動顯示彈窗
+            if (showMode === true) {
+                // true 模式：等待 loading 完成後自動顯示
+                // 注意：在 popup 模式下，彈窗不會立即顯示，而是等待 loading 完成後再顯示
+            } else if (showMode === false) {
+                // false 模式：不自動顯示，由使用者手動調用 showPopup()
+                // console.log('彈窗已設置為手動模式，請手動調用 window.showPopup() 來顯示彈窗');
+            }
         }
 
 
@@ -289,7 +315,7 @@ class InfProductCarouselComponent extends HTMLElement {
       };
 
       if(mergedConfig.brandConfig?.status && mergedConfig.carouselType === 'popup'){
-        this.handlePopup();
+        this.handlePopup(mergedConfig.brandConfig.showMode);
       }
 
       // 使用合併後的配置進行初始化，並在初始化後自動移動到目標容器
@@ -1664,8 +1690,8 @@ class InfProductCarouselComponent extends HTMLElement {
           this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
         } else {
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-            // 如果是 popup 模式，在沒有資料時也要顯示彈窗
-            if (window.showPopup && typeof window.showPopup === 'function') {
+            // 如果是 popup 模式且為 true 模式，在沒有資料時也要顯示彈窗
+            if (window.showPopup && typeof window.showPopup === 'function' && window.popupShowMode === true) {
               window.showPopup();
             }
           });
@@ -1823,8 +1849,8 @@ class InfProductCarouselComponent extends HTMLElement {
             // 載入完成後顯示文字區域
             $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
             
-            // 如果是 popup 模式，在 loading 完成後顯示彈窗
-            if (window.showPopup && typeof window.showPopup === 'function') {
+            // 如果是 popup 模式且為 true 模式，在 loading 完成後顯示彈窗
+            if (window.showPopup && typeof window.showPopup === 'function' && window.popupShowMode === true) {
               window.showPopup();
             }
           });
@@ -1841,6 +1867,7 @@ class InfProductCarouselComponent extends HTMLElement {
 }
 
 customElements.define('inf-product-carousel-component', InfProductCarouselComponent);
+} // 結束 if 檢查
 
 // 提供一個簡化的初始化函數
 window.initInfProductCarouselComponent = function(config = {}) {

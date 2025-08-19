@@ -642,6 +642,16 @@
                         </div>
                     </div>
                     <div class="config-input-group">
+                        <label for="showModeInput">自動顯示彈窗:</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="showModeInput" class="toggle-input" checked>
+                            <label for="showModeInput" class="toggle-label">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-text">啟用</span>
+                        </div>
+                    </div>
+                    <div class="config-input-group">
                         <label for="hideSizeInput">尺寸推薦:</label>
                         <select class="config-input" id="hideSizeInput">
                             <option value="true">隱藏尺寸推薦</option>
@@ -741,6 +751,7 @@
                     <button class="config-btn primary" id="applyConfigBtn">應用配置</button>
                     <button class="config-btn secondary" id="resetConfigBtn">重置配置</button>
                     <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
+                    <button class="config-btn secondary" id="showPopupBtn">顯示彈窗</button>
                 </div>
             </div>
 
@@ -927,6 +938,7 @@
                 recommendMode: document.getElementById('recommendModeInput').value,
                 carouselButton: document.getElementById('carouselButtonInput').value,
                 productHideSize: document.getElementById('productHideSizeInput').value,
+                showMode: document.getElementById('showModeInput').checked,
                 bid: bidData
             };
             
@@ -951,6 +963,7 @@
                     if (config.recommendMode) document.getElementById('recommendModeInput').value = config.recommendMode;
                     if (config.carouselButton) document.getElementById('carouselButtonInput').value = config.carouselButton;
                     if (config.productHideSize) document.getElementById('productHideSizeInput').value = config.productHideSize;
+                    if (config.showMode !== undefined) document.getElementById('showModeInput').checked = config.showMode === 'true' || config.showMode === true;
                     if (config.bid) {
                         // 如果 bid 是 object，轉換為格式化的 JSON 字串
                         if (typeof config.bid === 'object') {
@@ -1187,6 +1200,18 @@
                 
                 // 重置產品輪播設定
                 document.getElementById('productHideSizeInput').value = 'false';
+                document.getElementById('showModeInput').checked = true;
+                
+                // 重置後更新自動顯示彈窗欄位的顯示狀態
+                const statusToggle = document.getElementById('statusInput');
+                const showModeGroup = document.getElementById('showModeInput').closest('.config-input-group');
+                if (statusToggle && showModeGroup) {
+                    if (statusToggle.checked) {
+                        showModeGroup.style.display = 'block';
+                    } else {
+                        showModeGroup.style.display = 'none';
+                    }
+                }
                 
                 // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
                 if (document.getElementById('json-tab').classList.contains('active')) {
@@ -1216,6 +1241,107 @@
             }
         }
 
+        // 手動顯示彈窗 - 提供類似 window.initInfProductCarouselComponent 的使用方式
+        async function showPopupManually(config = null) {
+            try {
+                // 如果沒有傳入 config，使用當前配置
+                if (!config) {
+                    config = buildCurrentConfig();
+                }
+                
+                // 檢查是否有彈窗輪播配置
+                const popupCarousel = config.carousels ? config.carousels.find(carousel => carousel.type === 'popup') : null;
+                if (!popupCarousel) {
+                    showError('沒有找到彈窗輪播配置！');
+                    return;
+                }
+                
+                // 檢查彈窗輪播是否啟用
+                if (popupCarousel.brandConfig?.status !== 'true') {
+                    showError('彈窗輪播未啟用！請先啟用彈窗輪播組件。');
+                    return;
+                }
+                
+                // 檢查是否已經有 showPopup 函數
+                if (typeof window.showPopup === 'function') {
+                    // 如果已經初始化過，直接顯示彈窗
+                    window.showPopup();
+                    showSuccess('彈窗已顯示！');
+                } else {
+                    // 如果沒有初始化，先初始化彈窗輪播
+                    showLoading(true);
+                    
+                    // 檢查腳本是否已經載入
+                    if (typeof window.initInfProductCarouselComponent === 'function') {
+                        // 腳本已載入，直接初始化
+                        try {
+                            const popupCarouselconfig = {
+                                brand: config.brand,
+                                carousel: popupCarousel
+                            };
+                            window.initInfProductCarouselComponent(popupCarouselconfig);
+                            
+                            // 等待一下讓組件初始化完成，然後顯示彈窗
+                            setTimeout(() => {
+                                if (typeof window.showPopup === 'function') {
+                                    window.showPopup();
+                                    showSuccess('彈窗已初始化並顯示！');
+                                } else {
+                                    showError('彈窗初始化失敗！');
+                                }
+                                showLoading(false);
+                            }, 1000);
+                        } catch (error) {
+                            showError('組件初始化失敗: ' + error.message);
+                            showLoading(false);
+                        }
+                    } else {
+                        // 腳本未載入，需要載入腳本
+                        const script = document.createElement('script');
+                        script.src = './inf-product-carousel-component.js';
+                        script.defer = true;
+                        
+                        script.onload = function () {
+                            try {
+                                // 初始化彈窗輪播
+                                const popupCarouselconfig = {
+                                    brand: config.brand,
+                                    carousel: popupCarousel
+                                };
+                                window.initInfProductCarouselComponent(popupCarouselconfig);
+                                
+                                // 等待一下讓組件初始化完成，然後顯示彈窗
+                                setTimeout(() => {
+                                    if (typeof window.showPopup === 'function') {
+                                        window.showPopup();
+                                        showSuccess('彈窗已初始化並顯示！');
+                                    } else {
+                                        showError('彈窗初始化失敗！');
+                                    }
+                                    showLoading(false);
+                                }, 1000);
+                                
+                            } catch (error) {
+                                showError('組件初始化失敗: ' + error.message);
+                                showLoading(false);
+                            }
+                        };
+                        
+                        script.onerror = function () {
+                            showError('腳本載入失敗: inf-product-carousel-component.js');
+                            showLoading(false);
+                        };
+                        
+                        document.head.appendChild(script);
+                    }
+                }
+                
+            } catch (error) {
+                showError('顯示彈窗失敗: ' + error.message);
+                showLoading(false);
+            }
+        }
+
         // 應用待處理的配置
         async function applyPendingConfig() {
             const pendingConfig = sessionStorage.getItem('pendingConfig');
@@ -1223,12 +1349,9 @@
                 try {
                     const config = JSON.parse(pendingConfig);
                     
-                    // 載入腳本
-                    const script = document.createElement('script');
-                    script.src = './inf-product-carousel-component.js';
-                    script.defer = true;
-                    
-                    script.onload = function () {
+                    // 檢查腳本是否已經載入
+                    if (typeof window.initInfProductCarouselComponent === 'function') {
+                        // 腳本已載入，直接初始化
                         try {
                             // 檢查彈窗輪播是否啟用
                             const popupEnabled = config.carousels[0].brandConfig?.status === 'true';
@@ -1257,13 +1380,49 @@
                         } catch (error) {
                             showError('組件初始化失敗: ' + error.message);
                         }
-                    };
-                    
-                    script.onerror = function () {
-                        showError('腳本載入失敗: inf-product-carousel-component.js');
-                    };
-                    
-                    document.head.appendChild(script);
+                    } else {
+                        // 腳本未載入，需要載入腳本
+                        const script = document.createElement('script');
+                        script.src = './inf-product-carousel-component.js';
+                        script.defer = true;
+                        
+                        script.onload = function () {
+                            try {
+                                // 檢查彈窗輪播是否啟用
+                                const popupEnabled = config.carousels[0].brandConfig?.status === 'true';
+                                
+                                // 初始化商品輪播（總是啟用）
+                                const productCarousel = config.carousels[1];
+                                const productCarouselconfig = {
+                                    brand: config.brand,
+                                    carousel: productCarousel
+                                };
+                                window.initInfProductCarouselComponent(productCarouselconfig);
+                                
+                                // 根據彈窗輪播狀態決定是否初始化
+                                if (popupEnabled) {
+                                    // 初始化彈窗輪播
+                                    const popupCarousel = config.carousels[0];
+                                    const popupCarouselconfig = {
+                                        brand: config.brand,
+                                        carousel: popupCarousel
+                                    };
+                                    window.initInfProductCarouselComponent(popupCarouselconfig);
+                                    showSuccess('彈窗輪播已啟用！');
+                                } else {
+                                    showSuccess('彈窗輪播已禁用！');
+                                }
+                            } catch (error) {
+                                showError('組件初始化失敗: ' + error.message);
+                            }
+                        };
+                        
+                        script.onerror = function () {
+                            showError('腳本載入失敗: inf-product-carousel-component.js');
+                        };
+                        
+                        document.head.appendChild(script);
+                    }
                     
                     // 清除待處理的配置
                     sessionStorage.removeItem('pendingConfig');
@@ -1375,7 +1534,8 @@
                             CarouselLayout: 2.5,
                             Title: document.getElementById('titleInput').value,
                             Location: document.getElementById('locationInput').value,
-                            status: document.getElementById('statusInput').checked.toString()
+                            status: document.getElementById('statusInput').checked.toString(),
+                            showMode: document.getElementById('showModeInput').checked
                         }
                     }, {
                         type: 'product',
@@ -1454,7 +1614,12 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
-}`;
+}
+
+// 手動顯示彈窗的使用方式：
+// window.showPopupManually(); // 使用當前配置顯示彈窗
+// window.showPopupManually(customConfig); // 使用自定義配置顯示彈窗
+// window.showPopup(); // 如果彈窗已初始化，直接顯示`;
                 
                 navigator.clipboard.writeText(codeTemplate).then(() => {
                     showSuccess('完整代碼已複製到剪貼簿！');
@@ -1538,7 +1703,7 @@ if (document.readyState === 'loading') {
             // 為配置表單欄位添加自動保存功能
             const configInputs = [
                 'brandInput', 'bottomIdInput', 'titleInput',
-                'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput'
+                'hideSizeInput', 'displayModeInput', 'recommendModeInput', 'carouselButtonInput', 'bidInput', 'productHideSizeInput', 'showModeInput'
             ];
             
             configInputs.forEach(inputId => {
@@ -1571,6 +1736,16 @@ if (document.readyState === 'loading') {
                         toggleText.textContent = this.checked ? '啟用' : '禁用';
                     }
                     
+                    // 控制自動顯示彈窗欄位的顯示/隱藏
+                    const showModeGroup = document.getElementById('showModeInput').closest('.config-input-group');
+                    if (showModeGroup) {
+                        if (this.checked) {
+                            showModeGroup.style.display = 'block';
+                        } else {
+                            showModeGroup.style.display = 'none';
+                        }
+                    }
+                    
                     saveConfig();
                     // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
                     if (document.getElementById('json-tab').classList.contains('active')) {
@@ -1583,12 +1758,50 @@ if (document.readyState === 'loading') {
                 if (toggleText) {
                     toggleText.textContent = statusToggle.checked ? '啟用' : '禁用';
                 }
+                
+                // 初始化自動顯示彈窗欄位的顯示/隱藏
+                const showModeGroup = document.getElementById('showModeInput').closest('.config-input-group');
+                if (showModeGroup) {
+                    if (statusToggle.checked) {
+                        showModeGroup.style.display = 'block';
+                    } else {
+                        showModeGroup.style.display = 'none';
+                    }
+                }
+            }
+
+            // 為 showMode toggle 開關添加事件監聽器
+            const showModeToggle = document.getElementById('showModeInput');
+            if (showModeToggle) {
+                showModeToggle.addEventListener('change', function() {
+                    // 更新 toggle 文字
+                    const toggleText = this.parentElement.querySelector('.toggle-text');
+                    if (toggleText) {
+                        toggleText.textContent = this.checked ? '啟用' : '禁用';
+                    }
+                    
+                    saveConfig();
+                    // 如果當前在 JSON 標籤頁，也更新 JSON 顯示
+                    if (document.getElementById('json-tab').classList.contains('active')) {
+                        updateJsonDisplay();
+                    }
+                });
+                
+                // 初始化 toggle 文字
+                const toggleText = showModeToggle.parentElement.querySelector('.toggle-text');
+                if (toggleText) {
+                    toggleText.textContent = showModeToggle.checked ? '啟用' : '禁用';
+                }
             }
 
             // 為操作按鈕添加事件監聽器
             document.getElementById('applyConfigBtn').addEventListener('click', applyConfig);
             document.getElementById('resetConfigBtn').addEventListener('click', resetConfig);
             document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
+            document.getElementById('showPopupBtn').addEventListener('click', () => showPopupManually());
+            
+            // 將 showPopupManually 設為全域可訪問
+            window.showPopupManually = showPopupManually;
 
             // 為標籤頁按鈕添加事件監聽器
             document.querySelectorAll('.tab-button').forEach(button => {
