@@ -379,7 +379,7 @@
 
                     const script = document.createElement('script');
                     script.src = src;
-                    script.async = true;
+                    script.defer = true;
 
                     script.onload = () => {
                         _state.isLoaded = true;

@@ -1226,7 +1226,7 @@
                     // 載入腳本
                     const script = document.createElement('script');
                     script.src = './inf-product-carousel-component.js';
-                    script.async = true;
+                    script.defer = true;
                     
                     script.onload = function () {
                         try {
@@ -1430,7 +1430,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 載入腳本
     const script = document.createElement('script');
     script.src = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-component.js';
-    script.async = true;
+    script.defer = true;
     script.onload = function () {
         const config = ${configJson};
         config.carousels.forEach(carousel => {
