@@ -1230,26 +1230,30 @@
                     
                     script.onload = function () {
                         try {
-                            // 檢查組件是否啟用
-                            const isEnabled = config.carousels.some(carousel => 
-                                carousel.brandConfig && carousel.brandConfig.status === 'true'
-                            );
+                            // 檢查彈窗輪播是否啟用
+                            const popupEnabled = config.carousels[0].brandConfig?.status === 'true';
                             
-                            if (!isEnabled) {
-                                showSuccess('彈窗輪播已禁用，不會顯示彈窗！');
-                                return;
-                            }
+                            // 初始化商品輪播（總是啟用）
+                            const productCarousel = config.carousels[1];
+                            const productCarouselconfig = {
+                                brand: config.brand,
+                                carousel: productCarousel
+                            };
+                            window.initInfProductCarouselComponent(productCarouselconfig);
                             
-                            // 初始化每個輪播組件
-                            config.carousels.forEach(carousel => {
-                                const productCarouselconfig = {
+                            // 根據彈窗輪播狀態決定是否初始化
+                            if (popupEnabled) {
+                                // 初始化彈窗輪播
+                                const popupCarousel = config.carousels[0];
+                                const popupCarouselconfig = {
                                     brand: config.brand,
-                                    carousel
+                                    carousel: popupCarousel
                                 };
-                                window.initInfProductCarouselComponent(productCarouselconfig);
-                            });
-                            
-                            showSuccess('配置已成功應用！');
+                                window.initInfProductCarouselComponent(popupCarouselconfig);
+                                showSuccess('彈窗輪播已啟用！');
+                            } else {
+                                showSuccess('彈窗輪播已禁用！');
+                            }
                         } catch (error) {
                             showError('組件初始化失敗: ' + error.message);
                         }
