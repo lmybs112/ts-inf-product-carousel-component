@@ -209,39 +209,68 @@ class InfProductCarouselComponent extends HTMLElement {
 
             const popup = document.getElementById('infPopupproductCarousel');
 
-            // 顯示彈窗
+
+
+            // 點擊彈窗外部關閉彈窗 - 使用更穩健的實現
+            let isPopupVisible = false;
+            let closeTimeout = null;
+            
+            // 顯示彈窗時設置狀態
             function showPopup() {
                 if (popup) {
                     popup.classList.add('show');
                     // 直接設置樣式確保彈窗顯示
                     popup.style.left = '20px';
+                    isPopupVisible = true;
+                    
+                    // 延遲一下再啟用外部點擊關閉，避免立即關閉
+                    if (closeTimeout) {
+                        clearTimeout(closeTimeout);
+                    }
+                    closeTimeout = setTimeout(() => {
+                        // 啟用外部點擊關閉
+                        document.addEventListener('click', handleOutsideClick);
+                    }, 300);
                 } else {
                     console.error('彈窗元素不存在');
                 }
             }
-
-            // 關閉彈窗
+            
+            // 關閉彈窗時清理狀態
             function closePopup() {
                 if (popup) {
                     popup.classList.remove('show');
                     // 重置樣式確保彈窗完全隱藏
                     popup.style.left = '-500px';
+                    isPopupVisible = false;
+                    
+                    // 移除外部點擊監聽器
+                    document.removeEventListener('click', handleOutsideClick);
+                    
+                    // 清理超時
+                    if (closeTimeout) {
+                        clearTimeout(closeTimeout);
+                        closeTimeout = null;
+                    }
                 } else {
-                    console.error('彈窗元素不存在，無法關閉');
+                    console.error('彈窗元素不存在');
                 }
             }
-
-            // 點擊彈窗外部關閉彈窗
-            document.addEventListener('click', function (event) {
+            
+            // 處理外部點擊的函數
+            function handleOutsideClick(event) {
+                // 只有當彈窗可見時才處理外部點擊
+                if (!isPopupVisible || !popup) return;
+                
                 // 檢查點擊的元素是否在 popup 內部
-                if (popup && !popup.contains(event.target)) {
+                if (!popup.contains(event.target)) {
                     // 檢查是否點擊了顯示彈窗按鈕，如果是則不關閉彈窗
                     if (event.target.id === 'showPopupBtn' || event.target.closest('#showPopupBtn')) {
                         return;
                     }
                     closePopup();
                 }
-            });
+            }
 
             // 防止點擊 popup 內部時觸發外部點擊事件
             popup.addEventListener('click', function (event) {
