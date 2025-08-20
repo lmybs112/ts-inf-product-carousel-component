@@ -1566,7 +1566,7 @@ class InfProductCarouselComponent extends HTMLElement {
         LGVID: "x",
         MRID: "",
         recom_num: "6",
-        PID: "10662339",
+        PID: document.location.href.split('?')[0].split('/SalePage/Index/')[1],
         SP_PID: "xxSOCIAL PROOF", // FIXME
         SIZEAI_ptr: recommendMode||"bhv",
       }
