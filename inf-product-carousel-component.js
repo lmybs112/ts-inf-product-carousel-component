@@ -1855,30 +1855,42 @@ class InfProductCarouselComponent extends HTMLElement {
 
     $(this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`)).html(items);
 
-    // 如果是重置推薦且已存在 Swiper 實例，只更新內容不重新初始化
+    // 如果是重置推薦且已存在 Swiper 實例，需要重新初始化以確保事件監聽器正常工作
     if (isResetRecom && existingSwiper) {
       // 隱藏 loading 狀態
       $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-        // 重新顯示標題區域
+        // 同時顯示標題區域和輪播容器
         const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
+        const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+        
         if (textSection) {
-          $(textSection).fadeIn(600);
+          $(textSection).show();
         }
         
-        // 重新顯示輪播容器
-        const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
         if (embeddedContainer) {
           $(embeddedContainer).show();
         }
+        
+        // 初始化 Swiper
+        this.initializeSwiper(containerId, autoplay, sortedBreakpoints, displayMode);
       });
       
-      existingSwiper.update();
-      existingSwiper.slideTo(0);
+      // 銷毀現有的 Swiper 實例
+      existingSwiper.destroy(true, true);
+      
       // 重置標記
       window.resetRecomCalled = false;
+      
+      // 不繼續執行下面的 Swiper 初始化代碼
       return;
     }
 
+    // 正常情況下初始化 Swiper
+    this.initializeSwiper(containerId, autoplay, sortedBreakpoints, displayMode);
+  }
+
+  // 將 Swiper 初始化邏輯提取為獨立方法
+  initializeSwiper(containerId, autoplay, sortedBreakpoints, displayMode) {
     const swiper = new Swiper(this.shadowRoot.querySelector(`.swiper-basic-${containerId}`), {
       direction: 'horizontal',
       loop: true,
