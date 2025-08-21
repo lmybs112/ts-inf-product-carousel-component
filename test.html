@@ -752,6 +752,7 @@
                     <button class="config-btn secondary" id="resetConfigBtn">重置配置</button>
                     <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
                     <button class="config-btn secondary" id="showPopupBtn">顯示彈窗</button>
+                    <button class="config-btn secondary" id="resetRecomBtn">重置推薦</button>
                 </div>
             </div>
 
@@ -1797,6 +1798,14 @@ if (document.readyState === 'loading') {
             document.getElementById('resetConfigBtn').addEventListener('click', resetConfig);
             document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
             document.getElementById('showPopupBtn').addEventListener('click', () => showPopupManually());
+            document.getElementById('resetRecomBtn').addEventListener('click', () => {
+                if (typeof window.resetRecom === 'function') {
+                    window.resetRecom();
+                    showSuccess('推薦資料已重置！');
+                } else {
+                    showError('resetRecom 函數未定義！');
+                }
+            });
             
             // 將 showPopupManually 設為全域可訪問
             window.showPopupManually = showPopupManually;

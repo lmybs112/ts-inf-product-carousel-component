@@ -264,8 +264,9 @@ class InfProductCarouselComponent extends HTMLElement {
                 
                 // 檢查點擊的元素是否在 popup 內部
                 if (!popup.contains(event.target)) {
-                    // 檢查是否點擊了顯示彈窗按鈕，如果是則不關閉彈窗
-                    if (event.target.id === 'showPopupBtn' || event.target.closest('#showPopupBtn')) {
+                    // 檢查是否點擊了顯示彈窗按鈕或重置推薦按鈕，如果是則不關閉彈窗
+                    if (event.target.id === 'showPopupBtn' || event.target.closest('#showPopupBtn') ||
+                        event.target.id === 'resetRecomBtn' || event.target.closest('#resetRecomBtn')) {
                         return;
                     }
                     closePopup();
@@ -281,6 +282,24 @@ class InfProductCarouselComponent extends HTMLElement {
             window.showPopup = showPopup;
             window.closePopup = closePopup;
             window.popupautoShow = autoShow; // 保存 autoShow 到全域變數
+            
+            // 添加重置推薦資料的函數
+            window.resetRecom = function() {
+                if (popup) {
+                    // 設置標記，防止自動顯示彈窗
+                    window.resetRecomCalled = true;
+                    
+                    // 觸發重新載入事件，無論彈窗是否顯示都更新資料
+                    const reloadEvent = new CustomEvent('popup-reload-recommendations', {
+                        detail: { popupElement: popup }
+                    });
+                    document.dispatchEvent(reloadEvent);
+                    
+                    console.log('正在重新獲取推薦資料...');
+                } else {
+                    console.log('彈窗元素不存在，無法重置推薦資料');
+                }
+            };
             
             // 根據 autoShow 決定是否自動顯示彈窗
             if (autoShow === true) {
@@ -1496,6 +1515,43 @@ class InfProductCarouselComponent extends HTMLElement {
   getEmbeddedAds(ids, containerId, config) {
     const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
     
+    // 如果是彈窗類型，監聽重新載入事件
+    if (carouselType === 'popup') {
+      document.addEventListener('popup-reload-recommendations', (event) => {
+        console.log('收到重新載入事件，重新調用 API');
+        this.fetchRecommendations(ids, containerId, config);
+      });
+    }
+    
+    // 調用實際的推薦資料獲取函數
+    this.fetchRecommendations(ids, containerId, config);
+  }
+  
+  // 實際的推薦資料獲取函數
+  fetchRecommendations(ids, containerId, config) {
+    const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
+    
+    // 如果是重置推薦，先隱藏當前內容並顯示 loading
+    if (window.resetRecomCalled) {
+      // 隱藏標題區域
+      const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
+      if (textSection) {
+        $(textSection).hide();
+      }
+      
+      // 隱藏輪播容器
+      const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+      if (embeddedContainer) {
+        $(embeddedContainer).hide();
+      }
+      
+      // 顯示 loading
+      const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
+      if (loadingElement) {
+        $(loadingElement).show();
+      }
+    }
+    
     // 調試日誌：確認 displayMode 的值
     // console.log('getEmbeddedAds - displayMode:', displayMode);
     // console.log('getEmbeddedAds - 完整配置:', config);
@@ -1566,7 +1622,7 @@ class InfProductCarouselComponent extends HTMLElement {
         LGVID: "x",
         MRID: "",
         recom_num: "6",
-        PID: document.location.href.split('?')[0].split('/SalePage/Index/')[1],
+        PID:  document.location.href.includes('SalePage/Index/')?document.location.href.split('?')[0].split('/SalePage/Index/')[1]:'10662339',
         SP_PID: "xxSOCIAL PROOF", // FIXME
         SIZEAI_ptr: recommendMode||"bhv",
       }
@@ -1719,8 +1775,8 @@ class InfProductCarouselComponent extends HTMLElement {
           this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
         } else {
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-            // 如果是 popup 模式且為 true 模式，在沒有資料時也要顯示彈窗
-            if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true) {
+            // 如果是 popup 模式且為 true 模式，在沒有資料時也要顯示彈窗（只在初始載入時）
+            if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true && !window.isPopupVisible && !window.resetRecomCalled) {
               window.showPopup();
             }
           });
@@ -1753,6 +1809,10 @@ class InfProductCarouselComponent extends HTMLElement {
     // console.log('updatePopAd - displayMode:', displayMode);
     
     let displayImages = images;
+    
+    // 檢查是否已經存在 Swiper 實例（重置推薦時只更新內容）
+    const existingSwiper = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`).swiper;
+    const isResetRecom = window.resetRecomCalled;
 
     if (images.length === 0) {
       displayImages = [{
@@ -1794,6 +1854,30 @@ class InfProductCarouselComponent extends HTMLElement {
     `).join('');
 
     $(this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`)).html(items);
+
+    // 如果是重置推薦且已存在 Swiper 實例，只更新內容不重新初始化
+    if (isResetRecom && existingSwiper) {
+      // 隱藏 loading 狀態
+      $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
+        // 重新顯示標題區域
+        const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
+        if (textSection) {
+          $(textSection).fadeIn(600);
+        }
+        
+        // 重新顯示輪播容器
+        const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+        if (embeddedContainer) {
+          $(embeddedContainer).show();
+        }
+      });
+      
+      existingSwiper.update();
+      existingSwiper.slideTo(0);
+      // 重置標記
+      window.resetRecomCalled = false;
+      return;
+    }
 
     const swiper = new Swiper(this.shadowRoot.querySelector(`.swiper-basic-${containerId}`), {
       direction: 'horizontal',
@@ -1878,8 +1962,8 @@ class InfProductCarouselComponent extends HTMLElement {
             // 載入完成後顯示文字區域
             $(this.shadowRoot.querySelector(`#${containerId} .text-section`)).css('display', 'flex').hide().fadeIn(600);
             
-            // 如果是 popup 模式且為 true 模式，在 loading 完成後顯示彈窗
-            if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true) {
+            // 如果是 popup 模式且為 true 模式，在 loading 完成後顯示彈窗（只在初始載入時）
+            if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true && !window.isPopupVisible && !window.resetRecomCalled) {
               window.showPopup();
             }
           });
