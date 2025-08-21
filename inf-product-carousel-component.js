@@ -295,7 +295,7 @@ class InfProductCarouselComponent extends HTMLElement {
                     });
                     document.dispatchEvent(reloadEvent);
                     
-                    console.log('正在重新獲取推薦資料...');
+                    // console.log('正在重新獲取推薦資料...');
                 } else {
                     console.log('彈窗元素不存在，無法重置推薦資料');
                 }
@@ -809,16 +809,16 @@ class InfProductCarouselComponent extends HTMLElement {
         --swiper-wrapper-transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
       }
       #${containerId} #recommendation-loading {
-        height: 131.71px;
         display: flex;
         align-items: center;
         justify-content: center;
         width: 100%;
+        min-height: 200px;
         height: 100%;
       }
       @media (min-width: 480px) {
         #${containerId} #recommendation-loading {
-          height: 169.14px;
+          min-height: 250px;
         }
       }
       #${containerId} #recommendation-loading .loading-text {
@@ -1518,7 +1518,7 @@ class InfProductCarouselComponent extends HTMLElement {
     // 如果是彈窗類型，監聽重新載入事件
     if (carouselType === 'popup') {
       document.addEventListener('popup-reload-recommendations', (event) => {
-        console.log('收到重新載入事件，重新調用 API');
+        // console.log('收到重新載入事件，重新調用 API');
         this.fetchRecommendations(ids, containerId, config);
       });
     }
