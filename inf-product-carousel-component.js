@@ -1813,15 +1813,18 @@ if (!customElements.get('inf-product-carousel-component')) {
       
       let displayImages = images;
       
-      // 檢查是否已經存在 Swiper 實例（重置推薦時只更新內容）
-      // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
-      const swiperElement = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`) || 
-                           document.querySelector(`.swiper-basic-${containerId}`);
-      
-      if (!swiperElement) {
-        console.error(`找不到 Swiper 元素: .swiper-basic-${containerId}`);
-        return;
-      }
+             // 檢查是否已經存在 Swiper 實例（重置推薦時只更新內容）
+       // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
+       // 使用更靈活的選擇器，不依賴特定的 containerId
+       const swiperElement = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`) || 
+                            document.querySelector(`.swiper-basic-${containerId}`) ||
+                            this.shadowRoot.querySelector('[class*="swiper-basic-"]') ||
+                            document.querySelector('[class*="swiper-basic-"]');
+       
+       if (!swiperElement) {
+         console.error(`找不到 Swiper 元素，containerId: ${containerId}`);
+         return;
+       }
       
       const existingSwiper = swiperElement.swiper;
       const isResetRecom = window.resetRecomCalled;
@@ -1865,16 +1868,19 @@ if (!customElements.get('inf-product-carousel-component')) {
         </a>
       `).join('');
   
-      // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
-      const swiperWrapper = this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`) || 
-                           document.querySelector(`#swiper-wrapper-basic-${containerId}`);
-      
-      if (swiperWrapper) {
-        $(swiperWrapper).html(items);
-      } else {
-        console.error(`找不到 Swiper wrapper 元素: #swiper-wrapper-basic-${containerId}`);
-        return;
-      }
+             // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
+       // 使用更靈活的選擇器，不依賴特定的 containerId
+       const swiperWrapper = this.shadowRoot.querySelector(`#swiper-wrapper-basic-${containerId}`) || 
+                            document.querySelector(`#swiper-wrapper-basic-${containerId}`) ||
+                            this.shadowRoot.querySelector('[id*="swiper-wrapper-basic-"]') ||
+                            document.querySelector('[id*="swiper-wrapper-basic-"]');
+       
+       if (swiperWrapper) {
+         $(swiperWrapper).html(items);
+       } else {
+         console.error(`找不到 Swiper wrapper 元素，containerId: ${containerId}`);
+         return;
+       }
   
       // 如果是重置推薦且已存在 Swiper 實例，需要重新初始化以確保事件監聽器正常工作
       if (isResetRecom && existingSwiper) {
@@ -1910,16 +1916,19 @@ if (!customElements.get('inf-product-carousel-component')) {
       this.initializeSwiper(containerId, autoplay, sortedBreakpoints, displayMode);
     }
   
-    // 將 Swiper 初始化邏輯提取為獨立方法
-    initializeSwiper(containerId, autoplay, sortedBreakpoints, displayMode) {
-      // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
-      const swiperElement = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`) || 
-                           document.querySelector(`.swiper-basic-${containerId}`);
-      
-      if (!swiperElement) {
-        console.error(`找不到 Swiper 元素進行初始化: .swiper-basic-${containerId}`);
-        return;
-      }
+         // 將 Swiper 初始化邏輯提取為獨立方法
+     initializeSwiper(containerId, autoplay, sortedBreakpoints, displayMode) {
+       // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
+       // 使用更靈活的選擇器，不依賴特定的 containerId
+       const swiperElement = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`) || 
+                            document.querySelector(`.swiper-basic-${containerId}`) ||
+                            this.shadowRoot.querySelector('[class*="swiper-basic-"]') ||
+                            document.querySelector('[class*="swiper-basic-"]');
+       
+       if (!swiperElement) {
+         console.error(`找不到 Swiper 元素進行初始化，containerId: ${containerId}`);
+         return;
+       }
       
       const swiper = new Swiper(swiperElement, {
         direction: 'horizontal',
@@ -1957,14 +1966,17 @@ if (!customElements.get('inf-product-carousel-component')) {
         observeParents: true,
                 on: {
           init: () => {
-            // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
-            const swiperEl = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`) || 
-                             document.querySelector(`.swiper-basic-${containerId}`);
-            
-            if (!swiperEl) {
-              console.error(`找不到 Swiper 元素進行事件綁定: .swiper-basic-${containerId}`);
-              return;
-            }
+                         // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
+             // 使用更靈活的選擇器，不依賴特定的 containerId
+             const swiperEl = this.shadowRoot.querySelector(`.swiper-basic-${containerId}`) || 
+                              document.querySelector(`.swiper-basic-${containerId}`) ||
+                              this.shadowRoot.querySelector('[class*="swiper-basic-"]') ||
+                              document.querySelector('[class*="swiper-basic-"]');
+             
+             if (!swiperEl) {
+               console.error(`找不到 Swiper 元素進行事件綁定，containerId: ${containerId}`);
+               return;
+             }
             
             let isDragging = false;
             let moved = false;
@@ -2001,13 +2013,20 @@ if (!customElements.get('inf-product-carousel-component')) {
               });
             }
   
-            // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
-            const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`) || 
-                                  document.querySelector(`#${containerId} #recommendation-loading`);
-            const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`) || 
-                                     document.querySelector(`#${containerId} .infEmbeddedAdContainer`);
-            const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`) || 
-                               document.querySelector(`#${containerId} .text-section`);
+                         // 修復：當組件被 append 到外部容器時，需要從外部 DOM 查找元素
+             // 使用更靈活的選擇器，不依賴特定的 containerId
+             const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`) || 
+                                   document.querySelector(`#${containerId} #recommendation-loading`) ||
+                                   this.shadowRoot.querySelector('#recommendation-loading') ||
+                                   document.querySelector('#recommendation-loading');
+             const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`) || 
+                                      document.querySelector(`#${containerId} .infEmbeddedAdContainer`) ||
+                                      this.shadowRoot.querySelector('.infEmbeddedAdContainer') ||
+                                      document.querySelector('.infEmbeddedAdContainer');
+             const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`) || 
+                                document.querySelector(`#${containerId} .text-section`) ||
+                                this.shadowRoot.querySelector('.text-section') ||
+                                document.querySelector('.text-section');
             
             if (loadingElement) {
               $(loadingElement).fadeOut(400, () => {
