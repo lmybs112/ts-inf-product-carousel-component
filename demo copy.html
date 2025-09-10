@@ -22,6 +22,17 @@
     <div id="infFitsContent">
         <h1>頁面內容</h1>
         <p>這是一個示例頁面內容</p>
+        <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+            <h3>SKU 自動判斷功能測試</h3>
+            <p><strong>當前 URL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>自動判斷結果:</strong> <span id="autoDetectedSku"></span></p>
+            <p><strong>說明:</strong></p>
+            <ul>
+                <li>如果 URL 包含 <code>/SalePage/Index/</code> → 自動使用 <code>app91_sku</code></li>
+                <li>其他情況 → 自動使用 <code>shopline_sku</code></li>
+                <li>也可以手動設定 <code>skuContent</code> 來覆蓋自動判斷</li>
+            </ul>
+        </div>
     </div>
 
     <div id="infFitsFooter">
@@ -32,6 +43,24 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         function init() {
+            // 顯示當前 URL 和自動判斷結果
+            function showAutoDetection() {
+                const currentUrl = document.location.href;
+                const hasSalePageIndex = currentUrl.includes('/SalePage/Index/');
+                const autoDetectedSku = hasSalePageIndex ? 'app91_sku' : 'shopline_sku';
+                
+                document.getElementById('currentUrl').textContent = currentUrl;
+                document.getElementById('autoDetectedSku').textContent = autoDetectedSku;
+                
+                console.log('URL 自動判斷結果:', {
+                    url: currentUrl,
+                    hasSalePageIndex: hasSalePageIndex,
+                    detectedSku: autoDetectedSku
+                });
+            }
+            
+            // 執行自動判斷顯示
+            showAutoDetection();
 
             function insertInfFitsHeader() {
                 const headerHtml = '<div id="infFitsFooter"></div>';
@@ -54,7 +83,10 @@
                     "carousels": [{
                         "type": "product",
                         "hide_size": true,
-                        "skuContent": "app91_sku", // 測試 skuContent 配置：可設定為 'app91_sku' 或 'shopline_sku'
+                        // "skuContent": "app91_sku", // 手動設定：可設定為 'app91_sku' 或 'shopline_sku'
+                        // 如果不設定，會自動判斷：
+                        // - URL 包含 '/SalePage/Index/' → 自動使用 'app91_sku'
+                        // - 其他情況 → 自動使用 'shopline_sku'
                         "showPositionId": {
                             "top": "infFitsFooter"
                         }

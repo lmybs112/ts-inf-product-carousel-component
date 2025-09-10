@@ -487,7 +487,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         hide_discount: false,
         hide_size: false,
         ctype_val: ['underwear'],
-        skuContent: 'shopline_sku', // 新增：預設使用 shopline_sku，可設定為 'app91_sku' 或 'shopline_sku'
+        skuContent: this.getDefaultSkuContent(), // 新增：自動判斷預設 SKU 方法
         bid: {
           HV: '163',
           WV: '50',
@@ -690,6 +690,21 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
       }
       return member_id;
+    }
+
+    // 新增：自動判斷預設 SKU 方法
+    getDefaultSkuContent() {
+      try {
+        // 檢查當前 URL 是否包含 '/SalePage/Index/'
+        if (document.location.href.includes('/SalePage/Index/')) {
+          return 'app91_sku';
+        } else {
+          return 'shopline_sku';
+        }
+      } catch (error) {
+        console.error('getDefaultSkuContent 判斷錯誤:', error);
+        return 'shopline_sku'; // 發生錯誤時使用預設值
+      }
     }
   
     plain_me_sku() {
