@@ -2033,6 +2033,7 @@ if (!customElements.get('inf-product-carousel-component')) {
                 if (embeddedContainer) {
                   // 強制設定 display: block 來覆蓋 CSS 規則
                   embeddedContainer.style.setProperty('display', 'block', 'important');
+                  loadingElement.style.setProperty('display', 'none', 'important');
                 }
                 
                 // 載入完成後顯示文字區域

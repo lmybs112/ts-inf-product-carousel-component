@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產品輪播組件 Demo</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+</style>
+
+<body>
+    <div id="infFitsHeader">
+        <h2>頂部廣告區域</h2>
+    </div>
+
+    <div id="infFitsContent">
+        <h1>頁面內容</h1>
+        <p>這是一個示例頁面內容</p>
+    </div>
+
+    <div id="infFitsFooter">
+        <h2>底部廣告區域</h2>
+    </div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        function init() {
+
+            function insertInfFitsHeader() {
+                const headerHtml = '<div id="infFitsFooter"></div>';
+
+                if ($('.CustomPage').length > 0) {
+                    $('.CustomPage').append(headerHtml);
+                }
+            }
+
+            // 呼叫
+            insertInfFitsHeader();
+
+            const script = document.createElement('script');
+            // script.src = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-component.js';
+            script.src = './inf-product-carousel-component.js';
+            script.defer = true;
+            script.onload = function () {
+                const config = {
+                    "brand": "VER",
+                    "carousels": [{
+                        "type": "product",
+                        "hide_size": true,
+                        "showPositionId": {
+                            "top": "infFitsFooter"
+                        }
+                    }]
+                };
+                config.carousels.forEach(carousel => {
+                    const productCarouselconfig = {
+                        brand: config.brand,
+                        carousel
+                    };
+                    if (typeof window.initInfProductCarouselComponent === 'function') {
+                        window.initInfProductCarouselComponent(productCarouselconfig);
+                    } else {
+                        console.error('initInfProductCarouselComponent 未定義');
+                    }
+                });
+            };
+            document.body.appendChild(script);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+
+</html>
