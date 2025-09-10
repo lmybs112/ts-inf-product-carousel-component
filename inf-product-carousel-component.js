@@ -701,7 +701,9 @@ if (!customElements.get('inf-product-carousel-component')) {
     }
   
     shopline_sku() {
-      return '627b5ab044a027000fde0add';
+        var data = document.documentElement.innerHTML
+        var skuContent = data.split('"sku":"')[1].split('"')[0].split(':')[0]
+        return skuContent
     }
   
     ensureEmbeddedAdJQueryLoaded(callback) {
