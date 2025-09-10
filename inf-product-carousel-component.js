@@ -358,6 +358,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         const mergedConfig = {
           ...config,
           ...convertedBrandConfig,
+          ...carousel, // 新增：確保 carousel 配置（包括 skuContent）被包含
           brandConfig: brandConfig, // 保留原始 brandConfig 供其他地方使用
           carouselType: carousel.type // 添加 carousel 類型
         };
@@ -411,6 +412,10 @@ if (!customElements.get('inf-product-carousel-component')) {
       // background
       if (config.carousel.backgroundColor) {
         convertedConfig.backgroundColor = config.carousel.backgroundColor;
+      }
+      // skuContent
+      if (config.carousel.skuContent) {
+        convertedConfig.skuContent = config.carousel.skuContent;
       }
   
       // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
