@@ -726,10 +726,10 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
         }
         
-        return skuContent || 'default_sku'; // 如果解析失敗，返回預設值
+        return skuContent || ''; // 如果解析失敗，返回空字串
       } catch (error) {
         console.error('plain_me_sku 解析錯誤:', error);
-        return 'default_sku'; // 發生錯誤時返回預設值
+        return ''; // 發生錯誤時返回空字串
       }
     }
 
@@ -739,15 +739,15 @@ if (!customElements.get('inf-product-carousel-component')) {
             
             // 檢查是否找到 '/SalePage/Index/' 路徑
             if (urlParts.length < 2) {
-                console.warn('app91_sku: URL 中找不到 "/SalePage/Index/" 路徑，使用預設值');
-                return 'default_sku'; // 返回預設值
+                console.warn('app91_sku: URL 中找不到 "/SalePage/Index/" 路徑，返回空字串');
+                return ''; // 返回空字串
             }
             
             var skuContent = urlParts[1]
-            return skuContent || 'default_sku'; // 如果解析失敗，返回預設值
+            return skuContent || ''; // 如果解析失敗，返回空字串
         } catch (error) {
             console.error('app91_sku 解析錯誤:', error);
-            return 'default_sku'; // 發生錯誤時返回預設值
+            return ''; // 發生錯誤時返回空字串
         }
     }
 
@@ -758,15 +758,15 @@ if (!customElements.get('inf-product-carousel-component')) {
         
         // 檢查是否找到 "sku":" 字串
         if (skuParts.length < 2) {
-          console.warn('shopline_sku: 在頁面中找不到 "sku":" 字串，使用預設值');
-          return 'default_sku'; // 返回預設值
+          console.warn('shopline_sku: 在頁面中找不到 "sku":" 字串，返回空字串');
+          return ''; // 返回空字串
         }
         
         var skuContent = skuParts[1].split('"')[0].split(':')[0]
-        return skuContent || 'default_sku'; // 如果解析失敗，返回預設值
+        return skuContent || ''; // 如果解析失敗，返回空字串
       } catch (error) {
         console.error('shopline_sku 解析錯誤:', error);
-        return 'default_sku'; // 發生錯誤時返回預設值
+        return ''; // 發生錯誤時返回空字串
       }
     }
 
