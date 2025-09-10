@@ -482,6 +482,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         hide_discount: false,
         hide_size: false,
         ctype_val: ['underwear'],
+        skuContent: 'shopline_sku', // 新增：預設使用 shopline_sku，可設定為 'app91_sku' 或 'shopline_sku'
         bid: {
           HV: '163',
           WV: '50',
@@ -548,7 +549,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         recommendMode,
         autoplay,
         arrowPosition,
-        customPadding
+        customPadding,
+        skuContent // 新增：從配置中取得 skuContent 設定
       } = finalConfig;
       // console.error('finalConfig-----', finalConfig);
   
@@ -561,7 +563,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         }, {});
   
             const Brand = brand;
-      const skuContent = this.shopline_sku();
+      // 修改：根據 skuContent 設定選擇對應的方法
+      const skuContentValue = skuContent === 'app91_sku' ? this.app91_sku() : this.shopline_sku();
       const show_up_position_before = `#${containerId}`;
       const test = 'A';
       let GA4Key = '';
@@ -598,7 +601,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         arrowPosition,
         customPadding,
         sortedBreakpoints,
-        skuContent,
+        skuContent: skuContentValue, // 修改：傳遞實際的 skuContent 值
+        skuContentType: skuContent, // 新增：傳遞 skuContent 類型供後續使用
         show_up_position_before,
         test,
         GA4Key,
@@ -684,28 +688,68 @@ if (!customElements.get('inf-product-carousel-component')) {
     }
   
     plain_me_sku() {
-      let skuContent;
-      const metaTag = document.querySelector('meta[property="og:sku"]');
-      if (metaTag) {
-        skuContent = metaTag.getAttribute('content').split('-')[0];
-      } else if (document.querySelector('.prodnoBox') !== null) {
-        skuContent = document.querySelector('.prodnoBox').innerText.split(':')[1].split('-')[0];
-      } else {
-        // Meta tag not found
+      try {
+        let skuContent;
+        const metaTag = document.querySelector('meta[property="og:sku"]');
+        if (metaTag) {
+          const content = metaTag.getAttribute('content');
+          if (content) {
+            skuContent = content.split('-')[0];
+          }
+        } else if (document.querySelector('.prodnoBox') !== null) {
+          const prodnoBox = document.querySelector('.prodnoBox');
+          if (prodnoBox && prodnoBox.innerText) {
+            const textParts = prodnoBox.innerText.split(':');
+            if (textParts.length > 1) {
+              skuContent = textParts[1].split('-')[0];
+            }
+          }
+        }
+        
+        return skuContent || 'default_sku'; // 如果解析失敗，返回預設值
+      } catch (error) {
+        console.error('plain_me_sku 解析錯誤:', error);
+        return 'default_sku'; // 發生錯誤時返回預設值
       }
-      return skuContent;
     }
-  
+
     app91_sku() {
-      return document.location.href.split('?')[0].split('/SalePage/Index/')[1];
+        try {
+            var urlParts = document.location.href.split('?')[0].split('/SalePage/Index/')
+            
+            // 檢查是否找到 '/SalePage/Index/' 路徑
+            if (urlParts.length < 2) {
+                console.warn('app91_sku: URL 中找不到 "/SalePage/Index/" 路徑，使用預設值');
+                return 'default_sku'; // 返回預設值
+            }
+            
+            var skuContent = urlParts[1]
+            return skuContent || 'default_sku'; // 如果解析失敗，返回預設值
+        } catch (error) {
+            console.error('app91_sku 解析錯誤:', error);
+            return 'default_sku'; // 發生錯誤時返回預設值
+        }
     }
-  
+
     shopline_sku() {
+      try {
         var data = document.documentElement.innerHTML
-        var skuContent = data.split('"sku":"')[1].split('"')[0].split(':')[0]
-        return skuContent
+        var skuParts = data.split('"sku":"')
+        
+        // 檢查是否找到 "sku":" 字串
+        if (skuParts.length < 2) {
+          console.warn('shopline_sku: 在頁面中找不到 "sku":" 字串，使用預設值');
+          return 'default_sku'; // 返回預設值
+        }
+        
+        var skuContent = skuParts[1].split('"')[0].split(':')[0]
+        return skuContent || 'default_sku'; // 如果解析失敗，返回預設值
+      } catch (error) {
+        console.error('shopline_sku 解析錯誤:', error);
+        return 'default_sku'; // 發生錯誤時返回預設值
+      }
     }
-  
+
     ensureEmbeddedAdJQueryLoaded(callback) {
       if (typeof jQuery === 'undefined') {
         const script = document.createElement('script');
@@ -761,6 +805,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         customPadding,
         sortedBreakpoints,
         skuContent,
+        skuContentType, // 新增：從 config 中取得 skuContentType
         show_up_position_before,
         test,
         GA4Key,
@@ -1279,7 +1324,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       shadowRoot.appendChild(customCSS);
   
       $(() => {
-        let ids = this.ids_init();
+        let ids = this.ids_init(skuContentType || 'shopline_sku'); // 修改：傳遞 skuContentType
   
         const embeddedContainer = `
         <div class="embeddedAdContainer__wrapper">
@@ -1480,7 +1525,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       });
     }
   
-    ids_init() {
+    ids_init(skuContentType = 'shopline_sku') {
       const makeid = (length) => {
         let result = '';
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -1490,11 +1535,11 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
         return result;
       };
-  
+
       let member_id = this.member_id_Shopline();
       let lgiven_id = '';
       let lgvid_exist = false;
-  
+
       try {
         if (typeof localStorage['LGVID'] !== 'undefined') {
           lgvid_exist = true;
@@ -1502,18 +1547,21 @@ if (!customElements.get('inf-product-carousel-component')) {
       } catch (e) {
         lgvid_exist = false;
       }
-  
+
       if (lgvid_exist) {
         lgiven_id = localStorage['LGVID'];
       } else {
         lgiven_id = makeid(20);
         localStorage.setItem('LGVID', lgiven_id);
       }
-  
+
+      // 修改：根據 skuContentType 參數選擇對應的方法
+      const skuContentValue = skuContentType === 'app91_sku' ? this.app91_sku() : this.shopline_sku();
+
       return {
         member_id,
         lgiven_id,
-        skuContent: this.shopline_sku()
+        skuContent: skuContentValue
       };
     }
   
