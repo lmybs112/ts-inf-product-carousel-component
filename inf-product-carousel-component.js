@@ -1656,9 +1656,10 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
   
       if (!hide_size) {
-        requestData.SIZEAI = 'True';
+        // requestData.SIZEAI = 'True';
       }
       if (bid) {
+        requestData.SIZEAI = 'True';
         requestData.bid = bid;
       }
   
@@ -1702,9 +1703,10 @@ if (!customElements.get('inf-product-carousel-component')) {
           SIZEAI_ptr: recommendMode||"bhv",
         }
         if (!hide_size) {
-          requestPopupData.SIZEAI = 'True';
+          // requestPopupData.SIZEAI = 'True';
         }
         if (bid) {
+          requestPopupData.SIZEAI = 'True';
           requestPopupData.bid = bid;
         }
         fetchOptions = {
@@ -1849,7 +1851,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
   
           if (jsonData.length > 0) {
-            this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode);
+            this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size);
           } else {
             $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
               // 如果是 popup 模式且為 true 模式，在沒有資料時也要顯示彈窗（只在初始載入時）
@@ -1881,7 +1883,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         });
     }
   
-    updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode) {
+    updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode, hide_size) {
       // 調試日誌：確認 updatePopAd 中的 displayMode 值
       // console.log('updatePopAd - displayMode:', displayMode);
       
@@ -1918,7 +1920,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         <a class="embeddedItem swiper-slide" href="${img.link}" target="_blank" data-title="${img.title}" data-link="${img.link}">
           <div class="embeddedItem__img" style="position: relative;">
             <div class="embeddedItem__imgBox" style="background-color: #efefef;">
-              ${img.size_tag ? `<div class="embeddedItem__sizeTag">${img.size_tag}</div>` : ''}
+              ${img.size_tag && !hide_size ? `<div class="embeddedItem__sizeTag">${img.size_tag}</div>` : ''}
               <img loading="lazy" src="${img.image_link}" alt="${img.description}" style="width: 100%; height: auto; object-fit: cover;">
             </div>
           </div>
