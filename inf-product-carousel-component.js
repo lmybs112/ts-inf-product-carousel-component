@@ -1657,6 +1657,8 @@ if (!customElements.get('inf-product-carousel-component')) {
   
       if (!hide_size) {
         requestData.SIZEAI = 'True';
+      }
+      if (bid) {
         requestData.bid = bid;
       }
   
@@ -1701,6 +1703,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
         if (!hide_size) {
           requestPopupData.SIZEAI = 'True';
+        }
+        if (bid) {
           requestPopupData.bid = bid;
         }
         fetchOptions = {
