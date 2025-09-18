@@ -1922,33 +1922,41 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 如果需要添加額外的項目，則添加它們
       if (this.needsMoreSlides && this.additionalSlidesCount > 0) {
         if (this.slideGenerationStrategy === 'duplicate' && displayImages.length > 0) {
-          // 重複現有項目
+          // 使用更聰明的重複策略
           const originalItems = [...displayImages];
-          let addedCount = 0;
-          let sourceIndex = 0;
+          const originalCount = originalItems.length;
           
-          while (addedCount < this.additionalSlidesCount) {
-            const sourceItem = originalItems[sourceIndex % originalItems.length];
-            displayImages.push({
-              ...sourceItem,
-              isDuplicateSlide: true // 標記為重複項目
-            });
-            addedCount++;
-            sourceIndex++;
+          // 計算需要重複多少輪才能達到目標數量
+          const totalNeeded = originalCount + this.additionalSlidesCount;
+          const rounds = Math.ceil(totalNeeded / originalCount);
+          
+          // 重複原始項目直到達到所需數量
+          for (let round = 1; round < rounds; round++) {
+            for (let i = 0; i < originalCount && displayImages.length < totalNeeded; i++) {
+              const sourceItem = originalItems[i];
+              displayImages.push({
+                ...sourceItem,
+                isDuplicateSlide: true,
+                duplicateRound: round, // 標記是第幾輪重複
+                originalIndex: i // 標記原始索引
+              });
+            }
           }
-          console.log(`已重複添加 ${addedCount} 個項目，總項目數：${displayImages.length}`);
+          
+          console.log(`已重複添加項目，總項目數：${displayImages.length}，重複輪數：${rounds - 1}`);
           
         } else if (this.slideGenerationStrategy === 'blank') {
-          // 添加空白項目
+          // 添加空白項目，但確保它們有足夠的變化來避免 Swiper 混淆
           for (let i = 0; i < this.additionalSlidesCount; i++) {
             displayImages.push({
               link: '#',
               title: '',
-              image_link: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJyZ2JhKDAsMCwwLDAuMDUpIi8+PC9zdmc+',
-              description: '空白項目',
+              image_link: `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJyZ2JhKDAsMCwwLDAuMDUpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPiR7aSArIDF9PC90ZXh0Pjwvc3ZnPg==`,
+              description: `空白項目 ${i + 1}`,
               price: '',
               sale_price: null,
-              isBlankSlide: true // 標記為空白項目
+              isBlankSlide: true,
+              blankIndex: i // 標記空白項目索引，確保每個都不同
             });
           }
           console.log(`已添加 ${this.additionalSlidesCount} 個空白項目，總項目數：${displayImages.length}`);
@@ -2068,8 +2076,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           // 計算所需的最小項目數量（考慮小數 slidesPerView）
           const requiredSlides = Math.ceil(slidesPerView);
           
-          // 為了 loop 正常工作，需要至少是 slidesPerView 的 2-3 倍項目
-          const idealSlideCount = Math.max(6, Math.ceil(slidesPerView * 2.5));
+          // 為了 loop 正常工作，需要至少是 slidesPerView 的 3-4 倍項目
+          // 確保有足夠的項目來處理各種滑動情況
+          const idealSlideCount = Math.max(8, Math.ceil(slidesPerView * 3));
           
           if (itemCount < idealSlideCount) {
             // 項目數量不足時的處理策略
@@ -2134,7 +2143,10 @@ if (!customElements.get('inf-product-carousel-component')) {
       const smallestConfig = sortedBreakpoints[smallestBreakpoint] || {};
       
       const shouldEnableLoop = smallestConfig.loop !== false;
-      const loopedSlides = smallestConfig.loopedSlides;
+      // 動態計算 loopedSlides，確保它與實際項目數量匹配
+      const actualSlideCount = this.shadowRoot.querySelectorAll('.swiper-slide').length || 
+                              document.querySelectorAll(`#${containerId} .swiper-slide`).length;
+      const loopedSlides = smallestConfig.loopedSlides || Math.min(actualSlideCount, Math.max(6, actualSlideCount));
       const loopFillGroupWithBlank = smallestConfig.loopFillGroupWithBlank !== false;
       
       const swiperConfig = {
@@ -2175,8 +2187,9 @@ if (!customElements.get('inf-product-carousel-component')) {
       };
       
       // 如果有 loopedSlides 配置，添加到 swiperConfig 中
-      if (loopedSlides) {
+      if (loopedSlides && shouldEnableLoop) {
         swiperConfig.loopedSlides = loopedSlides;
+        console.log(`設置 loopedSlides: ${loopedSlides}，實際項目數: ${actualSlideCount}`);
       }
       
       const swiper = new Swiper(swiperElement, {
