@@ -1753,7 +1753,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               }
               return acc;
             }, {});
-  
+            
             if (response['bhv']) {
               response['bhv'].forEach(item => {
                 item.size_tag = size_tag[item.id];
@@ -1788,23 +1788,25 @@ if (!customElements.get('inf-product-carousel-component')) {
               return newItem;
             });
           } else {
+            const sizeAiPtrValidSetting = JSON.parse(fetchOptions.body).SIZEAI_ptr;
+            const sizeAiPtrValid = sizeAiPtrValidSetting ? sizeAiPtrValidSetting.split(',').map(s => s.trim()) : ['bhv'];
             // 根據 displayMode 決定資料來源順序
             if (displayMode === 'SaleRate') {
               // SaleRate 模式：優先使用 bhv 或 corr，然後是 sp_atc 或 sp_trans
               let sourceData = [];
               
-              // 優先取用 bhv 或 corr
-              if (response['bhv'] && response['bhv'].length > 0) {
+              // 優先取用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
+              if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
                 sourceData = response['bhv'];
-              } else if (response['corr'] && response['corr'].length > 0) {
+              } else if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
                 sourceData = response['corr'];
               }
               
-              // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans
+              // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans（需檢查是否在 sizeAiPtrValid 中）
               if (sourceData.length === 0) {
-                if (response['sp_atc'] && response['sp_atc'].length > 0) {
+                if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
                   sourceData = response['sp_atc'];
-                } else if (response['sp_trans'] && response['sp_trans'].length > 0) {
+                } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
                   sourceData = response['sp_trans'];
                 }
               }
@@ -1819,12 +1821,12 @@ if (!customElements.get('inf-product-carousel-component')) {
                 });
               }
             } else if (displayMode === 'SocialProofNum') {
-              // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr
+              // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
               let sourceData = [];
               
-              if (response['sp_atc'] && response['sp_atc'].length > 0) {
+              if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
                 sourceData = response['sp_atc'];
-              } else if (response['sp_trans'] && response['sp_trans'].length > 0) {
+              } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
                 sourceData = response['sp_trans'];
               }
               
@@ -1838,8 +1840,8 @@ if (!customElements.get('inf-product-carousel-component')) {
                 });
               }
             } else {
-              // 其他模式：使用預設的 bhv 資料
-              if (response['bhv'] && response['bhv'].length > 0) {
+              // 其他模式：使用預設的 bhv 資料（需檢查是否在 sizeAiPtrValid 中）
+              if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
                 jsonData = getRandomElements(response['bhv'], response['bhv'].length > 12 ? 12 : response['bhv'].length).map(item => {
                   let newItem = Object.assign({}, item);
                   newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
@@ -1854,10 +1856,8 @@ if (!customElements.get('inf-product-carousel-component')) {
             this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size);
           } else {
             $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-              // 如果是 popup 模式且為 true 模式，在沒有資料時也要顯示彈窗（只在初始載入時）
-              if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true && !window.isPopupVisible && !window.resetRecomCalled) {
-                window.showPopup();
-              }
+              // sourceData 為空時不顯示 popup
+              // console.log('sourceData 為空，不顯示 popup');
             });
             if (containerId === 'personalized-recommendations') {
               $('#jump-recom').hide();
@@ -1943,7 +1943,7 @@ if (!customElements.get('inf-product-carousel-component')) {
             }
           }
           
-          console.log(`已重複添加項目，總項目數：${displayImages.length}，重複輪數：${rounds - 1}`);
+          // console.log(`已重複添加項目，總項目數：${displayImages.length}，重複輪數：${rounds - 1}`);
           
         } else if (this.slideGenerationStrategy === 'blank') {
           // 添加空白項目，但確保它們有足夠的變化來避免 Swiper 混淆
@@ -2085,7 +2085,22 @@ if (!customElements.get('inf-product-carousel-component')) {
             
             const neededSlides = idealSlideCount - itemCount;
             
-            if (neededSlides > 0) {
+            // 檢查是否連一輪都不足（項目數量小於 slidesPerView）
+            if (itemCount < requiredSlides) {
+              // 連一輪都不足，移除 loop 功能
+              this.needsMoreSlides = false;
+              this.additionalSlidesCount = 0;
+              this.slideGenerationStrategy = 'none';
+              
+              // 移除 loop 功能
+              config.loop = false;
+              config.loopFillGroupWithBlank = false;
+              
+              // 調整阻力比例，提供更好的邊界反饋
+              config.resistanceRatio = 0.85;
+              
+            } else if (neededSlides > 0) {
+              // 有足夠項目顯示一輪，但不足理想數量，可以使用重複或空白策略
               this.needsMoreSlides = true;
               this.additionalSlidesCount = Math.max(this.additionalSlidesCount, neededSlides);
               
@@ -2097,25 +2112,25 @@ if (!customElements.get('inf-product-carousel-component')) {
                 // 如果項目太少，添加空白項目
                 this.slideGenerationStrategy = 'blank';
               }
+              
+              // 保持 loop 功能
+              config.loop = true;
+              config.loopFillGroupWithBlank = true;
+              
+              // 調整阻力比例
+              config.resistanceRatio = 0.5;
             }
-            
-            // 保持 loop 功能
-            config.loop = true;
-            config.loopFillGroupWithBlank = true;
             
             // 調整 slidesPerGroup 避免跳躍過多
             if (config.slidesPerGroup && config.slidesPerGroup > itemCount) {
               config.slidesPerGroup = Math.max(1, Math.min(config.slidesPerGroup, Math.floor(itemCount / 2) || 1));
             }
             
-            // 調整阻力比例
-            config.resistanceRatio = 0.5;
-            
-            console.log(`處理項目不足：斷點 ${breakpoint}，原始項目 ${itemCount}，需要添加 ${neededSlides} 個項目，策略：${this.slideGenerationStrategy}`);
+            // console.log(`處理項目不足：斷點 ${breakpoint}，原始項目 ${itemCount}，需要添加 ${neededSlides} 個項目，策略：${this.slideGenerationStrategy}`);
             
           } else {
             // 項目數量充足，保持原有配置
-            console.log(`項目數量充足：斷點 ${breakpoint}，項目數量 ${itemCount}，slidesPerView ${slidesPerView}，保持原有配置`);
+            // console.log(`項目數量充足：斷點 ${breakpoint}，項目數量 ${itemCount}，slidesPerView ${slidesPerView}，保持原有配置`);
           }
         }
       });
@@ -2189,7 +2204,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 如果有 loopedSlides 配置，添加到 swiperConfig 中
       if (loopedSlides && shouldEnableLoop) {
         swiperConfig.loopedSlides = loopedSlides;
-        console.log(`設置 loopedSlides: ${loopedSlides}，實際項目數: ${actualSlideCount}`);
+        // console.log(`設置 loopedSlides: ${loopedSlides}，實際項目數: ${actualSlideCount}`);
       }
       
       const swiper = new Swiper(swiperElement, {
