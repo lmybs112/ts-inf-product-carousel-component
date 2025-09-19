@@ -1658,7 +1658,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       if (!hide_size) {
         // requestData.SIZEAI = 'True';
       }
-      if (bid) {
+      if (bid && brand.toLocaleUpperCase() !== 'DABE') {
         requestData.SIZEAI = 'True';
         requestData.bid = bid;
       }
