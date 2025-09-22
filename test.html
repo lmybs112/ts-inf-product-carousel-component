@@ -753,6 +753,7 @@
                     <button class="config-btn secondary" id="exportConfigBtn">匯出配置</button>
                     <button class="config-btn secondary" id="showPopupBtn">顯示彈窗</button>
                     <button class="config-btn secondary" id="resetRecomBtn">重置推薦</button>
+                    <button class="config-btn secondary" id="resetRecomFullBidBtn">重置推薦(完整 bid)</button>
                 </div>
             </div>
 
@@ -1802,6 +1803,49 @@ if (document.readyState === 'loading') {
                 if (typeof window.resetRecom === 'function') {
                     window.resetRecom();
                     showSuccess('推薦資料已重置！');
+                } else {
+                    showError('resetRecom 函數未定義！');
+                }
+            });
+            
+            // 新增：測試 resetRecom 完整覆蓋 bid 功能
+            document.getElementById('resetRecomFullBidBtn').addEventListener('click', () => {
+                if (typeof window.resetRecom === 'function') {
+                    // 測試用的完整 bid 參數範例
+                    const fullTestBid = {
+                        "HV": "23.5",
+  "WV": "0",
+  "CC": "",
+  "DataItem": "0010",
+  "ClothSize": "",
+  "GVID": "INF",
+  "Sizes": "",
+  "Brand": "CLARKS",
+  "ml_out": "",
+  "Hip": "1-cm",
+  "TID": "162410.45086",
+  "FitP": "2,2,2,2",
+  "LGVID": "INF",
+  "ga_id": "INF",
+  "MRID": "INF",
+  "Gender": "F",
+  "Waist": "1-cm",
+  "ClothID": "",
+  "FMLpath": "FMLSep",
+  "Shoulder": "1-cm",
+  "AvatarSizeSCWH": "",
+  "Transaction": "34",
+  "comment": "try_on_report_online",
+  "ORDERID": "",
+  "DnChest": "1-cm",
+  "UpChest": "1-cm",
+  "SHOES_MODE": "1",
+  "FOOT_CIRCUM": "20",
+  "CALF_CIRCUM": "30.4"
+                    };
+                    
+                    window.resetRecom(fullTestBid);
+                    showSuccess('推薦資料已重置（完整 bid 配置）！<br>已更新所有 bid 參數');
                 } else {
                     showError('resetRecom 函數未定義！');
                 }

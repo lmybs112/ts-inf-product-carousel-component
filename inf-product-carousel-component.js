@@ -266,7 +266,9 @@ if (!customElements.get('inf-product-carousel-component')) {
                   if (!popup.contains(event.target)) {
                       // 檢查是否點擊了顯示彈窗按鈕或重置推薦按鈕，如果是則不關閉彈窗
                       if (event.target.id === 'showPopupBtn' || event.target.closest('#showPopupBtn') ||
-                          event.target.id === 'resetRecomBtn' || event.target.closest('#resetRecomBtn')) {
+                          event.target.id === 'resetRecomBtn' || event.target.closest('#resetRecomBtn') ||
+                          event.target.id === 'resetRecomWithBidBtn' || event.target.closest('#resetRecomWithBidBtn') ||
+                          event.target.id === 'resetRecomFullBidBtn' || event.target.closest('#resetRecomFullBidBtn')) {
                           return;
                       }
                       closePopup();
@@ -284,16 +286,23 @@ if (!customElements.get('inf-product-carousel-component')) {
               window.popupautoShow = autoShow; // 保存 autoShow 到全域變數
               
               // 添加重置推薦資料的函數
-              window.resetRecom = function() {
+              window.resetRecom = function(newBid) {
                   if (popup) {
                       // 設置標記，防止自動顯示彈窗
                       window.resetRecomCalled = true;
                       
-                      // 觸發重新載入事件，無論彈窗是否顯示都更新資料
+                      // 觸發重新載入事件，將 newBid 參數傳遞給 fetchRecommendations
                       const reloadEvent = new CustomEvent('popup-reload-recommendations', {
-                          detail: { popupElement: popup }
+                          detail: { 
+                              popupElement: popup,
+                              newBid: newBid  // 將 newBid 參數傳遞給事件
+                          }
                       });
                       document.dispatchEvent(reloadEvent);
+                      
+                      if (newBid && typeof newBid === 'object') {
+                          console.log('已傳遞新的 bid 配置：', newBid);
+                      }
                       
                       // console.log('正在重新獲取推薦資料...');
                   } else {
@@ -1592,7 +1601,19 @@ if (!customElements.get('inf-product-carousel-component')) {
       if (carouselType === 'popup') {
         document.addEventListener('popup-reload-recommendations', (event) => {
           // console.log('收到重新載入事件，重新調用 API');
-          this.fetchRecommendations(ids, containerId, config);
+          const newBid = event.detail?.newBid;
+          
+          // 如果有新的 bid 配置，創建更新後的 config
+          let updatedConfig = config;
+          if (newBid && typeof newBid === 'object') {
+            updatedConfig = {
+              ...config,
+              bid: newBid  // 完全覆蓋原始 bid 配置
+            };
+            console.log('使用新的 bid 配置重新載入推薦：', newBid);
+          }
+          
+          this.fetchRecommendations(ids, containerId, updatedConfig);
         });
       }
       
