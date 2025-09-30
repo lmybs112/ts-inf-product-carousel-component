@@ -469,7 +469,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       if (typeof brandConfig.status === 'boolean') {
         convertedConfig.enabled = brandConfig.status;
       }
-  
+
       return convertedConfig;
     }
   
@@ -554,6 +554,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         customEdm,
         hide_discount,
         hide_size,
+        series_out,
+        series_in,
         ctype_val,
         bid,
         backgroundColor,
@@ -605,6 +607,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         customEdm,
         hide_discount,
         hide_size,
+        series_out,
+        series_in,
         ctype_val,
         bid,
         title,
@@ -823,6 +827,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         customEdm,
         hide_discount,
         hide_size,
+        series_out,
+        series_in,
         ctype_val,
         bid,
         title,
@@ -1453,6 +1459,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           customEdm,
           hide_discount,
           hide_size,
+          series_out,
+          series_in,
           ctype_val,
           bid,
           autoplay,
@@ -1595,7 +1603,7 @@ if (!customElements.get('inf-product-carousel-component')) {
     }
   
     getEmbeddedAds(ids, containerId, config) {
-      const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
+      const { brand, customEdm, hide_discount, hide_size,series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
       // 如果是彈窗類型，監聽重新載入事件
       if (carouselType === 'popup') {
@@ -1623,7 +1631,7 @@ if (!customElements.get('inf-product-carousel-component')) {
     
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
-      const { brand, customEdm, hide_discount, hide_size, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
+      const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
       // 如果是重置推薦，先隱藏當前內容並顯示 loading
       if (window.resetRecomCalled) {
@@ -1683,6 +1691,12 @@ if (!customElements.get('inf-product-carousel-component')) {
         requestData.SIZEAI = 'True';
         requestData.bid = bid;
       }
+      if (series_out) {
+        requestData.series_out = series_out;
+      }
+      if (series_in) {
+        requestData.series_in = series_in;
+      }
   
       const options = {
         method: 'POST',
@@ -1741,7 +1755,8 @@ if (!customElements.get('inf-product-carousel-component')) {
   
       } else {
         // product 類型保持原本的配置
-        const api_recom_product_url = brand.toLocaleUpperCase() === 'DABE' ? 'HTTP_stock_cdp_product_recommendation' : 'HTTP_inf_alpha_bhv_cdp_product_recommendation';
+        const hasSeriesParams = !!series_out || !!series_in;
+        const api_recom_product_url = brand.toLocaleUpperCase() === 'DABE' || hasSeriesParams ? 'HTTP_stock_cdp_product_recommendation' : 'HTTP_inf_alpha_bhv_cdp_product_recommendation';
         apiUrl = `https://api.inffits.com/${api_recom_product_url}/extension/recom_product`;
         fetchOptions = options;
       }

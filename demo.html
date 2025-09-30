@@ -35,7 +35,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             // 載入腳本
             const script = document.createElement('script');
-            script.src = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-component.js';
+            script.src = './inf-product-carousel-component.js';
             script.defer = true;
             script.onload = function () {
                 const config = {
@@ -90,6 +90,8 @@
                         },
                         {
                             type: 'product',
+                            // series_in: "[\"女\"]",
+                            // series_out: "[\"女\"]",
                             showPositionId: {
                                 top: 'infFitsHeader',
                                 bottom: 'infFitsFooter'
