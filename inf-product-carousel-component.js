@@ -338,6 +338,9 @@ if (!customElements.get('inf-product-carousel-component')) {
       let brandConfig = {};
       config.showPositionId = carousel.showPositionId;
       
+      // 在組件初始化時清理過期快取
+      this.cleanupExpiredCache();
+      
       try {
         // 生成品牌配置的快取鍵
         const brandConfigCacheKey = `inf_brand_config_cache_${brand}_${carousel.type}`;
@@ -1707,6 +1710,49 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
     }
 
+    // 清理所有過期的快取
+    cleanupExpiredCache() {
+      try {
+        const keys = Object.keys(localStorage);
+        const configPrefix = 'inf_brand_config_cache_';
+        const carouselPrefix = 'inf_carousel_cache_';
+        const cacheExpiry = 10 * 60 * 1000; // 10 分鐘
+        const now = Date.now();
+        let cleanedCount = 0;
+
+        keys.forEach(key => {
+          // 只處理我們組件的快取
+          if (key.startsWith(configPrefix) || key.startsWith(carouselPrefix)) {
+            try {
+              const cached = JSON.parse(localStorage.getItem(key));
+              if (cached && cached.timestamp) {
+                // 檢查是否過期
+                if (now - cached.timestamp > cacheExpiry) {
+                  localStorage.removeItem(key);
+                  cleanedCount++;
+                  // console.log(`已清理過期快取: ${key}`);
+                }
+              } else {
+                // 格式不正確的快取也清理掉
+                localStorage.removeItem(key);
+                cleanedCount++;
+              }
+            } catch (e) {
+              // 解析失敗的快取也清理掉
+              localStorage.removeItem(key);
+              cleanedCount++;
+            }
+          }
+        });
+
+        if (cleanedCount > 0) {
+          // console.log(`已清理 ${cleanedCount} 個過期或無效的快取項目`);
+        }
+      } catch (error) {
+        console.error('清理過期快取時發生錯誤:', error);
+      }
+    }
+
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
@@ -2494,4 +2540,47 @@ if (!customElements.get('inf-product-carousel-component')) {
     };
     
     return carousel;
+  };
+
+  // 提供手動清理過期快取的全域函數
+  window.cleanupInfCarouselCache = function() {
+    try {
+      const keys = Object.keys(localStorage);
+      const configPrefix = 'inf_brand_config_cache_';
+      const carouselPrefix = 'inf_carousel_cache_';
+      const cacheExpiry = 10 * 60 * 1000; // 10 分鐘
+      const now = Date.now();
+      let cleanedCount = 0;
+      let totalCount = 0;
+
+      keys.forEach(key => {
+        if (key.startsWith(configPrefix) || key.startsWith(carouselPrefix)) {
+          totalCount++;
+          try {
+            const cached = JSON.parse(localStorage.getItem(key));
+            if (cached && cached.timestamp) {
+              if (now - cached.timestamp > cacheExpiry) {
+                localStorage.removeItem(key);
+                cleanedCount++;
+                console.log(`🗑️ 已清理過期快取: ${key}`);
+              }
+            } else {
+              localStorage.removeItem(key);
+              cleanedCount++;
+              console.log(`🗑️ 已清理格式錯誤的快取: ${key}`);
+            }
+          } catch (e) {
+            localStorage.removeItem(key);
+            cleanedCount++;
+            console.log(`🗑️ 已清理無效快取: ${key}`);
+          }
+        }
+      });
+
+      console.log(`✅ 清理完成：總共 ${totalCount} 個快取項目，已清理 ${cleanedCount} 個過期/無效項目，保留 ${totalCount - cleanedCount} 個有效項目`);
+      return { total: totalCount, cleaned: cleanedCount, remaining: totalCount - cleanedCount };
+    } catch (error) {
+      console.error('❌ 清理過期快取時發生錯誤:', error);
+      return null;
+    }
   };
