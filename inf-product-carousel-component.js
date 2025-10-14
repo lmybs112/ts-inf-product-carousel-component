@@ -339,21 +339,40 @@ if (!customElements.get('inf-product-carousel-component')) {
       config.showPositionId = carousel.showPositionId;
       
       try {
-        // 調用品牌配置 API
-        const brandConfigResponse = carousel.type === 'product' ? await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ Brand: brand })
-        }): {ok: true, json: () => Promise.resolve({})};
-  
-        if (!brandConfigResponse.ok) {
-          throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
+        // 生成品牌配置的快取鍵
+        const brandConfigCacheKey = `inf_brand_config_cache_${brand}_${carousel.type}`;
+        
+        // 檢查快取
+        const cachedBrandConfig = this.getCachedData(brandConfigCacheKey);
+        
+        let brandConfigResponseData;
+        
+        if (cachedBrandConfig) {
+          // 使用快取的品牌配置資料
+          // console.log('使用快取的品牌配置資料');
+          brandConfigResponseData = cachedBrandConfig;
+        } else {
+          // 調用品牌配置 API
+          const brandConfigResponse = carousel.type === 'product' ? await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ Brand: brand })
+          }): {ok: true, json: () => Promise.resolve({})};
+    
+          if (!brandConfigResponse.ok) {
+            throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
+          }
+    
+          brandConfigResponseData = await brandConfigResponse.json();
+          
+          // 將品牌配置資料保存到快取
+          if (carousel.type === 'product') {
+            this.setCachedData(brandConfigCacheKey, brandConfigResponseData);
+          }
         }
-  
-        const brandConfigResponseData = await brandConfigResponse.json();
         brandConfig =carousel.brandConfig? carousel.brandConfig :  brandConfigResponseData.find(
             item => item.Module === 'Product_Carousel_Widget'
           )?.ConfigData.Section_Info[0];
@@ -789,35 +808,44 @@ if (!customElements.get('inf-product-carousel-component')) {
         script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
         script.type = 'text/javascript';
         script.onload = () => {
-          this.loadSwiperScript();
-          callback();
+          this.loadSwiperScript(() => {
+            callback();
+          });
         };
         script.onerror = () => console.error('載入 jQuery 時出錯');
         document.head.appendChild(script);
       } else {
-        this.loadSwiperScript();
-        callback();
+        this.loadSwiperScript(() => {
+          callback();
+        });
       }
     }
   
-    loadSwiperScript() {
+    loadSwiperScript(callback) {
+      // 將 Swiper 樣式載入到 shadowRoot（樣式可以在 shadow DOM 中）
       const swiperStylesheet = document.createElement('link');
       swiperStylesheet.rel = 'stylesheet';
       swiperStylesheet.href = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css';
       this.shadowRoot.appendChild(swiperStylesheet);
   
-      // 檢查 Swiper 是否已經載入
-      if (typeof Swiper === 'undefined') {
+      // 檢查 Swiper 是否已經載入到全域作用域
+      if (typeof window.Swiper === 'undefined') {
         const swiperScript = document.createElement('script');
         swiperScript.src = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js';
         swiperScript.onload = () => {
-          // console.log('Swiper 腳本已載入到 Shadow DOM');
+          // console.log('Swiper 腳本已載入到全域作用域');
+          if (callback) callback();
         };
-        swiperScript.onerror = () => console.error('Error loading Swiper script');
-        // 將腳本添加到 shadowRoot 而不是 document.head
-        this.shadowRoot.appendChild(swiperScript);
+        swiperScript.onerror = () => {
+          console.error('載入 Swiper 腳本時出錯');
+          if (callback) callback(); // 即使出錯也執行回調，避免卡住
+        };
+        // 將腳本添加到 document.head 而不是 shadowRoot，確保 Swiper 在全域可用
+        document.head.appendChild(swiperScript);
       } else {
-        // Swiper 已存在，跳過載入
+        // Swiper 已存在於全域作用域，跳過載入
+        // console.log('Swiper 已存在，跳過載入');
+        if (callback) callback();
       }
     }
   
@@ -1629,6 +1657,56 @@ if (!customElements.get('inf-product-carousel-component')) {
       this.fetchRecommendations(ids, containerId, config);
     }
     
+    // 生成快取 key 的輔助函數
+    generateCacheKey(brand, pid, bid, carouselType, recommendMode) {
+      // 根據主要參數生成唯一的快取 key
+      const bidString = bid ? JSON.stringify(bid) : 'no-bid';
+      const key = `inf_carousel_cache_${brand}_${pid}_${carouselType}_${recommendMode}_${btoa(bidString).substring(0, 20)}`;
+      return key;
+    }
+
+    // 從 localStorage 獲取快取資料
+    getCachedData(cacheKey) {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (!cached) {
+          return null;
+        }
+
+        const { data, timestamp } = JSON.parse(cached);
+        const now = Date.now();
+        const cacheExpiry = 10 * 60 * 1000; // 10 分鐘（毫秒）
+
+        // 檢查快取是否過期
+        if (now - timestamp > cacheExpiry) {
+          // 快取已過期，移除舊快取
+          localStorage.removeItem(cacheKey);
+          return null;
+        }
+
+        // console.log('使用快取資料，剩餘有效時間：', Math.floor((cacheExpiry - (now - timestamp)) / 1000), '秒');
+        return data;
+      } catch (error) {
+        console.error('讀取快取時發生錯誤:', error);
+        return null;
+      }
+    }
+
+    // 將資料保存到 localStorage
+    setCachedData(cacheKey, data) {
+      try {
+        const cacheData = {
+          data: data,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        // console.log('已將推薦資料保存到快取');
+      } catch (error) {
+        console.error('保存快取時發生錯誤:', error);
+        // localStorage 可能已滿或不可用，靜默失敗
+      }
+    }
+
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
@@ -1652,6 +1730,17 @@ if (!customElements.get('inf-product-carousel-component')) {
         if (loadingElement) {
           $(loadingElement).show();
         }
+      }
+
+      // 生成快取 key
+      const cacheKey = this.generateCacheKey(brand, ids.skuContent, bid, carouselType, recommendMode);
+      
+      // 檢查是否有有效的快取資料
+      const cachedResponse = this.getCachedData(cacheKey);
+      if (cachedResponse) {
+        // 使用快取資料，直接處理並顯示
+        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+        return;
       }
       
       // 調試日誌：確認 displayMode 的值
@@ -1770,138 +1859,11 @@ if (!customElements.get('inf-product-carousel-component')) {
           return response.json();
         })
         .then(response => {
-          let size_tag = {};
-  
-          if (response['SIZEAI_result']) {
-            size_tag = response['SIZEAI_result'].reduce((acc, item) => {
-              if (item && item.ITEM && typeof item.ITEM === 'string' && item.ITEM !== '{}') {
-                try {
-                  const itemScores = JSON.parse(item.ITEM);
-                  if (itemScores && Object.keys(itemScores).length > 0) {
-                    const bestSize = Object.entries(itemScores)
-                      .map(([size, percent]) => [size, parseFloat(percent)])
-                      .sort((a, b) => b[1] - a[1])[0][0];
-                    acc[item.productid] = bestSize;
-                  }
-                } catch (error) {
-                  console.error(`Error parsing ITEM for productid ${item.productid}:`, error);
-                }
-              }
-              return acc;
-            }, {});
-            
-            if (response['bhv']) {
-              response['bhv'].forEach(item => {
-                item.size_tag = size_tag[item.id];
-              });
-            }
-            if (response['corr']) {
-              response['corr'].forEach(item => {
-                item.size_tag = size_tag[item.id];
-              });
-            }
-            if (response['sp_atc']) {
-              response['sp_atc'].forEach(item => {
-                item.size_tag = size_tag[item.id];
-              });
-            }
-            if (response['sp_trans']) {
-              response['sp_trans'].forEach(item => {
-                item.size_tag = size_tag[item.id];
-              });
-            }
-          }
-  
-          // 根據 displayMode 決定資料取用順序
-          let jsonData = [];
+          // 將 API 回應保存到快取
+          this.setCachedData(cacheKey, response);
           
-          if (customEdm && customEdm.length > 0) {
-            // 如果有自定義 EDM 資料，優先使用
-            jsonData = customEdm.map(item => {
-              let newItem = Object.assign({}, item);
-              newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
-              newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
-              return newItem;
-            });
-          } else {
-            const sizeAiPtrValidSetting = JSON.parse(fetchOptions.body).SIZEAI_ptr;
-            const sizeAiPtrValid = sizeAiPtrValidSetting ? sizeAiPtrValidSetting.split(',').map(s => s.trim()) : ['bhv'];
-            // 根據 displayMode 決定資料來源順序
-            if (displayMode === 'SaleRate') {
-              // SaleRate 模式：優先使用 bhv 或 corr，然後是 sp_atc 或 sp_trans
-              let sourceData = [];
-              
-              // 優先取用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
-              if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
-                sourceData = response['bhv'];
-              } else if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
-                sourceData = response['corr'];
-              }
-              
-              // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans（需檢查是否在 sizeAiPtrValid 中）
-              if (sourceData.length === 0) {
-                if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
-                  sourceData = response['sp_atc'];
-                } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
-                  sourceData = response['sp_trans'];
-                }
-              }
-              
-              // 處理資料並限制數量
-              if (sourceData.length > 0) {
-                jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
-                  let newItem = Object.assign({}, item);
-                  newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
-                  newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
-                  return newItem;
-                });
-              }
-            } else if (displayMode === 'SocialProofNum') {
-              // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
-              let sourceData = [];
-              
-              if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
-                sourceData = response['sp_atc'];
-              } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
-                sourceData = response['sp_trans'];
-              }
-              
-              // 處理資料並限制數量
-              if (sourceData.length > 0) {
-                jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
-                  let newItem = Object.assign({}, item);
-                  newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
-                  newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
-                  return newItem;
-                });
-              }
-            } else {
-              // 其他模式：使用預設的 bhv 資料（需檢查是否在 sizeAiPtrValid 中）
-              if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
-                jsonData = getRandomElements(response['bhv'], response['bhv'].length > 12 ? 12 : response['bhv'].length).map(item => {
-                  let newItem = Object.assign({}, item);
-                  newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
-                  newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
-                  return newItem;
-                });
-              }
-            }
-          }
-  
-          if (jsonData.length > 0) {
-            this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size);
-          } else {
-            $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-              // sourceData 為空時不顯示 popup
-              // console.log('sourceData 為空，不顯示 popup');
-            });
-            if (containerId === 'personalized-recommendations') {
-              $('#jump-recom').hide();
-            }
-            if (containerId === 'more-recommendations') {
-              $('#jump-more').hide();
-            }
-          }
+          // 處理並顯示資料
+          this.processFetchedData(response, ids, containerId, config, cacheKey);
         })
         .catch(err => {
           console.error('API 調用錯誤:', err);
@@ -1917,6 +1879,159 @@ if (!customElements.get('inf-product-carousel-component')) {
             $('#jump-more').hide();
           }
         });
+    }
+
+    // 處理獲取到的資料（無論是從快取還是 API）
+    processFetchedData(response, ids, containerId, config, cacheKey) {
+      const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
+      
+      // 定義 getRandomElements 函數
+      const getRandomElements = (arr, count) => {
+        const result = [];
+        const usedIndexes = new Set();
+        while (result.length < count) {
+          const randomIndex = Math.floor(Math.random() * arr.length);
+          if (!usedIndexes.has(randomIndex)) {
+            result.push(arr[randomIndex]);
+            usedIndexes.add(randomIndex);
+          }
+        }
+        return result;
+      };
+      
+      // 從這裡開始是原本 fetch then 中的邏輯
+      let size_tag = {};
+
+      if (response['SIZEAI_result']) {
+        size_tag = response['SIZEAI_result'].reduce((acc, item) => {
+          if (item && item.ITEM && typeof item.ITEM === 'string' && item.ITEM !== '{}') {
+            try {
+              const itemScores = JSON.parse(item.ITEM);
+              if (itemScores && Object.keys(itemScores).length > 0) {
+                const bestSize = Object.entries(itemScores)
+                  .map(([size, percent]) => [size, parseFloat(percent)])
+                  .sort((a, b) => b[1] - a[1])[0][0];
+                acc[item.productid] = bestSize;
+              }
+            } catch (error) {
+              console.error(`Error parsing ITEM for productid ${item.productid}:`, error);
+            }
+          }
+          return acc;
+        }, {});
+        
+        if (response['bhv']) {
+          response['bhv'].forEach(item => {
+            item.size_tag = size_tag[item.id];
+          });
+        }
+        if (response['corr']) {
+          response['corr'].forEach(item => {
+            item.size_tag = size_tag[item.id];
+          });
+        }
+        if (response['sp_atc']) {
+          response['sp_atc'].forEach(item => {
+            item.size_tag = size_tag[item.id];
+          });
+        }
+        if (response['sp_trans']) {
+          response['sp_trans'].forEach(item => {
+            item.size_tag = size_tag[item.id];
+          });
+        }
+      }
+
+      // 根據 displayMode 決定資料取用順序
+      let jsonData = [];
+      
+      if (customEdm && customEdm.length > 0) {
+        // 如果有自定義 EDM 資料，優先使用
+        jsonData = customEdm.map(item => {
+          let newItem = Object.assign({}, item);
+          newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+          newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+          return newItem;
+        });
+      } else {
+        // 使用配置中的 recommendMode 替代 fetchOptions.body
+        const sizeAiPtrValid = recommendMode ? recommendMode.split(',').map(s => s.trim()) : ['bhv'];
+        // 根據 displayMode 決定資料來源順序
+        if (displayMode === 'SaleRate') {
+          // SaleRate 模式：優先使用 bhv 或 corr，然後是 sp_atc 或 sp_trans
+          let sourceData = [];
+          
+          // 優先取用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
+          if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
+            sourceData = response['bhv'];
+          } else if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
+            sourceData = response['corr'];
+          }
+          
+          // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans（需檢查是否在 sizeAiPtrValid 中）
+          if (sourceData.length === 0) {
+            if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
+              sourceData = response['sp_atc'];
+            } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
+              sourceData = response['sp_trans'];
+            }
+          }
+          
+          // 處理資料並限制數量
+          if (sourceData.length > 0) {
+            jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
+              let newItem = Object.assign({}, item);
+              newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+              newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              return newItem;
+            });
+          }
+        } else if (displayMode === 'SocialProofNum') {
+          // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
+          let sourceData = [];
+          
+          if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
+            sourceData = response['sp_atc'];
+          } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
+            sourceData = response['sp_trans'];
+          }
+          
+          // 處理資料並限制數量
+          if (sourceData.length > 0) {
+            jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
+              let newItem = Object.assign({}, item);
+              newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+              newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              return newItem;
+            });
+          }
+        } else {
+          // 其他模式：使用預設的 bhv 資料（需檢查是否在 sizeAiPtrValid 中）
+          if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
+            jsonData = getRandomElements(response['bhv'], response['bhv'].length > 12 ? 12 : response['bhv'].length).map(item => {
+              let newItem = Object.assign({}, item);
+              newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
+              newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              return newItem;
+            });
+          }
+        }
+      }
+
+      if (jsonData.length > 0) {
+        this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size);
+      } else {
+        $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
+          // sourceData 為空時不顯示 popup
+          // console.log('sourceData 為空，不顯示 popup');
+        });
+        if (containerId === 'personalized-recommendations') {
+          $('#jump-recom').hide();
+        }
+        if (containerId === 'more-recommendations') {
+          $('#jump-more').hide();
+        }
+      }
     }
   
     updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode, hide_size) {
@@ -2243,7 +2358,13 @@ if (!customElements.get('inf-product-carousel-component')) {
         // console.log(`設置 loopedSlides: ${loopedSlides}，實際項目數: ${actualSlideCount}`);
       }
       
-      const swiper = new Swiper(swiperElement, {
+      // 檢查 Swiper 是否已載入
+      if (typeof window.Swiper === 'undefined') {
+        console.error('Swiper 尚未載入，無法初始化輪播');
+        return;
+      }
+      
+      const swiper = new window.Swiper(swiperElement, {
         ...swiperConfig,
         on: {
           init: () => {
