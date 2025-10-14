@@ -342,40 +342,21 @@ if (!customElements.get('inf-product-carousel-component')) {
       this.cleanupExpiredCache();
       
       try {
-        // 生成品牌配置的快取鍵
-        const brandConfigCacheKey = `inf_brand_config_cache_${brand}_${carousel.type}`;
-        
-        // 檢查快取
-        const cachedBrandConfig = this.getCachedData(brandConfigCacheKey);
-        
-        let brandConfigResponseData;
-        
-        if (cachedBrandConfig) {
-          // 使用快取的品牌配置資料
-          // console.log('使用快取的品牌配置資料');
-          brandConfigResponseData = cachedBrandConfig;
-        } else {
-          // 調用品牌配置 API
-          const brandConfigResponse = carousel.type === 'product' ? await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ Brand: brand })
-          }): {ok: true, json: () => Promise.resolve({})};
-    
-          if (!brandConfigResponse.ok) {
-            throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
-          }
-    
-          brandConfigResponseData = await brandConfigResponse.json();
-          
-          // 將品牌配置資料保存到快取
-          if (carousel.type === 'product') {
-            this.setCachedData(brandConfigCacheKey, brandConfigResponseData);
-          }
+        // 直接調用品牌配置 API，不使用快取（確保獲取最新配置）
+        const brandConfigResponse = carousel.type === 'product' ? await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ Brand: brand })
+        }): {ok: true, json: () => Promise.resolve({})};
+  
+        if (!brandConfigResponse.ok) {
+          throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
         }
+  
+        const brandConfigResponseData = await brandConfigResponse.json();
         brandConfig =carousel.brandConfig? carousel.brandConfig :  brandConfigResponseData.find(
             item => item.Module === 'Product_Carousel_Widget'
           )?.ConfigData.Section_Info[0];
@@ -1660,11 +1641,41 @@ if (!customElements.get('inf-product-carousel-component')) {
       this.fetchRecommendations(ids, containerId, config);
     }
     
-    // 生成快取 key 的輔助函數
+    // 取得當前頁面的標準化簽名（去除追蹤參數、排序其餘參數）
+    getPageSignatureForCache() {
+      try {
+        const url = new URL(document.location.href);
+        // 需剔除的追蹤參數（常見廣告/分析標記）
+        const ignoreParams = new Set([
+          'utm_source','utm_medium','utm_campaign','utm_term','utm_content',
+          'gclid','fbclid','_gl','msclkid','yclid','igshid','utm_id','utm_referrer',
+          'utm_name','utm_reader','spm','ref','referrer'
+        ]);
+        // 重新組裝有效查詢參數（排序以穩定簽名）
+        const entries = [];
+        url.searchParams.forEach((value, key) => {
+          if (!ignoreParams.has(key)) {
+            entries.push([key, value]);
+          }
+        });
+        entries.sort((a, b) => a[0].localeCompare(b[0]));
+        const normalizedQuery = entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+        const base = `${url.origin}${url.pathname}`;
+        const normalized = normalizedQuery ? `${base}?${normalizedQuery}` : base;
+        // 產生短簽名，避免 key 過長
+        return btoa(unescape(encodeURIComponent(normalized))).substring(0, 20);
+      } catch (e) {
+        // 退回最簡簽名
+        return 'page';
+      }
+    }
+
+    // 生成快取 key 的輔助函數（加入頁面簽名）
     generateCacheKey(brand, pid, bid, carouselType, recommendMode) {
       // 根據主要參數生成唯一的快取 key
       const bidString = bid ? JSON.stringify(bid) : 'no-bid';
-      const key = `inf_carousel_cache_${brand}_${pid}_${carouselType}_${recommendMode}_${btoa(bidString).substring(0, 20)}`;
+      const pageSig = this.getPageSignatureForCache();
+      const key = `inf_carousel_cache_${brand}_${pid}_${carouselType}_${recommendMode}_${btoa(bidString).substring(0, 20)}_pg_${pageSig}`;
       return key;
     }
 
@@ -1695,18 +1706,17 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
     }
 
-    // 將資料保存到 localStorage（實現 LRU 策略，最多保存 5 筆）
+    // 將資料保存到 localStorage（實現 LRU 策略，最多保存 5 筆，僅處理推薦商品快取）
     setCachedData(cacheKey, data) {
       try {
         const maxCacheItems = 5; // 最多保存 5 筆快取
         
-        // 判斷是品牌配置快取還是推薦商品快取
-        const isConfigCache = cacheKey.startsWith('inf_brand_config_cache_');
+        // 只處理推薦商品快取（品牌配置不再快取）
         const isCarouselCache = cacheKey.startsWith('inf_carousel_cache_');
         
-        if (isConfigCache || isCarouselCache) {
-          // 獲取同類型的所有快取
-          const prefix = isConfigCache ? 'inf_brand_config_cache_' : 'inf_carousel_cache_';
+        if (isCarouselCache) {
+          // 獲取推薦商品快取
+          const prefix = 'inf_carousel_cache_';
           const keys = Object.keys(localStorage);
           const samePrefixCaches = [];
           
@@ -1738,7 +1748,7 @@ if (!customElements.get('inf-product-carousel-component')) {
             // 刪除最舊的快取
             const oldestCache = samePrefixCaches[0];
             localStorage.removeItem(oldestCache.key);
-            // console.log(`已刪除最舊的快取: ${oldestCache.key}`);
+            // console.log(`已刪除最舊的推薦商品快取: ${oldestCache.key}`);
           }
         }
         
@@ -1748,26 +1758,25 @@ if (!customElements.get('inf-product-carousel-component')) {
           timestamp: Date.now()
         };
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        // console.log('已將資料保存到快取');
+        // console.log('已將推薦商品資料保存到快取');
       } catch (error) {
         console.error('保存快取時發生錯誤:', error);
         // localStorage 可能已滿或不可用，靜默失敗
       }
     }
 
-    // 清理所有過期的快取
+    // 清理所有過期的快取（僅處理推薦商品快取）
     cleanupExpiredCache() {
       try {
         const keys = Object.keys(localStorage);
-        const configPrefix = 'inf_brand_config_cache_';
         const carouselPrefix = 'inf_carousel_cache_';
         const cacheExpiry = 10 * 60 * 1000; // 10 分鐘
         const now = Date.now();
         let cleanedCount = 0;
 
         keys.forEach(key => {
-          // 只處理我們組件的快取
-          if (key.startsWith(configPrefix) || key.startsWith(carouselPrefix)) {
+          // 只處理推薦商品快取（品牌配置不再快取）
+          if (key.startsWith(carouselPrefix)) {
             try {
               const cached = JSON.parse(localStorage.getItem(key));
               if (cached && cached.timestamp) {
@@ -1775,7 +1784,7 @@ if (!customElements.get('inf-product-carousel-component')) {
                 if (now - cached.timestamp > cacheExpiry) {
                   localStorage.removeItem(key);
                   cleanedCount++;
-                  // console.log(`已清理過期快取: ${key}`);
+                  // console.log(`已清理過期的推薦商品快取: ${key}`);
                 }
               } else {
                 // 格式不正確的快取也清理掉
@@ -1791,7 +1800,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         });
 
         if (cleanedCount > 0) {
-          // console.log(`已清理 ${cleanedCount} 個過期或無效的快取項目`);
+          // console.log(`已清理 ${cleanedCount} 個過期或無效的推薦商品快取項目`);
         }
       } catch (error) {
         console.error('清理過期快取時發生錯誤:', error);
@@ -2587,41 +2596,19 @@ if (!customElements.get('inf-product-carousel-component')) {
     return carousel;
   };
 
-  // 提供手動清理過期快取的全域函數
+  // 提供手動清理過期快取的全域函數（僅處理推薦商品快取）
   window.cleanupInfCarouselCache = function() {
     try {
       const keys = Object.keys(localStorage);
-      const configPrefix = 'inf_brand_config_cache_';
       const carouselPrefix = 'inf_carousel_cache_';
       const cacheExpiry = 10 * 60 * 1000; // 10 分鐘
       const maxCacheItems = 5; // 快取數量上限
       const now = Date.now();
       let cleanedCount = 0;
-      let configCount = 0;
       let carouselCount = 0;
 
       keys.forEach(key => {
-        if (key.startsWith(configPrefix)) {
-          configCount++;
-          try {
-            const cached = JSON.parse(localStorage.getItem(key));
-            if (cached && cached.timestamp) {
-              if (now - cached.timestamp > cacheExpiry) {
-                localStorage.removeItem(key);
-                cleanedCount++;
-                console.log(`🗑️ 已清理過期的品牌配置快取: ${key}`);
-              }
-            } else {
-              localStorage.removeItem(key);
-              cleanedCount++;
-              console.log(`🗑️ 已清理格式錯誤的品牌配置快取: ${key}`);
-            }
-          } catch (e) {
-            localStorage.removeItem(key);
-            cleanedCount++;
-            console.log(`🗑️ 已清理無效的品牌配置快取: ${key}`);
-          }
-        } else if (key.startsWith(carouselPrefix)) {
+        if (key.startsWith(carouselPrefix)) {
           carouselCount++;
           try {
             const cached = JSON.parse(localStorage.getItem(key));
@@ -2644,21 +2631,19 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
       });
 
-      const totalCount = configCount + carouselCount;
-      const remainingConfig = configCount - cleanedCount;
-      const remainingCarousel = carouselCount - cleanedCount;
+      const totalCount = carouselCount;
       
       console.log(`\n📊 快取統計：`);
-      console.log(`   品牌配置快取: ${configCount} 個 (上限 ${maxCacheItems} 個)`);
       console.log(`   推薦商品快取: ${carouselCount} 個 (上限 ${maxCacheItems} 個)`);
+      console.log(`   品牌配置快取: 0 個 (已移除快取，每次獲取最新配置)`);
       console.log(`✅ 清理完成：總共 ${totalCount} 個快取項目，已清理 ${cleanedCount} 個過期/無效項目，保留 ${totalCount - cleanedCount} 個有效項目`);
-      console.log(`💡 提示：每種類型的快取最多保存 ${maxCacheItems} 筆，超過會自動刪除最舊的`);
+      console.log(`💡 提示：推薦商品快取最多保存 ${maxCacheItems} 筆，超過會自動刪除最舊的`);
       
       return { 
         total: totalCount, 
         cleaned: cleanedCount, 
         remaining: totalCount - cleanedCount,
-        config: configCount,
+        config: 0, // 品牌配置不再快取
         carousel: carouselCount,
         maxPerType: maxCacheItems
       };
