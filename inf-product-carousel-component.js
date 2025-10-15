@@ -301,12 +301,12 @@ if (!customElements.get('inf-product-carousel-component')) {
                       document.dispatchEvent(reloadEvent);
                       
                       if (newBid && typeof newBid === 'object') {
-                          console.log('已傳遞新的 bid 配置：', newBid);
+                          // console.log('已傳遞新的 bid 配置：', newBid);
                       }
                       
                       // console.log('正在重新獲取推薦資料...');
                   } else {
-                      console.log('彈窗元素不存在，無法重置推薦資料');
+                      // console.log('彈窗元素不存在，無法重置推薦資料');
                   }
               };
               
@@ -1842,15 +1842,24 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
       }
 
-      // 生成快取 key
-      const cacheKey = this.generateCacheKey(brand, ids.skuContent, bid, carouselType, recommendMode);
+      // 檢查是否為 no-pid 情況，如果是則不使用快取
+      const isNoPid = !ids.skuContent || ids.skuContent.trim() === '';
       
-      // 檢查是否有有效的快取資料
-      const cachedResponse = this.getCachedData(cacheKey);
-      if (cachedResponse) {
-        // 使用快取資料，直接處理並顯示
-        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
-        return;
+      let cacheKey = null;
+      let cachedResponse = null;
+      
+      // 只有在非 no-pid 情況下才使用快取
+      if (!isNoPid) {
+        // 生成快取 key
+        cacheKey = this.generateCacheKey(brand, ids.skuContent, bid, carouselType, recommendMode);
+        
+        // 檢查是否有有效的快取資料
+        cachedResponse = this.getCachedData(cacheKey);
+        if (cachedResponse) {
+          // 使用快取資料，直接處理並顯示
+          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+          return;
+        }
       }
       
       // 調試日誌：確認 displayMode 的值
@@ -1969,8 +1978,10 @@ if (!customElements.get('inf-product-carousel-component')) {
           return response.json();
         })
         .then(response => {
-          // 將 API 回應保存到快取
-          this.setCachedData(cacheKey, response);
+          // 只有在非 no-pid 情況下才保存到快取
+          if (!isNoPid && cacheKey) {
+            this.setCachedData(cacheKey, response);
+          }
           
           // 處理並顯示資料
           this.processFetchedData(response, ids, containerId, config, cacheKey);
@@ -1994,6 +2005,12 @@ if (!customElements.get('inf-product-carousel-component')) {
     // 處理獲取到的資料（無論是從快取還是 API）
     processFetchedData(response, ids, containerId, config, cacheKey) {
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
+      
+      // 如果是 no-pid 情況，記錄不使用快取
+      const isNoPid = !ids.skuContent || ids.skuContent.trim() === '';
+      if (isNoPid) {
+        // console.log('no-pid 情況，不使用快取機制');
+      }
       
       // 定義 getRandomElements 函數
       const getRandomElements = (arr, count) => {
@@ -2220,7 +2237,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               blankIndex: i // 標記空白項目索引，確保每個都不同
             });
           }
-          console.log(`已添加 ${this.additionalSlidesCount} 個空白項目，總項目數：${displayImages.length}`);
+          // console.log(`已添加 ${this.additionalSlidesCount} 個空白項目，總項目數：${displayImages.length}`);
         }
       }
       
@@ -2625,7 +2642,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           oldConfigCount++;
           localStorage.removeItem(key);
           cleanedCount++;
-          console.log(`🗑️ 已清理舊的品牌配置快取: ${key}`);
+          // console.log(`🗑️ 已清理舊的品牌配置快取: ${key}`);
         } else if (key.startsWith(carouselPrefix)) {
           carouselCount++;
           try {
@@ -2634,29 +2651,29 @@ if (!customElements.get('inf-product-carousel-component')) {
               if (now - cached.timestamp > cacheExpiry) {
                 localStorage.removeItem(key);
                 cleanedCount++;
-                console.log(`🗑️ 已清理過期的推薦商品快取: ${key}`);
+                // console.log(`🗑️ 已清理過期的推薦商品快取: ${key}`);
               }
             } else {
               localStorage.removeItem(key);
               cleanedCount++;
-              console.log(`🗑️ 已清理格式錯誤的推薦商品快取: ${key}`);
+              // console.log(`🗑️ 已清理格式錯誤的推薦商品快取: ${key}`);
             }
           } catch (e) {
             localStorage.removeItem(key);
             cleanedCount++;
-            console.log(`🗑️ 已清理無效的推薦商品快取: ${key}`);
+            // console.log(`🗑️ 已清理無效的推薦商品快取: ${key}`);
           }
         }
       });
 
       const totalCount = carouselCount + oldConfigCount;
       
-      console.log(`\n📊 快取統計：`);
-      console.log(`   推薦商品快取: ${carouselCount} 個 (上限 ${maxCacheItems} 個)`);
-      console.log(`   舊品牌配置快取: ${oldConfigCount} 個 (已全部清理)`);
-      console.log(`   新品牌配置快取: 0 個 (已移除快取，每次獲取最新配置)`);
-      console.log(`✅ 清理完成：總共 ${totalCount} 個快取項目，已清理 ${cleanedCount} 個過期/無效項目，保留 ${totalCount - cleanedCount} 個有效項目`);
-      console.log(`💡 提示：推薦商品快取最多保存 ${maxCacheItems} 筆，超過會自動刪除最舊的`);
+      // console.log(`\n📊 快取統計：`);
+      // console.log(`   推薦商品快取: ${carouselCount} 個 (上限 ${maxCacheItems} 個)`);
+      // console.log(`   舊品牌配置快取: ${oldConfigCount} 個 (已全部清理)`);
+      // console.log(`   新品牌配置快取: 0 個 (已移除快取，每次獲取最新配置)`);
+      // console.log(`✅ 清理完成：總共 ${totalCount} 個快取項目，已清理 ${cleanedCount} 個過期/無效項目，保留 ${totalCount - cleanedCount} 個有效項目`);
+      // console.log(`💡 提示：推薦商品快取最多保存 ${maxCacheItems} 筆，超過會自動刪除最舊的`);
       
       return { 
         total: totalCount, 
