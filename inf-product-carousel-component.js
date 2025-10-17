@@ -1642,15 +1642,10 @@ if (!customElements.get('inf-product-carousel-component')) {
     }
     
     // 生成快取 key 的函數
-    generateCacheKey(brand, pid, bid, carouselType, recommendMode) {
-      // 根據主要參數生成唯一的快取 key
-      const bidString = bid ? JSON.stringify(bid) : 'no-bid';
+    generateCacheKey(carouselType) {
+      // 根據輪播類型和當前頁面路徑生成唯一的快取 key
       const pathname = location.pathname.toLowerCase();
-      
-      // 確保 PID 不為空，如果為空則使用預設值
-      const safePid = pid && pid.trim() ? pid.trim() : 'no-pid';
-      
-      const key = `inf_carousel_cache_${safePid}_${carouselType}_${btoa(bidString).substring(0, 20)}_${pathname.replace(/\//g, '_')}`;
+      const key = `inf_carousel_cache_${carouselType}_${pathname.replace(/\//g, '_')}`;
       return key;
     }
 
@@ -1813,24 +1808,15 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
       }
 
-      // 檢查是否為 no-pid 情況，如果是則不使用快取
-      const isNoPid = !ids.skuContent || ids.skuContent.trim() === '';
+      // 生成快取 key
+      const cacheKey = this.generateCacheKey(carouselType);
       
-      let cacheKey = null;
-      let cachedResponse = null;
-      
-      // 只有在非 no-pid 情況下才使用快取
-      if (!isNoPid) {
-        // 生成快取 key
-        cacheKey = this.generateCacheKey(brand, ids.skuContent, bid, carouselType, recommendMode);
-        
-        // 檢查是否有有效的快取資料
-        cachedResponse = this.getCachedData(cacheKey);
-        if (cachedResponse) {
-          // 使用快取資料，直接處理並顯示
-          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
-          return;
-        }
+      // 檢查是否有有效的快取資料
+      const cachedResponse = this.getCachedData(cacheKey);
+      if (cachedResponse) {
+        // 使用快取資料，直接處理並顯示
+        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+        return;
       }
       
       // 調試日誌：確認 displayMode 的值
@@ -1949,10 +1935,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           return response.json();
         })
         .then(response => {
-          // 只有在非 no-pid 情況下才保存到快取
-          if (!isNoPid && cacheKey) {
-            this.setCachedData(cacheKey, response);
-          }
+          // 保存到快取
+          this.setCachedData(cacheKey, response);
           
           // 處理並顯示資料
           this.processFetchedData(response, ids, containerId, config, cacheKey);
@@ -1976,12 +1960,6 @@ if (!customElements.get('inf-product-carousel-component')) {
     // 處理獲取到的資料（無論是從快取還是 API）
     processFetchedData(response, ids, containerId, config, cacheKey) {
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
-      
-      // 如果是 no-pid 情況，記錄不使用快取
-      const isNoPid = !ids.skuContent || ids.skuContent.trim() === '';
-      if (isNoPid) {
-        // console.log('no-pid 情況，不使用快取機制');
-      }
       
       // 定義 getRandomElements 函數
       const getRandomElements = (arr, count) => {
