@@ -1641,45 +1641,16 @@ if (!customElements.get('inf-product-carousel-component')) {
       this.fetchRecommendations(ids, containerId, config);
     }
     
-    // 取得當前頁面的標準化簽名（去除追蹤參數、排序其餘參數）
-    getPageSignatureForCache() {
-      try {
-        const url = new URL(document.location.href);
-        // 需剔除的追蹤參數（常見廣告/分析標記）
-        const ignoreParams = new Set([
-          'utm_source','utm_medium','utm_campaign','utm_term','utm_content',
-          'gclid','fbclid','_gl','msclkid','yclid','igshid','utm_id','utm_referrer',
-          'utm_name','utm_reader','spm','ref','referrer'
-        ]);
-        // 重新組裝有效查詢參數（排序以穩定簽名）
-        const entries = [];
-        url.searchParams.forEach((value, key) => {
-          if (!ignoreParams.has(key)) {
-            entries.push([key, value]);
-          }
-        });
-        entries.sort((a, b) => a[0].localeCompare(b[0]));
-        const normalizedQuery = entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
-        const base = `${url.origin}${url.pathname}`;
-        const normalized = normalizedQuery ? `${base}?${normalizedQuery}` : base;
-        // 產生短簽名，避免 key 過長
-        return btoa(unescape(encodeURIComponent(normalized))).substring(0, 20);
-      } catch (e) {
-        // 退回最簡簽名
-        return 'page';
-      }
-    }
-
-    // 生成快取 key 的輔助函數（加入頁面簽名）
+    // 生成快取 key 的函數
     generateCacheKey(brand, pid, bid, carouselType, recommendMode) {
       // 根據主要參數生成唯一的快取 key
       const bidString = bid ? JSON.stringify(bid) : 'no-bid';
-      const pageSig = this.getPageSignatureForCache();
+      const pathname = location.pathname;
       
       // 確保 PID 不為空，如果為空則使用預設值
       const safePid = pid && pid.trim() ? pid.trim() : 'no-pid';
       
-      const key = `inf_carousel_cache_${brand}_${safePid}_${carouselType}_${recommendMode}_${btoa(bidString).substring(0, 20)}_pg_${pageSig}`;
+      const key = `inf_carousel_cache_${safePid}_${carouselType}_${btoa(bidString).substring(0, 20)}_${pathname.replace(/\//g, '_')}`;
       return key;
     }
 
