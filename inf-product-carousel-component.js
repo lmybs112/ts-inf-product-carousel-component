@@ -1645,7 +1645,7 @@ if (!customElements.get('inf-product-carousel-component')) {
     generateCacheKey(brand, pid, bid, carouselType, recommendMode) {
       // 根據主要參數生成唯一的快取 key
       const bidString = bid ? JSON.stringify(bid) : 'no-bid';
-      const pathname = location.pathname;
+      const pathname = location.pathname.toLowerCase();
       
       // 確保 PID 不為空，如果為空則使用預設值
       const safePid = pid && pid.trim() ? pid.trim() : 'no-pid';
