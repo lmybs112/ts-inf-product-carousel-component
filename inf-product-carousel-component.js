@@ -2095,7 +2095,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
 
       if (jsonData.length > 0) {
-        this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size);
+        this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size, hide_discount);
       } else {
         $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
           // sourceData 為空時不顯示 popup
@@ -2110,7 +2110,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
     }
   
-    updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode, hide_size) {
+    updatePopAd(images, containerId, autoplay, sortedBreakpoints, displayMode, hide_size, hide_discount) {
       // 調試日誌：確認 updatePopAd 中的 displayMode 值
       // console.log('updatePopAd - displayMode:', displayMode);
       
@@ -2215,12 +2215,14 @@ if (!customElements.get('inf-product-carousel-component')) {
           ${shouldShowContent ? `
           <div class="embeddedItemInfo">
             <h3 class="embeddedItemInfo__title">${img.title}</h3>
-            ${displayMode === 'SocialProofNum'?
+            ${hide_discount?`<div class="embeddedItemInfo__content">
+                  <p class="embeddedItemInfo__price">NT$ ${img.price}</p>
+                </div>`: displayMode === 'SocialProofNum' && !!img.record_cnt ?
                 `<div class="embeddedItemInfo__content">
                   <p class="embeddedItemInfo__discount">${img.record_cnt}人購買</p>
                   <p class="embeddedItemInfo__price">NT$ ${img.price}</p>
                 </div>`:
-                displayMode === 'SaleRate' && img.sale_price && img.sale_price !== img.price
+                displayMode === 'SaleRate' && !!img.sale_price && img.sale_price !== img.price
               ? `<div class="embeddedItemInfo__content">
                   <p class="embeddedItemInfo__discount">${Math.ceil(100 - (parseInt(img.sale_price.replace(',', '')) * 100) / parseInt(img.price.replace(',', '')))}% off</p>
                   <p class="embeddedItemInfo__price">NT$ ${img.sale_price}</p>
