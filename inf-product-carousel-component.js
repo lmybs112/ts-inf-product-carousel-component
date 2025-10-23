@@ -583,7 +583,10 @@ if (!customElements.get('inf-product-carousel-component')) {
   
             const Brand = brand;
       // 修改：根據 skuContent 設定選擇對應的方法
-      const skuContentValue = skuContent === 'app91_sku' ? this.app91_sku() : this.shopline_sku();
+      // 如果 skuContent 是具體的數值，直接使用；否則根據類型選擇對應的方法
+      const skuContentValue = (typeof skuContent === 'string' && skuContent !== 'app91_sku' && skuContent !== 'shopline_sku') 
+        ? skuContent 
+        : (skuContent === 'app91_sku' ? this.app91_sku() : this.shopline_sku());
       const show_up_position_before = `#${containerId}`;
       const test = 'A';
       let GA4Key = '';
@@ -1371,7 +1374,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       shadowRoot.appendChild(customCSS);
   
       $(() => {
-        let ids = this.ids_init(skuContentType || 'shopline_sku'); // 修改：傳遞 skuContentType
+        let ids = this.ids_init(skuContentType || skuContent || 'shopline_sku'); // 修改：傳遞 skuContentType 或 skuContent
   
         const embeddedContainer = `
         <div class="embeddedAdContainer__wrapper">
@@ -1605,7 +1608,10 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
 
       // 修改：根據 skuContentType 參數選擇對應的方法
-      const skuContentValue = skuContentType === 'app91_sku' ? this.app91_sku() : this.shopline_sku();
+      // 如果 skuContentType 是具體的數值，直接使用；否則根據類型選擇對應的方法
+      const skuContentValue = (typeof skuContentType === 'string' && skuContentType !== 'app91_sku' && skuContentType !== 'shopline_sku') 
+        ? skuContentType 
+        : (skuContentType === 'app91_sku' ? this.app91_sku() : this.shopline_sku());
 
       return {
         member_id,
