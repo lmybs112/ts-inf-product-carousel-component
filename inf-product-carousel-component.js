@@ -638,7 +638,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 先清空 shadow DOM，準備根據配置重新渲染
       this.shadowRoot.innerHTML = `
         <div id="temp-container" style="display: none;">
-          <div id="recommendation-loading">
+          <div id="recommendation-loading" style="display: none;">
             <span class="loading-text">Loading...</span>
           </div>
         </div>
@@ -653,7 +653,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         // 如果目標容器存在，將組件內容移動到目標容器
         const componentContent = `
           <div id="${containerId}" style="background-color: ${backgroundColor};margin: 0 auto;height: 100%;width: 100%;">
-            <div id="recommendation-loading" style="height: 100%;">
+            <div id="recommendation-loading" style="height: 100%; display: none;">
               <span class="loading-text">Loading...</span>
             </div>
           </div>
@@ -813,8 +813,22 @@ if (!customElements.get('inf-product-carousel-component')) {
       const swiperStylesheet = document.createElement('link');
       swiperStylesheet.rel = 'stylesheet';
       swiperStylesheet.href = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css';
+      
+      // 等待樣式載入完成
+      swiperStylesheet.onload = () => {
+        // console.log('Swiper 樣式已載入完成');
+        this.loadSwiperJS(callback);
+      };
+      swiperStylesheet.onerror = () => {
+        console.error('載入 Swiper 樣式時出錯');
+        // 即使樣式載入失敗，也繼續載入 JS
+        this.loadSwiperJS(callback);
+      };
+      
       this.shadowRoot.appendChild(swiperStylesheet);
-  
+    }
+    
+    loadSwiperJS(callback) {
       // 檢查 Swiper 是否已經載入到全域作用域
       if (typeof window.Swiper === 'undefined') {
         const swiperScript = document.createElement('script');
@@ -1469,7 +1483,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
         }
   
-        this.getEmbeddedAds(ids, containerId, {
+        // 樣式載入完成後，顯示 loading 並開始載入推薦內容
+        this.showLoadingAndLoadAds(ids, containerId, {
           brand,
           customEdm,
           hide_discount,
@@ -1618,6 +1633,20 @@ if (!customElements.get('inf-product-carousel-component')) {
         lgiven_id,
         skuContent: skuContentValue
       };
+    }
+    
+    showLoadingAndLoadAds(ids, containerId, config) {
+      const $ = jQuery;
+      const shadowRoot = this.shadowRoot;
+      
+      // 顯示 loading 元素
+      const loadingElement = shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
+      if (loadingElement) {
+        $(loadingElement).fadeIn(300);
+      }
+      
+      // 開始載入推薦內容
+      this.getEmbeddedAds(ids, containerId, config);
     }
   
     getEmbeddedAds(ids, containerId, config) {
