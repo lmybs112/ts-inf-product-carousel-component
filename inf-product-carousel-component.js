@@ -492,7 +492,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         title: '推薦您也可以這樣搭配',
         description: '',
         displayMode: 'SaleRate',
-        recommendMode: 'bhv,corr,sp_atc_sp_trans',
+        recommendMode: 'bhv,corr,sp_atc,sp_trans',
         customPadding: null,
         arrowPosition: 'center',
         autoplay: true,
@@ -2052,9 +2052,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           
           // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans（需檢查是否在 sizeAiPtrValid 中）
           if (sourceData.length === 0) {
-            if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
+            if ((sizeAiPtrValid.includes('sp_atc') || sizeAiPtrValid.includes('sp_atc_sp_trans')) && response['sp_atc'] && response['sp_atc'].length > 0) {
               sourceData = response['sp_atc'];
-            } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
+            } else if ((sizeAiPtrValid.includes('sp_trans') || sizeAiPtrValid.includes('sp_atc_sp_trans')) && response['sp_trans'] && response['sp_trans'].length > 0) {
               sourceData = response['sp_trans'];
             }
           }
@@ -2072,12 +2072,11 @@ if (!customElements.get('inf-product-carousel-component')) {
           // SocialProofNum 模式：只使用 sp_atc 或 sp_trans，不使用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
           let sourceData = [];
           
-          if (sizeAiPtrValid.includes('sp_atc') && response['sp_atc'] && response['sp_atc'].length > 0) {
+          if ((sizeAiPtrValid.includes('sp_atc') || sizeAiPtrValid.includes('sp_atc_sp_trans')) && response['sp_atc'] && response['sp_atc'].length > 0) {
             sourceData = response['sp_atc'];
-          } else if (sizeAiPtrValid.includes('sp_trans') && response['sp_trans'] && response['sp_trans'].length > 0) {
+          } else if ((sizeAiPtrValid.includes('sp_trans') || sizeAiPtrValid.includes('sp_atc_sp_trans'))  && response['sp_trans'] && response['sp_trans'].length > 0) {
             sourceData = response['sp_trans'];
           }
-          
           // 處理資料並限制數量
           if (sourceData.length > 0) {
             jsonData = getRandomElements(sourceData, sourceData.length > 12 ? 12 : sourceData.length).map(item => {
