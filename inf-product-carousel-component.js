@@ -1847,14 +1847,11 @@ if (!customElements.get('inf-product-carousel-component')) {
       const cacheKey = this.generateCacheKey(carouselType);
       
       // 檢查是否有有效的快取資料
-      // 如果是重置推薦操作，跳過快取檢查，強制重新發出 API 請求
-      if (!window.resetRecomCalled) {
-        const cachedResponse = this.getCachedData(cacheKey);
-        if (cachedResponse) {
-          // 使用快取資料，直接處理並顯示
-          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
-          return;
-        }
+      const cachedResponse = this.getCachedData(cacheKey);
+      if (cachedResponse) {
+        // 使用快取資料，直接處理並顯示
+        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+        return;
       }
       
       // 調試日誌：確認 displayMode 的值
@@ -1991,11 +1988,6 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
           if (containerId === 'more-recommendations') {
             $('#jump-more').hide();
-          }
-          
-          // 重置標記，避免影響後續操作
-          if (window.resetRecomCalled) {
-            window.resetRecomCalled = false;
           }
         });
     }
