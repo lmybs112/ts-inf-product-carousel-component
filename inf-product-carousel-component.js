@@ -2577,6 +2577,35 @@ if (!customElements.get('inf-product-carousel-component')) {
   
   // 提供一個簡化的初始化函數
   window.initInfProductCarouselComponent = function(config = {}) {
+    // 從 localStorage 讀取 BodyID_Foot_size 並更新 bid 的 HV 和 WV
+    try {
+      const bodyIdFootSize = localStorage.getItem('BodyID_Foot_size');
+      
+      if (bodyIdFootSize) {
+        const footSizeData = JSON.parse(bodyIdFootSize);
+        
+        // 確保 config.carousel 和 config.carousel.bid 存在
+        if (!config.carousel) {
+          config.carousel = {};
+        }
+        if (!config.carousel.bid) {
+          config.carousel.bid = {};
+        }
+        
+        // 更新 HV 和 WV 值（如果 footSizeData 中有這些屬性）
+        if (footSizeData.HV) {
+          config.carousel.bid.HV = footSizeData.HV;
+        }
+        if (footSizeData.WV) {
+          config.carousel.bid.WV = footSizeData.WV;
+        }
+        
+        // console.log('✅ 已從 localStorage 更新 bid 的 HV 和 WV:', config.carousel.bid);
+      }
+    } catch (error) {
+      console.error('❌ 讀取或解析 BodyID_Foot_size 時發生錯誤:', error);
+    }
+    
     // 創建組件實例
     const carousel = document.createElement('inf-product-carousel-component');
     
