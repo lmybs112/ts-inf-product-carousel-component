@@ -2013,7 +2013,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 從這裡開始是原本 fetch then 中的邏輯
       let size_tag = {};
 
-      if (response['SIZEAI_result']) {
+      if (response['SIZEAI_result'] && !response['SIZEAI_result'].error) {
         size_tag = response['SIZEAI_result'].reduce((acc, item) => {
           if (item && item.ITEM && typeof item.ITEM === 'string' && item.ITEM !== '{}') {
             try {
