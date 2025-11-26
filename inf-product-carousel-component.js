@@ -1822,6 +1822,38 @@ if (!customElements.get('inf-product-carousel-component')) {
     fetchRecommendations(ids, containerId, config) {
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
+      // 檢查 localStorage 中的 BodyID_Foot_size，如果存在則更新 bid 的 HV 和 WV
+      try {
+        const bodyIdFootSize = localStorage.getItem('BodyID_Foot_size');
+        if (bodyIdFootSize && bid) {
+          console.log('[InfCarousel] 偵測到 localStorage 中的 BodyID_Foot_size:', bodyIdFootSize);
+          console.log('[InfCarousel] 原始 bid:', JSON.stringify(bid));
+          
+          // 解析 BodyID_Foot_size (假設格式為 JSON)
+          try {
+            const footSizeData = JSON.parse(bodyIdFootSize);
+            
+            // 更新 bid 的 HV 和 WV
+            if (footSizeData.HV !== undefined) {
+              bid.HV = footSizeData.HV;
+              console.log('[InfCarousel] 已更新 bid.HV 為:', footSizeData.HV);
+            }
+            if (footSizeData.WV !== undefined) {
+              bid.WV = footSizeData.WV;
+              console.log('[InfCarousel] 已更新 bid.WV 為:', footSizeData.WV);
+            }
+            
+            console.log('[InfCarousel] 更新後的 bid:', JSON.stringify(bid));
+          } catch (parseError) {
+            console.warn('[InfCarousel] 解析 BodyID_Foot_size 失敗:', parseError);
+          }
+        } else if (bodyIdFootSize) {
+          console.log('[InfCarousel] BodyID_Foot_size 存在但 bid 不存在');
+        }
+      } catch (error) {
+        console.error('[InfCarousel] 檢查 BodyID_Foot_size 時發生錯誤:', error);
+      }
+      
       // 如果是重置推薦，先隱藏當前內容並顯示 loading
       if (window.resetRecomCalled) {
         // 隱藏標題區域
@@ -1952,15 +1984,23 @@ if (!customElements.get('inf-product-carousel-component')) {
           },
           body: JSON.stringify(requestPopupData)
         };
-  
+        
+        // 輸出 popup 模式的 API 請求資料，方便排查
+        console.log('[InfCarousel] Popup API 請求 URL:', apiUrl);
+        console.log('[InfCarousel] Popup API 請求資料:', JSON.stringify(requestPopupData, null, 2));
+
       } else {
         // product 類型保持原本的配置
         const hasSeriesParams = !!series_out || !!series_in;
         const api_recom_product_url = brand.toLocaleUpperCase() === 'DABE' || hasSeriesParams ? 'HTTP_stock_cdp_product_recommendation' : 'HTTP_inf_alpha_bhv_cdp_product_recommendation';
         apiUrl = `https://api.inffits.com/${api_recom_product_url}/extension/recom_product`;
         fetchOptions = options;
+        
+        // 輸出 product 模式的 API 請求資料，方便排查
+        console.log('[InfCarousel] Product API 請求 URL:', apiUrl);
+        console.log('[InfCarousel] Product API 請求資料:', JSON.stringify(requestData, null, 2));
       }
-  
+
       fetch(apiUrl, fetchOptions)
         .then(response => {
           // 檢查 HTTP 狀態碼，如果是錯誤狀態碼（如 500），則拋出錯誤
@@ -2577,35 +2617,6 @@ if (!customElements.get('inf-product-carousel-component')) {
   
   // 提供一個簡化的初始化函數
   window.initInfProductCarouselComponent = function(config = {}) {
-    // 從 localStorage 讀取 BodyID_Foot_size 並更新 bid 的 HV 和 WV
-    try {
-      const bodyIdFootSize = localStorage.getItem('BodyID_Foot_size');
-      
-      if (bodyIdFootSize) {
-        const footSizeData = JSON.parse(bodyIdFootSize);
-        
-        // 確保 config.carousel 和 config.carousel.bid 存在
-        if (!config.carousel) {
-          config.carousel = {};
-        }
-        if (!config.carousel.bid) {
-          config.carousel.bid = {};
-        }
-        
-        // 更新 HV 和 WV 值（如果 footSizeData 中有這些屬性）
-        if (footSizeData.HV) {
-          config.carousel.bid.HV = footSizeData.HV;
-        }
-        if (footSizeData.WV) {
-          config.carousel.bid.WV = footSizeData.WV;
-        }
-        
-        // console.log('✅ 已從 localStorage 更新 bid 的 HV 和 WV:', config.carousel.bid);
-      }
-    } catch (error) {
-      console.error('❌ 讀取或解析 BodyID_Foot_size 時發生錯誤:', error);
-    }
-    
     // 創建組件實例
     const carousel = document.createElement('inf-product-carousel-component');
     
