@@ -4,6 +4,12 @@ if (!customElements.get('inf-product-carousel-component')) {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
+      // 防抖計時器
+      this.initDebounceTimer = null;
+      // 防止重複請求的鎖
+      this.isRequestInProgress = false;
+      // 已註冊的事件監聽器標記
+      this.hasPopupEventListener = false;
     }
   
     static get observedAttributes() {
@@ -328,8 +334,16 @@ if (!customElements.get('inf-product-carousel-component')) {
   
     attributeChangedCallback(name, oldValue, newValue) {
       if (name === 'config' && oldValue !== newValue) {
-        const config = JSON.parse(newValue || '{}');
-        this.fetchBrandConfigAndInit(config);
+        // 清除之前的防抖計時器
+        if (this.initDebounceTimer) {
+          clearTimeout(this.initDebounceTimer);
+        }
+        
+        // 設置新的防抖計時器，300ms 內只執行最後一次
+        this.initDebounceTimer = setTimeout(() => {
+          const config = JSON.parse(newValue || '{}');
+          this.fetchBrandConfigAndInit(config);
+        }, 300);
       }
         }
   
@@ -1652,9 +1666,10 @@ if (!customElements.get('inf-product-carousel-component')) {
     getEmbeddedAds(ids, containerId, config) {
       const { brand, customEdm, hide_discount, hide_size,series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
-      // 如果是彈窗類型，監聽重新載入事件
-      if (carouselType === 'popup') {
-        document.addEventListener('popup-reload-recommendations', (event) => {
+      // 如果是彈窗類型，監聽重新載入事件（只註冊一次）
+      if (carouselType === 'popup' && !this.hasPopupEventListener) {
+        // 定義事件處理函數
+        this.popupReloadHandler = (event) => {
           // console.log('收到重新載入事件，重新調用 API');
           const newBid = event.detail?.newBid;
           
@@ -1669,7 +1684,11 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
           
           this.fetchRecommendations(ids, containerId, updatedConfig);
-        });
+        };
+        
+        // 註冊事件監聽器
+        document.addEventListener('popup-reload-recommendations', this.popupReloadHandler);
+        this.hasPopupEventListener = true;
       }
       
       // 調用實際的推薦資料獲取函數
@@ -1820,6 +1839,12 @@ if (!customElements.get('inf-product-carousel-component')) {
 
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
+      // 如果請求正在進行中，忽略新的請求
+      if (this.isRequestInProgress) {
+        console.log('[InfCarousel] 請求正在進行中，忽略重複請求');
+        return;
+      }
+      
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
       // 檢查 localStorage 中的 BodyID_Foot_size，如果存在則更新 bid 的 HV 和 WV
@@ -1890,6 +1915,9 @@ if (!customElements.get('inf-product-carousel-component')) {
         this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
         return;
       }
+      
+      // 設置請求鎖定
+      this.isRequestInProgress = true;
       
       // 調試日誌：確認 displayMode 的值
       // console.log('getEmbeddedAds - displayMode:', displayMode);
@@ -2018,6 +2046,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           return response.json();
         })
         .then(response => {
+          // 解除請求鎖定
+          this.isRequestInProgress = false;
+          
           // 保存到快取
           this.setCachedData(cacheKey, response);
           
@@ -2025,6 +2056,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           this.processFetchedData(response, ids, containerId, config, cacheKey);
         })
         .catch(err => {
+          // 解除請求鎖定
+          this.isRequestInProgress = false;
+          
           console.error('API 調用錯誤:', err);
           // 當 API 調用失敗時，隱藏 loading 但不顯示 popup
           $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
