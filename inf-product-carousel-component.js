@@ -1839,7 +1839,13 @@ if (!customElements.get('inf-product-carousel-component')) {
 
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
-      // 如果請求正在進行中，忽略新的請求
+      // 如果是 reset 調用，強制解除請求鎖定以允許新請求
+      if (window.resetRecomCalled) {
+        console.log('[InfCarousel] Reset 調用，解除請求鎖定');
+        this.isRequestInProgress = false;
+      }
+      
+      // 如果請求正在進行中，忽略新的請求（reset 除外）
       if (this.isRequestInProgress) {
         console.log('[InfCarousel] 請求正在進行中，忽略重複請求');
         return;
@@ -1908,8 +1914,8 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 生成快取 key
       const cacheKey = this.generateCacheKey(carouselType);
       
-      // 檢查是否有有效的快取資料
-      const cachedResponse = this.getCachedData(cacheKey);
+      // 檢查是否有有效的快取資料（reset 時跳過快取，強制重新載入）
+      const cachedResponse = window.resetRecomCalled ? null : this.getCachedData(cacheKey);
       if (cachedResponse) {
         // 使用快取資料，直接處理並顯示
         this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
