@@ -1834,13 +1834,18 @@ if (!customElements.get('inf-product-carousel-component')) {
             const footSizeData = JSON.parse(bodyIdFootSize);
             
             // 更新 bid 的 HV 和 WV
-            if (footSizeData.HV !== undefined) {
-              bid.HV = footSizeData.HV;
-              console.log('[InfCarousel] 已更新 bid.HV 為:', footSizeData.HV);
+            // localStorage 中的格式為 FH (腳長) -> HV, FW (腳寬) -> WV, FCir (腳圍) -> FOOT_CIRCUM
+            if (footSizeData.FH !== undefined) {
+              bid.HV = footSizeData.FH;
+              console.log('[InfCarousel] 已更新 bid.HV 為:', footSizeData.FH);
             }
-            if (footSizeData.WV !== undefined) {
-              bid.WV = footSizeData.WV;
-              console.log('[InfCarousel] 已更新 bid.WV 為:', footSizeData.WV);
+            if (footSizeData.FW !== undefined) {
+              bid.WV = footSizeData.FW;
+              console.log('[InfCarousel] 已更新 bid.WV 為:', footSizeData.FW);
+            }
+            if (footSizeData.FCir !== undefined) {
+              bid.FOOT_CIRCUM = footSizeData.FCir;
+              console.log('[InfCarousel] 已更新 bid.FOOT_CIRCUM 為:', footSizeData.FCir);
             }
             
             console.log('[InfCarousel] 更新後的 bid:', JSON.stringify(bid));
