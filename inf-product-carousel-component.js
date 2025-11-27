@@ -10,6 +10,10 @@ if (!customElements.get('inf-product-carousel-component')) {
       this.abortController = null;
       // 已註冊的事件監聽器標記
       this.hasPopupEventListener = false;
+      // 延遲載入的配置（autoShow = false 時使用）
+      this.pendingLoadConfig = null;
+      // 資料是否已載入的標記
+      this.isDataLoaded = false;
     }
   
     static get observedAttributes() {
@@ -18,6 +22,9 @@ if (!customElements.get('inf-product-carousel-component')) {
   
             // 整合的彈窗處理函數
             handlePopup(autoShow = true) {
+              // 保存組件實例引用，供 showPopup 使用
+              const componentInstance = this;
+              
               // 創建並添加 CSS 樣式
               const popupStyles = `
               #infPopupproductCarousel *{
@@ -224,6 +231,21 @@ if (!customElements.get('inf-product-carousel-component')) {
               // 顯示彈窗時設置狀態
               function showPopup() {
                   if (popup) {
+                      // 檢查是否有待載入的配置（autoShow = false 的情況）
+                      if (componentInstance.pendingLoadConfig && !componentInstance.isDataLoaded) {
+                          console.log('[InfCarousel] 第一次顯示彈窗，開始載入推薦內容');
+                          
+                          // 標記資料已開始載入，避免重複載入
+                          componentInstance.isDataLoaded = true;
+                          
+                          // 載入推薦內容
+                          const { ids, containerId, config } = componentInstance.pendingLoadConfig;
+                          componentInstance.showLoadingAndLoadAds(ids, containerId, config);
+                          
+                          // 清除待載入配置
+                          componentInstance.pendingLoadConfig = null;
+                      }
+                      
                       popup.classList.add('show');
                       // 直接設置樣式確保彈窗顯示
                       popup.style.left = '20px';
@@ -296,6 +318,23 @@ if (!customElements.get('inf-product-carousel-component')) {
                   if (popup) {
                       // 設置標記，防止自動顯示彈窗
                       window.resetRecomCalled = true;
+                      
+                      // 如果 autoShow = false 且資料尚未載入，需要先觸發載入
+                      if (componentInstance.pendingLoadConfig && !componentInstance.isDataLoaded) {
+                          console.log('[InfCarousel] Reset 調用，但資料尚未載入，先載入資料');
+                          componentInstance.isDataLoaded = true;
+                          const { ids, containerId, config } = componentInstance.pendingLoadConfig;
+                          // 更新 bid 後載入
+                          if (newBid && typeof newBid === 'object') {
+                              config.bid = newBid;
+                          }
+                          componentInstance.showLoadingAndLoadAds(ids, containerId, config);
+                          componentInstance.pendingLoadConfig = null;
+                          return;
+                      }
+                      
+                      // 重置資料載入標記，允許重新載入
+                      componentInstance.isDataLoaded = false;
                       
                       // 觸發重新載入事件，將 newBid 參數傳遞給 fetchRecommendations
                       const reloadEvent = new CustomEvent('popup-reload-recommendations', {
@@ -636,7 +675,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         show_up_position_before,
         test,
         GA4Key,
-        carouselType: finalConfig.carouselType || 'product' // 添加 carousel 類型
+        carouselType: finalConfig.carouselType || 'product', // 添加 carousel 類型
+        autoShow: finalConfig.brandConfig?.autoShow // 傳遞 autoShow 設定
       }));
     }
   
@@ -879,7 +919,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         show_up_position_before,
         test,
         GA4Key,
-        carouselType
+        carouselType,
+        autoShow // 新增：從 config 中取得 autoShow
       } = config;
   
       const $ = jQuery;
@@ -1489,22 +1530,52 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
         }
   
-        // 樣式載入完成後，顯示 loading 並開始載入推薦內容
-        this.showLoadingAndLoadAds(ids, containerId, {
-          brand,
-          customEdm,
-          hide_discount,
-          hide_size,
-          series_out,
-          series_in,
-          ctype_val,
-          bid,
-          autoplay,
-          sortedBreakpoints,
-          displayMode,
-          recommendMode,
-          carouselType: config.carouselType || 'product' // 添加 carousel 類型
-        });
+        // 樣式載入完成後，根據 autoShow 決定是否立即載入推薦內容
+        const shouldLoadImmediately = !(carouselType === 'popup' && autoShow === false);
+        
+        if (shouldLoadImmediately) {
+          // autoShow = true 或非 popup 類型：立即載入推薦內容
+          console.log('[InfCarousel] 立即載入推薦內容');
+          this.showLoadingAndLoadAds(ids, containerId, {
+            brand,
+            customEdm,
+            hide_discount,
+            hide_size,
+            series_out,
+            series_in,
+            ctype_val,
+            bid,
+            autoplay,
+            sortedBreakpoints,
+            displayMode,
+            recommendMode,
+            carouselType: carouselType || 'product'
+          });
+        } else {
+          // popup 類型且 autoShow = false：延遲載入，保存配置供 showPopup 使用
+          console.log('[InfCarousel] autoShow = false，延遲載入推薦內容');
+          
+          // 保存配置信息到組件實例，供 showPopup 調用
+          this.pendingLoadConfig = {
+            ids,
+            containerId,
+            config: {
+              brand,
+              customEdm,
+              hide_discount,
+              hide_size,
+              series_out,
+              series_in,
+              ctype_val,
+              bid,
+              autoplay,
+              sortedBreakpoints,
+              displayMode,
+              recommendMode,
+              carouselType: carouselType || 'product'
+            }
+          };
+        }
   
         $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
           const title = $(this).data('title');
