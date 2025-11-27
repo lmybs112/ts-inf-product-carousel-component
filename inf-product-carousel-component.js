@@ -4,10 +4,10 @@ if (!customElements.get('inf-product-carousel-component')) {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-      // 防抖計時器
-      this.initDebounceTimer = null;
-      // 防止重複請求的鎖
-      this.isRequestInProgress = false;
+      // API 請求防抖計時器
+      this.fetchDebounceTimer = null;
+      // 用於取消進行中的請求
+      this.abortController = null;
       // 已註冊的事件監聽器標記
       this.hasPopupEventListener = false;
     }
@@ -334,16 +334,8 @@ if (!customElements.get('inf-product-carousel-component')) {
   
     attributeChangedCallback(name, oldValue, newValue) {
       if (name === 'config' && oldValue !== newValue) {
-        // 清除之前的防抖計時器
-        if (this.initDebounceTimer) {
-          clearTimeout(this.initDebounceTimer);
-        }
-        
-        // 設置新的防抖計時器，300ms 內只執行最後一次
-        this.initDebounceTimer = setTimeout(() => {
-          const config = JSON.parse(newValue || '{}');
-          this.fetchBrandConfigAndInit(config);
-        }, 300);
+        const config = JSON.parse(newValue || '{}');
+        this.fetchBrandConfigAndInit(config);
       }
         }
   
@@ -1839,18 +1831,29 @@ if (!customElements.get('inf-product-carousel-component')) {
 
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
-      // 如果是 reset 調用，強制解除請求鎖定以允許新請求
-      if (window.resetRecomCalled) {
-        console.log('[InfCarousel] Reset 調用，解除請求鎖定');
-        this.isRequestInProgress = false;
+      // 清除之前的防抖計時器
+      if (this.fetchDebounceTimer) {
+        clearTimeout(this.fetchDebounceTimer);
+        console.log('[InfCarousel] 取消前一個請求的防抖計時器');
       }
       
-      // 如果請求正在進行中，忽略新的請求（reset 除外）
-      if (this.isRequestInProgress) {
-        console.log('[InfCarousel] 請求正在進行中，忽略重複請求');
-        return;
+      // 取消進行中的 fetch 請求
+      if (this.abortController) {
+        this.abortController.abort();
+        console.log('[InfCarousel] 取消進行中的 API 請求');
       }
       
+      // 如果是 reset 調用，立即執行不延遲
+      const debounceDelay = window.resetRecomCalled ? 0 : 300;
+      
+      // 設置新的防抖計時器，延遲執行實際請求
+      this.fetchDebounceTimer = setTimeout(() => {
+        this.executeFetchRecommendations(ids, containerId, config);
+      }, debounceDelay);
+    }
+
+    // 執行實際的 API 請求
+    executeFetchRecommendations(ids, containerId, config) {
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
       // 檢查 localStorage 中的 BodyID_Foot_size，如果存在則更新 bid 的 HV 和 WV
@@ -1922,8 +1925,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         return;
       }
       
-      // 設置請求鎖定
-      this.isRequestInProgress = true;
+      // 創建新的 AbortController 用於此次請求
+      this.abortController = new AbortController();
       
       // 調試日誌：確認 displayMode 的值
       // console.log('getEmbeddedAds - displayMode:', displayMode);
@@ -2043,7 +2046,13 @@ if (!customElements.get('inf-product-carousel-component')) {
         console.log('[InfCarousel] Product API 請求資料:', JSON.stringify(requestData, null, 2));
       }
 
-      fetch(apiUrl, fetchOptions)
+      // 將 signal 添加到 fetchOptions
+      const fetchOptionsWithSignal = {
+        ...fetchOptions,
+        signal: this.abortController.signal
+      };
+
+      fetch(apiUrl, fetchOptionsWithSignal)
         .then(response => {
           // 檢查 HTTP 狀態碼，如果是錯誤狀態碼（如 500），則拋出錯誤
           if (!response.ok) {
@@ -2052,8 +2061,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           return response.json();
         })
         .then(response => {
-          // 解除請求鎖定
-          this.isRequestInProgress = false;
+          // 清除 abortController
+          this.abortController = null;
           
           // 保存到快取
           this.setCachedData(cacheKey, response);
@@ -2062,8 +2071,14 @@ if (!customElements.get('inf-product-carousel-component')) {
           this.processFetchedData(response, ids, containerId, config, cacheKey);
         })
         .catch(err => {
-          // 解除請求鎖定
-          this.isRequestInProgress = false;
+          // 如果是被取消的請求，不做錯誤處理
+          if (err.name === 'AbortError') {
+            console.log('[InfCarousel] 請求已被取消（防抖機制）');
+            return;
+          }
+          
+          // 清除 abortController
+          this.abortController = null;
           
           console.error('API 調用錯誤:', err);
           // 當 API 調用失敗時，隱藏 loading 但不顯示 popup
