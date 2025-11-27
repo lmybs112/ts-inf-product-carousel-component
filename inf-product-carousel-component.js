@@ -1742,21 +1742,41 @@ if (!customElements.get('inf-product-carousel-component')) {
     showLoadingAndLoadAds(ids, containerId, config) {
       const $ = jQuery;
       const shadowRoot = this.shadowRoot;
-      const { carouselType } = config;
+      const { carouselType, bid } = config;
       
-      // 先檢查快取（reset 時跳過快取）
+      // 先檢查快取
+      const cacheKey = this.generateCacheKey(carouselType);
+      const cachedData = this.getCachedData(cacheKey);
+      
       if (!window.resetRecomCalled) {
-        const cacheKey = this.generateCacheKey(carouselType);
-        const cachedData = this.getCachedData(cacheKey);
+        // 正常情況：有快取就使用
         if (cachedData) {
           console.log('[InfCarousel] 使用快取資料，跳過 API 請求');
           // 使用快取資料，直接處理並顯示（不需要顯示 loading）
           this.processFetchedData(cachedData.data, ids, containerId, config, cacheKey);
           return;
         }
+      } else {
+        // Reset 情況：檢查 bid 是否相同
+        if (cachedData && cachedData.bid) {
+          // 比較 bid 是否相同（深度比較）
+          const isBidSame = JSON.stringify(cachedData.bid) === JSON.stringify(bid);
+          if (isBidSame) {
+            console.log('[InfCarousel] Reset 調用但 bid 相同，使用快取資料');
+            // bid 相同，使用快取
+            this.processFetchedData(cachedData.data, ids, containerId, config, cacheKey);
+            // 重置標記
+            window.resetRecomCalled = false;
+            return;
+          } else {
+            console.log('[InfCarousel] Reset 調用且 bid 不同，重新調用 API');
+          }
+        } else {
+          console.log('[InfCarousel] Reset 調用但無快取或快取中無 bid，重新調用 API');
+        }
       }
       
-      // 沒有快取或是 reset 調用，顯示 loading 並開始載入
+      // 沒有快取或是 reset 且 bid 不同，顯示 loading 並開始載入
       const loadingElement = shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
       if (loadingElement) {
         $(loadingElement).fadeIn(300);
