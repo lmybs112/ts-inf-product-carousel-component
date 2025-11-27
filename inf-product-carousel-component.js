@@ -1980,6 +1980,9 @@ if (!customElements.get('inf-product-carousel-component')) {
         if (bid) {
           requestPopupData.SIZEAI = 'True';
           requestPopupData.bid = bid;
+          requestPopupData.bid.SHOES_MODE =  bid.SHOES_MODE ? bid.SHOES_MODE : '1';
+          requestPopupData.bid.FOOT_CIRCUM =  requestPopupData.bid.FOOT_CIRCUM ? requestPopupData.bid.FOOT_CIRCUM : '0';
+          requestPopupData.bid.CALF_CIRCUM =  requestPopupData.bid.CALF_CIRCUM ? requestPopupData.bid.CALF_CIRCUM : '0';
         }
         fetchOptions = {
           method: 'POST',
