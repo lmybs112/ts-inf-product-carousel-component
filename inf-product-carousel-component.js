@@ -1575,6 +1575,33 @@ if (!customElements.get('inf-product-carousel-component')) {
               carouselType: carouselType || 'product'
             }
           };
+          
+          // 即使延遲載入，也要先註冊 resetRecom 事件監聽器
+          if (carouselType === 'popup' && !this.hasPopupEventListener) {
+            console.log('[InfCarousel] 註冊 resetRecom 事件監聽器');
+            
+            // 定義事件處理函數
+            this.popupReloadHandler = (event) => {
+              console.log('[InfCarousel] 收到重新載入事件，重新調用 API');
+              const newBid = event.detail?.newBid;
+              
+              // 如果有新的 bid 配置，創建更新後的 config
+              let updatedConfig = this.pendingLoadConfig ? this.pendingLoadConfig.config : config;
+              if (newBid && typeof newBid === 'object') {
+                updatedConfig = {
+                  ...updatedConfig,
+                  bid: newBid  // 完全覆蓋原始 bid 配置
+                };
+                console.log('使用新的 bid 配置重新載入推薦：', newBid);
+              }
+              
+              this.fetchRecommendations(ids, containerId, updatedConfig);
+            };
+            
+            // 註冊事件監聽器
+            document.addEventListener('popup-reload-recommendations', this.popupReloadHandler);
+            this.hasPopupEventListener = true;
+          }
         }
   
         $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
