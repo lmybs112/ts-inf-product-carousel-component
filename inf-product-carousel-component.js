@@ -1747,11 +1747,11 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 先檢查快取（reset 時跳過快取）
       if (!window.resetRecomCalled) {
         const cacheKey = this.generateCacheKey(carouselType);
-        const cachedResponse = this.getCachedData(cacheKey);
-        if (cachedResponse) {
+        const cachedData = this.getCachedData(cacheKey);
+        if (cachedData) {
           console.log('[InfCarousel] 使用快取資料，跳過 API 請求');
           // 使用快取資料，直接處理並顯示（不需要顯示 loading）
-          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+          this.processFetchedData(cachedData.data, ids, containerId, config, cacheKey);
           return;
         }
       }
@@ -1814,7 +1814,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           return null;
         }
 
-        const { data, timestamp } = JSON.parse(cached);
+        const { data, timestamp, bid } = JSON.parse(cached);
         const now = Date.now();
         const cacheExpiry = 10 * 60 * 1000; // 10 分鐘（毫秒）
 
@@ -1826,7 +1826,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
 
         // console.log('使用快取資料，剩餘有效時間：', Math.floor((cacheExpiry - (now - timestamp)) / 1000), '秒');
-        return data;
+        // 返回包含 bid 的完整快取資料
+        return { data, bid };
       } catch (error) {
         console.error('讀取快取時發生錯誤:', error);
         return null;
@@ -1834,7 +1835,7 @@ if (!customElements.get('inf-product-carousel-component')) {
     }
 
     // 將資料保存到 localStorage（實現 LRU 策略，最多保存 5 筆，僅處理推薦商品快取）
-    setCachedData(cacheKey, data) {
+    setCachedData(cacheKey, data, bid = null) {
       try {
         const maxCacheItems = 5; // 最多保存 5 筆快取
         
@@ -1879,10 +1880,11 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
         }
         
-        // 保存新快取
+        // 保存新快取，包含 bid 參數
         const cacheData = {
           data: data,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          bid: bid  // 保存 API 請求時使用的 bid
         };
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
         // console.log('已將推薦商品資料保存到快取');
@@ -2028,12 +2030,32 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 生成快取 key
       const cacheKey = this.generateCacheKey(carouselType);
       
-      // 檢查是否有有效的快取資料（reset 時跳過快取，強制重新載入）
-      const cachedResponse = window.resetRecomCalled ? null : this.getCachedData(cacheKey);
-      if (cachedResponse) {
-        // 使用快取資料，直接處理並顯示
-        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
-        return;
+      // 檢查是否有有效的快取資料（reset 時需要特殊處理）
+      if (!window.resetRecomCalled) {
+        // 正常情況：使用快取
+        const cachedData = this.getCachedData(cacheKey);
+        if (cachedData) {
+          console.log('[InfCarousel] 使用快取資料');
+          this.processFetchedData(cachedData.data, ids, containerId, config, cacheKey);
+          return;
+        }
+      } else {
+        // Reset 情況：檢查 bid 是否相同
+        const cachedData = this.getCachedData(cacheKey);
+        if (cachedData && cachedData.bid) {
+          // 比較 bid 是否相同（深度比較）
+          const isBidSame = JSON.stringify(cachedData.bid) === JSON.stringify(bid);
+          if (isBidSame) {
+            console.log('[InfCarousel] Reset 調用但 bid 相同，使用快取資料');
+            // bid 相同，使用快取，但仍然需要重新渲染（因為可能需要更新 UI）
+            this.processFetchedData(cachedData.data, ids, containerId, config, cacheKey);
+            // 重置標記
+            window.resetRecomCalled = false;
+            return;
+          } else {
+            console.log('[InfCarousel] Reset 調用且 bid 不同，重新調用 API');
+          }
+        }
       }
       
       // 創建新的 AbortController 用於此次請求
@@ -2175,8 +2197,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           // 清除 abortController
           this.abortController = null;
           
-          // 保存到快取
-          this.setCachedData(cacheKey, response);
+          // 保存到快取，包含 bid 參數
+          this.setCachedData(cacheKey, response, bid);
           
           // 處理並顯示資料
           this.processFetchedData(response, ids, containerId, config, cacheKey);
