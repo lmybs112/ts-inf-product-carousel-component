@@ -2791,8 +2791,27 @@ if (!customElements.get('inf-product-carousel-component')) {
   
   // 提供一個簡化的初始化函數
   window.initInfProductCarouselComponent = function(config = {}) {
+    // 生成唯一標識符，用於檢查重複初始化
+    const carouselType = config?.carousel?.type || 'product';
+    const containerId = config?.carousel?.showPositionId?.top || 
+                        config?.carousel?.showPositionId?.bottom || 
+                        'default';
+    const instanceKey = `inf-carousel-${carouselType}-${containerId}`;
+    
+    // 檢查是否已經存在相同的組件實例
+    const existingCarousel = document.querySelector(`inf-product-carousel-component[data-instance-key="${instanceKey}"]`);
+    if (existingCarousel) {
+      console.log('[InfCarousel] 組件已存在，跳過重複初始化:', instanceKey);
+      return existingCarousel;
+    }
+    
+    console.log('[InfCarousel] 創建新組件實例:', instanceKey);
+    
     // 創建組件實例
     const carousel = document.createElement('inf-product-carousel-component');
+    
+    // 設置唯一標識符
+    carousel.setAttribute('data-instance-key', instanceKey);
     
     // 設置配置
     carousel.setAttribute('config', JSON.stringify(config));
