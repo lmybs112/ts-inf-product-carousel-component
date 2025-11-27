@@ -1715,8 +1715,21 @@ if (!customElements.get('inf-product-carousel-component')) {
     showLoadingAndLoadAds(ids, containerId, config) {
       const $ = jQuery;
       const shadowRoot = this.shadowRoot;
+      const { carouselType } = config;
       
-      // 顯示 loading 元素
+      // 先檢查快取（reset 時跳過快取）
+      if (!window.resetRecomCalled) {
+        const cacheKey = this.generateCacheKey(carouselType);
+        const cachedResponse = this.getCachedData(cacheKey);
+        if (cachedResponse) {
+          console.log('[InfCarousel] 使用快取資料，跳過 API 請求');
+          // 使用快取資料，直接處理並顯示（不需要顯示 loading）
+          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+          return;
+        }
+      }
+      
+      // 沒有快取或是 reset 調用，顯示 loading 並開始載入
       const loadingElement = shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
       if (loadingElement) {
         $(loadingElement).fadeIn(300);
@@ -1782,11 +1795,10 @@ if (!customElements.get('inf-product-carousel-component')) {
         if (now - timestamp > cacheExpiry) {
           // 快取已過期，移除舊快取
           localStorage.removeItem(cacheKey);
-          console.log('[InfCarousel] 快取已過期，移除快取:', cacheKey);
           return null;
         }
 
-        console.log('[InfCarousel] 使用快取資料，剩餘有效時間：', Math.floor((cacheExpiry - (now - timestamp)) / 1000), '秒', cacheKey);
+        // console.log('使用快取資料，剩餘有效時間：', Math.floor((cacheExpiry - (now - timestamp)) / 1000), '秒');
         return data;
       } catch (error) {
         console.error('讀取快取時發生錯誤:', error);
@@ -1903,21 +1915,6 @@ if (!customElements.get('inf-product-carousel-component')) {
 
     // 實際的推薦資料獲取函數
     fetchRecommendations(ids, containerId, config) {
-      const { carouselType } = config;
-      
-      // 先檢查快取（reset 時跳過快取）
-      if (!window.resetRecomCalled) {
-        const cacheKey = this.generateCacheKey(carouselType);
-        const cachedResponse = this.getCachedData(cacheKey);
-        if (cachedResponse) {
-          console.log('[InfCarousel] 使用快取資料，跳過 API 請求');
-          // 使用快取資料，直接處理並顯示
-          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
-          return;
-        }
-      }
-      
-      // 沒有快取或是 reset 調用，進行防抖處理
       // 清除之前的防抖計時器
       if (this.fetchDebounceTimer) {
         clearTimeout(this.fetchDebounceTimer);
@@ -2001,8 +1998,16 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
       }
 
-      // 生成快取 key（用於後續保存快取）
+      // 生成快取 key
       const cacheKey = this.generateCacheKey(carouselType);
+      
+      // 檢查是否有有效的快取資料（reset 時跳過快取，強制重新載入）
+      const cachedResponse = window.resetRecomCalled ? null : this.getCachedData(cacheKey);
+      if (cachedResponse) {
+        // 使用快取資料，直接處理並顯示
+        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+        return;
+      }
       
       // 創建新的 AbortController 用於此次請求
       this.abortController = new AbortController();
