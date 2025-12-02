@@ -51,6 +51,9 @@ if (!customElements.get('inf-product-carousel-component')) {
                   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
                   border: 1px solid rgba(0, 0, 0, 0.06);
                   backdrop-filter: blur(20px);
+                  display: none !important;
+                  visibility: hidden !important;
+                  opacity: 0 !important;
               }
   
               /* 小螢幕響應式設計 */
@@ -66,6 +69,9 @@ if (!customElements.get('inf-product-carousel-component')) {
                   
                   #infPopupproductCarousel.show {
                       left: 20px;
+                      display: block !important;
+                      visibility: visible !important;
+                      opacity: 1 !important;
                   }
               }
   
@@ -80,11 +86,17 @@ if (!customElements.get('inf-product-carousel-component')) {
                   
                   #infPopupproductCarousel.show {
                       left: 12px;
+                      display: block !important;
+                      visibility: visible !important;
+                      opacity: 1 !important;
                   }
               }
   
               #infPopupproductCarousel.show {
                   left: 20px;
+                  display: block !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
               }
   
               .popup-close-btn {
@@ -163,6 +175,9 @@ if (!customElements.get('inf-product-carousel-component')) {
   
               #infPopupproductCarousel.show {
                   left: 20px;
+                  display: block !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
               }
               
               /* 限制組件在 popup 內的顯示 */
@@ -231,6 +246,12 @@ if (!customElements.get('inf-product-carousel-component')) {
               // 顯示彈窗時設置狀態
               function showPopup() {
                   if (popup) {
+                      // 檢查數據是否有效，無效則不顯示
+                      if (window.hasValidPopupData === false) {
+                          console.log('[InfCarousel] 數據無效，不顯示 popup');
+                          return;
+                      }
+                      
                       // 檢查是否有待載入的配置（autoShow = false 的情況）
                       if (componentInstance.pendingLoadConfig && !componentInstance.isDataLoaded) {
                           console.log('[InfCarousel] 第一次顯示彈窗，開始載入推薦內容');
@@ -249,6 +270,9 @@ if (!customElements.get('inf-product-carousel-component')) {
                       popup.classList.add('show');
                       // 直接設置樣式確保彈窗顯示
                       popup.style.left = '20px';
+                      popup.style.display = 'block';
+                      popup.style.visibility = 'visible';
+                      popup.style.opacity = '1';
                       isPopupVisible = true;
                       
                       // 延遲一下再啟用外部點擊關閉，避免立即關閉
@@ -270,6 +294,9 @@ if (!customElements.get('inf-product-carousel-component')) {
                       popup.classList.remove('show');
                       // 重置樣式確保彈窗完全隱藏
                       popup.style.left = '-500px';
+                      popup.style.display = 'none';
+                      popup.style.visibility = 'hidden';
+                      popup.style.opacity = '0';
                       isPopupVisible = false;
                       
                       // 移除外部點擊監聽器
@@ -1833,6 +1860,30 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
     }
 
+    // 檢查數據是否有效（有內容）
+    isValidData(data) {
+      // 檢查 SIZEAI_result 是否有錯誤
+      if (data.SIZEAI_result) {
+        if (data.SIZEAI_result.error || data.SIZEAI_result.error_type) {
+          console.log('[InfCarousel] 數據無效：SIZEAI_result 包含錯誤');
+          return false;
+        }
+      }
+      // 檢查是否有任何有效的推薦數據
+      const hasValidData = 
+        (data.bhv && Array.isArray(data.bhv) && data.bhv.length > 0) ||
+        (data.corr && Array.isArray(data.corr) && data.corr.length > 0) ||
+        (data.sp_atc && Array.isArray(data.sp_atc) && data.sp_atc.length > 0) ||
+        (data.sp_trans && Array.isArray(data.sp_trans) && data.sp_trans.length > 0);
+      
+      if (!hasValidData) {
+        console.log('[InfCarousel] 數據無效：沒有任何有效的推薦數據');
+        return false;
+      }
+      
+      return true;
+    }
+
     // 將資料保存到 localStorage（實現 LRU 策略，最多保存 5 筆，僅處理推薦商品快取）
     setCachedData(cacheKey, data) {
       try {
@@ -2031,9 +2082,29 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 檢查是否有有效的快取資料（reset 時跳過快取，強制重新載入）
       const cachedResponse = window.resetRecomCalled ? null : this.getCachedData(cacheKey);
       if (cachedResponse) {
-        // 使用快取資料，直接處理並顯示
-        this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
-        return;
+        // 檢查快取數據是否有效，如果無效則刪除快取並重新請求
+        if (!this.isValidData(cachedResponse)) {
+          console.log('[InfCarousel] 快取數據無效，刪除快取並重新請求');
+          localStorage.removeItem(cacheKey);
+          // 如果是 popup 模式，移除 popup 元素
+          if (config.carouselType === 'popup') {
+            const popupElement = document.getElementById('infPopupproductCarousel');
+            if (popupElement) {
+              if (typeof window.closePopup === 'function') {
+                window.closePopup();
+              }
+              popupElement.remove();
+              console.log('[InfCarousel] 已移除無效快取數據的 popup 元素');
+            }
+          }
+          // 繼續執行後續的 API 請求
+        } else {
+          // 使用快取資料，直接處理並顯示
+          // 重置標記，允許顯示 popup（快取數據已驗證有效）
+          window.hasValidPopupData = true;
+          this.processFetchedData(cachedResponse, ids, containerId, config, cacheKey);
+          return;
+        }
       }
       
       // 創建新的 AbortController 用於此次請求
@@ -2118,7 +2189,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           LGVID: "x",
           MRID: "",
           recom_num: "6",
-          PID:  document.location.href.includes('SalePage/Index/')?document.location.href.split('?')[0].split('/SalePage/Index/')[1]:'10662339',
+          PID:  document.location.href.includes('SalePage/Index/')?document.location.href.split('?')[0].split('/SalePage/Index/')[1]:'8897934',
           SP_PID: "xxSOCIAL PROOF", // FIXME
           SIZEAI_ptr: recommendMode||"bhv",
         }
@@ -2175,8 +2246,40 @@ if (!customElements.get('inf-product-carousel-component')) {
           // 清除 abortController
           this.abortController = null;
           
-          // 保存到快取
+          // 檢查數據是否有效，只有有效數據才保存到快取和處理
+          if (!this.isValidData(response)) {
+            console.log('[InfCarousel] 數據無效，不保存到 localStorage 也不顯示 popup');
+            // 設置標記表示數據無效
+            window.hasValidPopupData = false;
+            // 隱藏 loading
+            $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
+            if (containerId === 'personalized-recommendations') {
+              $('#jump-recom').hide();
+            }
+            if (containerId === 'more-recommendations') {
+              $('#jump-more').hide();
+            }
+            // 如果是 popup 模式，完全移除 popup 元素
+            if (config.carouselType === 'popup') {
+              const popupElement = document.getElementById('infPopupproductCarousel');
+              if (popupElement) {
+                // 先關閉 popup
+                if (typeof window.closePopup === 'function') {
+                  window.closePopup();
+                }
+                // 然後完全移除元素
+                popupElement.remove();
+                console.log('[InfCarousel] 已移除無效數據的 popup 元素');
+              }
+            }
+            return;
+          }
+          
+          // 保存到快取（只有有效數據才保存）
           this.setCachedData(cacheKey, response);
+          
+          // 重置標記，允許顯示 popup（數據已驗證有效）
+          window.hasValidPopupData = true;
           
           // 處理並顯示資料
           this.processFetchedData(response, ids, containerId, config, cacheKey);
@@ -2208,6 +2311,35 @@ if (!customElements.get('inf-product-carousel-component')) {
 
     // 處理獲取到的資料（無論是從快取還是 API）
     processFetchedData(response, ids, containerId, config, cacheKey) {
+      // 再次檢查數據是否有效（從快取讀取時也需要檢查）
+      if (!this.isValidData(response)) {
+        console.log('[InfCarousel] 從快取讀取的數據無效，不顯示 popup');
+        // 設置標記表示數據無效
+        window.hasValidPopupData = false;
+        // 隱藏 loading
+        $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
+        if (containerId === 'personalized-recommendations') {
+          $('#jump-recom').hide();
+        }
+        if (containerId === 'more-recommendations') {
+          $('#jump-more').hide();
+        }
+        // 如果是 popup 模式，完全移除 popup 元素
+        if (config.carouselType === 'popup') {
+          const popupElement = document.getElementById('infPopupproductCarousel');
+          if (popupElement) {
+            // 先關閉 popup
+            if (typeof window.closePopup === 'function') {
+              window.closePopup();
+            }
+            // 然後完全移除元素
+            popupElement.remove();
+            console.log('[InfCarousel] 已移除無效數據的 popup 元素');
+          }
+        }
+        return;
+      }
+      
       const { brand, customEdm, hide_discount, hide_size, series_out, series_in, ctype_val, bid, autoplay, sortedBreakpoints, displayMode, carouselType, recommendMode } = config;
       
       // 定義 getRandomElements 函數
@@ -2343,8 +2475,13 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
 
       if (jsonData.length > 0) {
+        // 設置標記表示數據有效，允許顯示 popup
+        window.hasValidPopupData = true;
         this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size, hide_discount);
+
       } else {
+        // 數據無效，設置標記防止顯示 popup
+        window.hasValidPopupData = false;
         $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
           // sourceData 為空時不顯示 popup
           // console.log('sourceData 為空，不顯示 popup');
@@ -2382,7 +2519,6 @@ if (!customElements.get('inf-product-carousel-component')) {
       
       const existingSwiper = swiperElement.swiper;
       const isResetRecom = window.resetRecomCalled;
-  
       if (images.length === 0) {
         displayImages = [{
           link: '#',
@@ -2770,8 +2906,12 @@ if (!customElements.get('inf-product-carousel-component')) {
                 }
                 
                 // 如果是 popup 模式且為 true 模式，在 loading 完成後顯示彈窗（只在初始載入時）
-                if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true && !window.isPopupVisible && !window.resetRecomCalled) {
+                // 只有在數據有效時才顯示 popup
+                if (window.showPopup && typeof window.showPopup === 'function' && window.popupautoShow === true && !window.isPopupVisible && !window.resetRecomCalled && window.hasValidPopupData !== false) {
                   window.showPopup();
+                } else if (window.hasValidPopupData === false && typeof window.closePopup === 'function') {
+                  // 如果數據無效，確保 popup 被關閉
+                  window.closePopup();
                 }
               });
             }
