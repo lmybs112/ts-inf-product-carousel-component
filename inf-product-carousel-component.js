@@ -997,12 +997,14 @@ if (!customElements.get('inf-product-carousel-component')) {
           --swiper-wrapper-transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
         }
         #${containerId} #recommendation-loading {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          min-height: 200px;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 100% !important;
+          min-height: 200px !important;
           height: 100%;
+          position: relative;
+          box-sizing: border-box;
         }
         @media (min-width: 480px) {
           #${containerId} #recommendation-loading {
@@ -1786,7 +1788,15 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 沒有快取或是 reset 調用，顯示 loading 並開始載入
       const loadingElement = shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
       if (loadingElement) {
-        $(loadingElement).fadeIn(300);
+        // 確保 CSS 樣式已完全應用且布局已計算完成後再顯示
+        // 使用雙重 requestAnimationFrame 確保瀏覽器完成樣式計算和布局
+        // 這可以解決 CSS 載入時機和元素顯示時機的競態條件問題
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            // 此時 CSS 的 flex 布局應該已經完全計算完成，可以安全顯示
+            $(loadingElement).fadeIn(300);
+          });
+        });
       }
       
       // 開始載入推薦內容
