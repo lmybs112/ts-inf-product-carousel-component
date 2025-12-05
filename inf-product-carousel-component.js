@@ -570,7 +570,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         autoplay: true,
         hide_discount: false,
         hide_size: false,
-        ctype_val: ['underwear'],
+        ctype_val: [''],
         skuContent: this.getDefaultSkuContent(), // 新增：自動判斷預設 SKU 方法
         bid: {
           HV: '163',
