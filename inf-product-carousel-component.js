@@ -2430,7 +2430,11 @@ if (!customElements.get('inf-product-carousel-component')) {
           
           // 優先取用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
           if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
-            sourceData = response['bhv'];
+            if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
+              sourceData = response['bhv'].concat(response['corr']);
+            } else {
+              sourceData = response['bhv'];
+            }
           } else if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
             sourceData = response['corr'];
           }
