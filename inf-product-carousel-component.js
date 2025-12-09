@@ -2150,12 +2150,13 @@ if (!customElements.get('inf-product-carousel-component')) {
         requestData.ctype_val = JSON.stringify(ctype_val);
       }
   
-      if (!hide_size) {
-        // requestData.SIZEAI = 'True';
-      }
       if (bid && brand.toLocaleUpperCase() !== 'DABE') {
         requestData.SIZEAI = 'True';
         requestData.bid = bid;
+      }
+
+      if (!!hide_size &&  requestData.SIZEAI === 'True') {
+        delete requestData.SIZEAI;
       }
       if (series_out) {
         requestData.series_out = series_out;
