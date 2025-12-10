@@ -40,6 +40,7 @@
             script.onload = function () {
                 const config = {
                     brand: 'ALMI',
+                    GA4Key: 'G-xxxxxxxx', // GA4 金鑰設定（與 brand 同階層）
                     carousels: [{
                             type: 'popup',
                             hide_size: false,
@@ -102,6 +103,7 @@
                 config.carousels.forEach(carousel => {
                     const productCarouselconfig = {
                         brand: config.brand,
+                        GA4Key: config.GA4Key, // 傳遞 GA4Key 設定
                         carousel
                     };
                     // 初始化組件

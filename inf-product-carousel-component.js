@@ -406,7 +406,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
   
     async fetchBrandConfigAndInit(config = {}) {
-      const { brand, carousel} = config;
+      const { brand, carousel, GA4Key} = config;
       let brandConfig = {};
       config.showPositionId = carousel.showPositionId;
       
@@ -444,7 +444,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           ...convertedBrandConfig,
           ...carousel, // 新增：確保 carousel 配置（包括 skuContent）被包含
           brandConfig: brandConfig, // 保留原始 brandConfig 供其他地方使用
-          carouselType: carousel.type // 添加 carousel 類型
+          carouselType: carousel.type, // 添加 carousel 類型
+          GA4Key: GA4Key || '' // 保留 GA4Key 設定
         };
   
         if(mergedConfig.brandConfig?.status && mergedConfig.carouselType === 'popup'){
@@ -457,7 +458,11 @@ if (!customElements.get('inf-product-carousel-component')) {
       } catch (error) {
         console.error('獲取品牌配置時發生錯誤:', error);
         // 如果品牌配置 API 失敗，仍然使用原有配置初始化
-        this.initProductRecommendation(config);
+        const fallbackConfig = {
+          ...config,
+          GA4Key: config.GA4Key || '' // 確保 GA4Key 被傳遞
+        };
+        this.initProductRecommendation(fallbackConfig);
       }
     }
   
@@ -572,6 +577,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         hide_size: false,
         ctype_val: [''],
         skuContent: this.getDefaultSkuContent(), // 新增：自動判斷預設 SKU 方法
+        GA4Key: '', // GA4 金鑰，預設為空字串
         bid: {
           HV: '163',
           WV: '50',
@@ -641,7 +647,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         autoplay,
         arrowPosition,
         customPadding,
-        skuContent // 新增：從配置中取得 skuContent 設定
+        skuContent, // 新增：從配置中取得 skuContent 設定
+        GA4Key // 從配置中取得 GA4Key 設定
       } = finalConfig;
       // console.error('finalConfig-----', finalConfig);
   
@@ -661,7 +668,6 @@ if (!customElements.get('inf-product-carousel-component')) {
         : (skuContent === 'app91_sku' ? this.app91_sku() : this.shopline_sku());
       const show_up_position_before = `#${containerId}`;
       const test = 'A';
-      let GA4Key = '';
   
       // 輸出最終配置以供調試
       // console.log('最終配置:', finalConfig);
@@ -1484,7 +1490,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               </div>
             </div>
             <div class="embeddedAdImgContainer carouselContainer swiper swiper-basic-${containerId}" style="overflow: hidden;">
-              <div class="swiper-wrapper" id="swiper-wrapper-basic-${containerId}"></div>
+              <div class="swiper-wrapper" id="swiper-wrapper-basic swiper-wrapper-basic-${containerId}"></div>
             </div>
             <div class="swiper-next a-right">
               <img src="https://raw.githubusercontent.com/infFITSDevelopment/pop-ad/refs/heads/main/slide-arrow-right.svg" />
