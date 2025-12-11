@@ -1766,12 +1766,6 @@ if (!customElements.get('inf-product-carousel-component')) {
                 event_label: 'Title: ' + title,
                 value: link ? link.length : 0
               };
-              console.log('[InfCarousel] 發送 GA 事件 - embeddedItem:', {
-                eventName: 'bhv_click_embedded_item' + test,
-                eventData: eventData,
-                title: title,
-                link: link
-              });
               gtag('event', 'bhv_click_embedded_item' + test, eventData);
             } else if (GA4Key) {
               console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
@@ -1918,10 +1912,6 @@ if (!customElements.get('inf-product-carousel-component')) {
                 event_label: 'title-nav-next',
                 value: 10
               };
-              console.log('[InfCarousel] 發送 GA 事件 - 手機版右箭頭:', {
-                eventName: 'bhv_click_embedded_item' + test,
-                eventData: eventData
-              });
               gtag('event', 'bhv_click_embedded_item' + test, eventData);
             } else if (GA4Key) {
               console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
