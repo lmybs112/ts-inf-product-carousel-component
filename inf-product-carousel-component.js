@@ -930,7 +930,7 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
 
       // 檢查 gtag 是否已存在
-      if (typeof gtag === 'function') {
+      if (typeof window.gtag === 'function') {
         if (callback) {
           callback();
         }
@@ -1523,6 +1523,45 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 確保 Google Analytics 已載入（如果配置了 GA4Key）
       this.ensureGtagLoaded(GA4Key);
   
+      // 創建統一的 GA 事件發送函數，支援 gtag 和 dataLayer.push
+      const sendGAEvent = (eventName, eventData) => {
+        if (!GA4Key) {
+          return; // 沒有配置 GA4Key，不發送事件
+        }
+
+        const fullEventData = {
+          ...eventData,
+          send_to: GA4Key
+        };
+
+        // 優先使用 window.gtag（如果存在）
+        if (typeof window.gtag === 'function') {
+          console.log('[InfCarousel] 發送 GA 事件 (gtag):', {
+            eventName: eventName,
+            eventData: fullEventData
+          });
+          window.gtag('event', eventName, fullEventData);
+          return;
+        }
+
+        // 備用方案：使用 dataLayer.push（支援 GTM）
+        if (window.dataLayer && Array.isArray(window.dataLayer)) {
+          const dataLayerEvent = {
+            event: eventName,
+            ...fullEventData
+          };
+          console.log('[InfCarousel] 發送 GA 事件 (dataLayer):', {
+            eventName: eventName,
+            eventData: dataLayerEvent
+          });
+          window.dataLayer.push(dataLayerEvent);
+          return;
+        }
+
+        // 如果兩者都不存在，顯示警告
+        console.warn('[InfCarousel] gtag 和 dataLayer 都不存在，無法發送 GA 事件。請確保已載入 Google Analytics 或 Google Tag Manager。');
+      };
+  
       $(() => {
         let ids = this.ids_init(skuContentType || skuContent || 'shopline_sku'); // 修改：傳遞 skuContentType 或 skuContent
   
@@ -1759,17 +1798,11 @@ if (!customElements.get('inf-product-carousel-component')) {
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
             const title = target.getAttribute('data-title');
             const link = target.getAttribute('data-link');
-            if (typeof gtag === 'function' && GA4Key) {
-              const eventData = {
-                send_to: GA4Key,
-                event_category: 'infEmbeddedAdContainer-embedded',
-                event_label: 'Title: ' + title,
-                value: link ? link.length : 0
-              };
-              gtag('event', 'bhv_click_embedded_item' + test, eventData);
-            } else if (GA4Key) {
-              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-            }
+            sendGAEvent('bhv_click_embedded_item' + test, {
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'Title: ' + title,
+              value: link ? link.length : 0
+            });
           }
         });
         
@@ -1777,17 +1810,11 @@ if (!customElements.get('inf-product-carousel-component')) {
         $(shadowRoot).on('click', embeddedItemSelector, function(e) {
           const title = $(this).data('title');
           const link = $(this).data('link');
-          if (typeof gtag === 'function' && GA4Key) {
-            const eventData = {
-              send_to: GA4Key,
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'Title: ' + title,
-              value: link.length
-            };
-            gtag('event', 'bhv_click_embedded_item' + test, eventData);
-          } else if (GA4Key) {
-            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-          }
+          sendGAEvent('bhv_click_embedded_item' + test, {
+            event_category: 'infEmbeddedAdContainer-embedded',
+            event_label: 'Title: ' + title,
+            value: link.length
+          });
         });
   
         // 綁定左箭頭點擊事件
@@ -1797,33 +1824,21 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.a-left');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            if (typeof gtag === 'function' && GA4Key) {
-              const eventData = {
-                send_to: GA4Key,
-                event_category: 'infEmbeddedAdContainer-embedded',
-                event_label: 'arrow-left',
-                value: 10
-              };
-              gtag('event', 'bhv_click_embedded_item' + test, eventData);
-            } else if (GA4Key) {
-              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-            }
+            sendGAEvent('bhv_click_embedded_item' + test, {
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'arrow-left',
+              value: 10
+            });
           }
         });
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', aLeftSelector, function(e) {
-          if (typeof gtag === 'function' && GA4Key) {
-            const eventData = {
-              send_to: GA4Key,
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'arrow-left',
-              value: 10
-            };
-            gtag('event', 'bhv_click_embedded_item' + test, eventData);
-          } else if (GA4Key) {
-            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-          }
+          sendGAEvent('bhv_click_embedded_item' + test, {
+            event_category: 'infEmbeddedAdContainer-embedded',
+            event_label: 'arrow-left',
+            value: 10
+          });
         });
 
         // 綁定右箭頭點擊事件
@@ -1833,33 +1848,21 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.a-right');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            if (typeof gtag === 'function' && GA4Key) {
-              const eventData = {
-                send_to: GA4Key,
-                event_category: 'infEmbeddedAdContainer-embedded',
-                event_label: 'arrow-right',
-                value: 10
-              };
-              gtag('event', 'bhv_click_embedded_item' + test, eventData);
-            } else if (GA4Key) {
-              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-            }
+            sendGAEvent('bhv_click_embedded_item' + test, {
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'arrow-right',
+              value: 10
+            });
           }
         });
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', aRightSelector, function(e) {
-          if (typeof gtag === 'function' && GA4Key) {
-            const eventData = {
-              send_to: GA4Key,
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'arrow-right',
-              value: 10
-            };
-            gtag('event', 'bhv_click_embedded_item' + test, eventData);
-          } else if (GA4Key) {
-            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-          }
+          sendGAEvent('bhv_click_embedded_item' + test, {
+            event_category: 'infEmbeddedAdContainer-embedded',
+            event_label: 'arrow-right',
+            value: 10
+          });
         });
 
         // 綁定手機版左箭頭點擊事件（title-nav-prev）
@@ -1869,33 +1872,21 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.title-nav-prev');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            if (typeof gtag === 'function' && GA4Key) {
-              const eventData = {
-                send_to: GA4Key,
-                event_category: 'infEmbeddedAdContainer-embedded',
-                event_label: 'title-nav-prev',
-                value: 10
-              };
-              gtag('event', 'bhv_click_embedded_item' + test, eventData);
-            } else if (GA4Key) {
-              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-            }
+            sendGAEvent('bhv_click_embedded_item' + test, {
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'title-nav-prev',
+              value: 10
+            });
           }
         });
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', titleNavPrevSelector, function(e) {
-          if (typeof gtag === 'function' && GA4Key) {
-            const eventData = {
-              send_to: GA4Key,
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'title-nav-prev',
-              value: 10
-            };
-            gtag('event', 'bhv_click_embedded_item' + test, eventData);
-          } else if (GA4Key) {
-            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-          }
+          sendGAEvent('bhv_click_embedded_item' + test, {
+            event_category: 'infEmbeddedAdContainer-embedded',
+            event_label: 'title-nav-prev',
+            value: 10
+          });
         });
 
         // 綁定手機版右箭頭點擊事件（title-nav-next）
@@ -1905,33 +1896,21 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.title-nav-next');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            if (typeof gtag === 'function' && GA4Key) {
-              const eventData = {
-                send_to: GA4Key,
-                event_category: 'infEmbeddedAdContainer-embedded',
-                event_label: 'title-nav-next',
-                value: 10
-              };
-              gtag('event', 'bhv_click_embedded_item' + test, eventData);
-            } else if (GA4Key) {
-              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-            }
+            sendGAEvent('bhv_click_embedded_item' + test, {
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'title-nav-next',
+              value: 10
+            });
           }
         });
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', titleNavNextSelector, function(e) {
-          if (typeof gtag === 'function' && GA4Key) {
-            const eventData = {
-              send_to: GA4Key,
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'title-nav-next',
-              value: 10
-            };
-            gtag('event', 'bhv_click_embedded_item' + test, eventData);
-          } else if (GA4Key) {
-            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
-          }
+          sendGAEvent('bhv_click_embedded_item' + test, {
+            event_category: 'infEmbeddedAdContainer-embedded',
+            event_label: 'title-nav-next',
+            value: 10
+          });
         });
       });
     }
