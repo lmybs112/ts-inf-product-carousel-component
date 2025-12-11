@@ -248,13 +248,11 @@ if (!customElements.get('inf-product-carousel-component')) {
                   if (popup) {
                       // 檢查數據是否有效，無效則不顯示
                       if (window.hasValidPopupData === false) {
-                          console.log('[InfCarousel] 數據無效，不顯示 popup');
                           return;
                       }
                       
                       // 檢查是否有待載入的配置（autoShow = false 的情況）
                       if (componentInstance.pendingLoadConfig && !componentInstance.isDataLoaded) {
-                          console.log('[InfCarousel] 第一次顯示彈窗，開始載入推薦內容');
                           
                           // 標記資料已開始載入，避免重複載入
                           componentInstance.isDataLoaded = true;
@@ -348,7 +346,6 @@ if (!customElements.get('inf-product-carousel-component')) {
                       
                       // 如果 autoShow = false 且資料尚未載入，需要先觸發載入
                       if (componentInstance.pendingLoadConfig && !componentInstance.isDataLoaded) {
-                          console.log('[InfCarousel] Reset 調用，但資料尚未載入，先載入資料');
                           componentInstance.isDataLoaded = true;
                           const { ids, containerId, config } = componentInstance.pendingLoadConfig;
                           // 更新 bid 後載入
@@ -372,14 +369,7 @@ if (!customElements.get('inf-product-carousel-component')) {
                       });
                       document.dispatchEvent(reloadEvent);
                       
-                      if (newBid && typeof newBid === 'object') {
-                          // console.log('已傳遞新的 bid 配置：', newBid);
-                      }
-                      
-                      // console.log('正在重新獲取推薦資料...');
-                  } else {
-                      // console.log('彈窗元素不存在，無法重置推薦資料');
-                  }
+                  } 
               };
               
               // 根據 autoShow 決定是否自動顯示彈窗
@@ -928,6 +918,67 @@ if (!customElements.get('inf-product-carousel-component')) {
         if (callback) callback();
       }
     }
+
+    // 確保 Google Analytics (gtag) 已載入
+    ensureGtagLoaded(GA4Key, callback) {
+      // 如果沒有配置 GA4Key，直接執行 callback
+      if (!GA4Key) {
+        if (callback) {
+          callback();
+        }
+        return;
+      }
+
+      // 檢查 gtag 是否已存在
+      if (typeof gtag === 'function') {
+        if (callback) {
+          callback();
+        }
+        return;
+      }
+
+      // 檢查是否已經在載入中
+      if (window.gtagLoadingPromise) {
+        window.gtagLoadingPromise.then(() => {
+          if (callback) {
+            callback();
+          }
+        });
+        return;
+      }
+
+      console.log('[InfCarousel] 載入 Google Analytics，GA4Key:', GA4Key);
+
+      // 創建載入 Promise，避免重複載入
+      window.gtagLoadingPromise = new Promise((resolve) => {
+        // 創建 dataLayer
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', GA4Key);
+
+        // 載入 gtag.js 腳本
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4Key}`;
+        script.onload = () => {
+          console.log('[InfCarousel] Google Analytics 載入完成');
+          resolve();
+          if (callback) {
+            callback();
+          }
+        };
+        script.onerror = () => {
+          console.error('[InfCarousel] Google Analytics 載入失敗');
+          resolve(); // 即使載入失敗也 resolve，避免阻塞
+          if (callback) {
+            callback();
+          }
+        };
+        document.head.appendChild(script);
+      });
+    }
   
     loadEmbeddedScript(containerId, config) {
       const {
@@ -1469,6 +1520,9 @@ if (!customElements.get('inf-product-carousel-component')) {
       `;
       shadowRoot.appendChild(customCSS);
   
+      // 確保 Google Analytics 已載入（如果配置了 GA4Key）
+      this.ensureGtagLoaded(GA4Key);
+  
       $(() => {
         let ids = this.ids_init(skuContentType || skuContent || 'shopline_sku'); // 修改：傳遞 skuContentType 或 skuContent
   
@@ -1490,7 +1544,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               </div>
             </div>
             <div class="embeddedAdImgContainer carouselContainer swiper swiper-basic-${containerId}" style="overflow: hidden;">
-              <div class="swiper-wrapper" id="swiper-wrapper-basic swiper-wrapper-basic-${containerId}"></div>
+              <div class="swiper-wrapper" id="swiper-wrapper-basic-${containerId}"></div>
             </div>
             <div class="swiper-next a-right">
               <img src="https://raw.githubusercontent.com/infFITSDevelopment/pop-ad/refs/heads/main/slide-arrow-right.svg" />
@@ -1696,33 +1750,198 @@ if (!customElements.get('inf-product-carousel-component')) {
           });
         });
   
-        $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-basic .embeddedItem`, function() {
+        // 綁定 embeddedItem 點擊事件 - 使用事件委派在 shadowRoot 上
+        const embeddedItemSelector = `#${containerId} .infEmbeddedAdContainer .embeddedItem`;
+        
+        // 使用原生事件監聽器確保能正確觸發
+        shadowRoot.addEventListener('click', function(e) {
+          const target = e.target.closest('.embeddedItem');
+          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+            const title = target.getAttribute('data-title');
+            const link = target.getAttribute('data-link');
+            if (typeof gtag === 'function' && GA4Key) {
+              const eventData = {
+                send_to: GA4Key,
+                event_category: 'infEmbeddedAdContainer-embedded',
+                event_label: 'Title: ' + title,
+                value: link ? link.length : 0
+              };
+              console.log('[InfCarousel] 發送 GA 事件 - embeddedItem:', {
+                eventName: 'bhv_click_embedded_item' + test,
+                eventData: eventData,
+                title: title,
+                link: link
+              });
+              gtag('event', 'bhv_click_embedded_item' + test, eventData);
+            } else if (GA4Key) {
+              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+            }
+          }
+        });
+        
+        // 同時保留 jQuery 事件委派作為備用
+        $(shadowRoot).on('click', embeddedItemSelector, function(e) {
           const title = $(this).data('title');
           const link = $(this).data('link');
-          gtag('event', 'bhv_click_embedded_item' + test, {
-            send_to: GA4Key,
-            event_category: 'swiper-wrapper-basic-embedded',
-            event_label: 'Title: ' + title,
-            value: link.length
-          });
+          if (typeof gtag === 'function' && GA4Key) {
+            const eventData = {
+              send_to: GA4Key,
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'Title: ' + title,
+              value: link.length
+            };
+            gtag('event', 'bhv_click_embedded_item' + test, eventData);
+          } else if (GA4Key) {
+            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+          }
         });
   
-        $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-basic .a-left`, function() {
-          gtag('event', 'bhv_click_embedded_item' + test, {
-            send_to: GA4Key,
-            event_category: 'swiper-wrapper-basic-embedded',
-            event_label: 'arrow-left',
-            value: 10
-          });
+        // 綁定左箭頭點擊事件
+        const aLeftSelector = `#${containerId} .infEmbeddedAdContainer .a-left`;
+        
+        // 使用原生事件監聽器
+        shadowRoot.addEventListener('click', function(e) {
+          const target = e.target.closest('.a-left');
+          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+            if (typeof gtag === 'function' && GA4Key) {
+              const eventData = {
+                send_to: GA4Key,
+                event_category: 'infEmbeddedAdContainer-embedded',
+                event_label: 'arrow-left',
+                value: 10
+              };
+              gtag('event', 'bhv_click_embedded_item' + test, eventData);
+            } else if (GA4Key) {
+              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+            }
+          }
         });
-  
-        $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-basic .a-right`, function() {
-          gtag('event', 'bhv_click_embedded_item' + test, {
-            send_to: GA4Key,
-            event_category: 'swiper-wrapper-basic-embedded',
-            event_label: 'arrow-right',
-            value: 10
-          });
+        
+        // 同時保留 jQuery 事件委派作為備用
+        $(shadowRoot).on('click', aLeftSelector, function(e) {
+          if (typeof gtag === 'function' && GA4Key) {
+            const eventData = {
+              send_to: GA4Key,
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'arrow-left',
+              value: 10
+            };
+            gtag('event', 'bhv_click_embedded_item' + test, eventData);
+          } else if (GA4Key) {
+            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+          }
+        });
+
+        // 綁定右箭頭點擊事件
+        const aRightSelector = `#${containerId} .infEmbeddedAdContainer .a-right`;
+
+        // 使用原生事件監聽器
+        shadowRoot.addEventListener('click', function(e) {
+          const target = e.target.closest('.a-right');
+          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+            if (typeof gtag === 'function' && GA4Key) {
+              const eventData = {
+                send_to: GA4Key,
+                event_category: 'infEmbeddedAdContainer-embedded',
+                event_label: 'arrow-right',
+                value: 10
+              };
+              gtag('event', 'bhv_click_embedded_item' + test, eventData);
+            } else if (GA4Key) {
+              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+            }
+          }
+        });
+        
+        // 同時保留 jQuery 事件委派作為備用
+        $(shadowRoot).on('click', aRightSelector, function(e) {
+          if (typeof gtag === 'function' && GA4Key) {
+            const eventData = {
+              send_to: GA4Key,
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'arrow-right',
+              value: 10
+            };
+            gtag('event', 'bhv_click_embedded_item' + test, eventData);
+          } else if (GA4Key) {
+            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+          }
+        });
+
+        // 綁定手機版左箭頭點擊事件（title-nav-prev）
+        const titleNavPrevSelector = `#${containerId} .infEmbeddedAdContainer .title-nav-prev`;
+        
+        // 使用原生事件監聽器
+        shadowRoot.addEventListener('click', function(e) {
+          const target = e.target.closest('.title-nav-prev');
+          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+            if (typeof gtag === 'function' && GA4Key) {
+              const eventData = {
+                send_to: GA4Key,
+                event_category: 'infEmbeddedAdContainer-embedded',
+                event_label: 'title-nav-prev',
+                value: 10
+              };
+              gtag('event', 'bhv_click_embedded_item' + test, eventData);
+            } else if (GA4Key) {
+              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+            }
+          }
+        });
+        
+        // 同時保留 jQuery 事件委派作為備用
+        $(shadowRoot).on('click', titleNavPrevSelector, function(e) {
+          if (typeof gtag === 'function' && GA4Key) {
+            const eventData = {
+              send_to: GA4Key,
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'title-nav-prev',
+              value: 10
+            };
+            gtag('event', 'bhv_click_embedded_item' + test, eventData);
+          } else if (GA4Key) {
+            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+          }
+        });
+
+        // 綁定手機版右箭頭點擊事件（title-nav-next）
+        const titleNavNextSelector = `#${containerId} .infEmbeddedAdContainer .title-nav-next`;
+        
+        // 使用原生事件監聽器
+        shadowRoot.addEventListener('click', function(e) {
+          const target = e.target.closest('.title-nav-next');
+          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+            if (typeof gtag === 'function' && GA4Key) {
+              const eventData = {
+                send_to: GA4Key,
+                event_category: 'infEmbeddedAdContainer-embedded',
+                event_label: 'title-nav-next',
+                value: 10
+              };
+              console.log('[InfCarousel] 發送 GA 事件 - 手機版右箭頭:', {
+                eventName: 'bhv_click_embedded_item' + test,
+                eventData: eventData
+              });
+              gtag('event', 'bhv_click_embedded_item' + test, eventData);
+            } else if (GA4Key) {
+              console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+            }
+          }
+        });
+        
+        // 同時保留 jQuery 事件委派作為備用
+        $(shadowRoot).on('click', titleNavNextSelector, function(e) {
+          if (typeof gtag === 'function' && GA4Key) {
+            const eventData = {
+              send_to: GA4Key,
+              event_category: 'infEmbeddedAdContainer-embedded',
+              event_label: 'title-nav-next',
+              value: 10
+            };
+            gtag('event', 'bhv_click_embedded_item' + test, eventData);
+          } else if (GA4Key) {
+            console.warn('[InfCarousel] gtag 函數不存在，無法發送 GA 事件。請確保已載入 Google Analytics。');
+          }
         });
       });
     }
@@ -2602,6 +2821,8 @@ if (!customElements.get('inf-product-carousel-component')) {
        
        if (swiperWrapper) {
          $(swiperWrapper).html(items);
+         
+         // 元素已插入，事件委派會自動處理動態創建的元素
        } else {
          console.error(`找不到 Swiper wrapper 元素，containerId: ${containerId}`);
          return;
@@ -2913,11 +3134,9 @@ if (!customElements.get('inf-product-carousel-component')) {
     // 檢查是否已經存在相同的組件實例
     const existingCarousel = document.querySelector(`inf-product-carousel-component[data-instance-key="${instanceKey}"]`);
     if (existingCarousel) {
-      console.log('[InfCarousel] 組件已存在，跳過重複初始化:', instanceKey);
       return existingCarousel;
     }
     
-    console.log('[InfCarousel] 創建新組件實例:', instanceKey);
     
     // 創建組件實例
     const carousel = document.createElement('inf-product-carousel-component');
@@ -2972,7 +3191,6 @@ if (!customElements.get('inf-product-carousel-component')) {
           oldConfigCount++;
           localStorage.removeItem(key);
           cleanedCount++;
-          // console.log(`🗑️ 已清理舊的品牌配置快取: ${key}`);
         } else if (key.startsWith(carouselPrefix)) {
           carouselCount++;
           try {
@@ -2981,29 +3199,19 @@ if (!customElements.get('inf-product-carousel-component')) {
               if (now - cached.timestamp > cacheExpiry) {
                 localStorage.removeItem(key);
                 cleanedCount++;
-                // console.log(`🗑️ 已清理過期的推薦商品快取: ${key}`);
               }
             } else {
               localStorage.removeItem(key);
               cleanedCount++;
-              // console.log(`🗑️ 已清理格式錯誤的推薦商品快取: ${key}`);
             }
           } catch (e) {
             localStorage.removeItem(key);
             cleanedCount++;
-            // console.log(`🗑️ 已清理無效的推薦商品快取: ${key}`);
           }
         }
       });
 
       const totalCount = carouselCount + oldConfigCount;
-      
-      // console.log(`\n📊 快取統計：`);
-      // console.log(`   推薦商品快取: ${carouselCount} 個 (上限 ${maxCacheItems} 個)`);
-      // console.log(`   舊品牌配置快取: ${oldConfigCount} 個 (已全部清理)`);
-      // console.log(`   新品牌配置快取: 0 個 (已移除快取，每次獲取最新配置)`);
-      // console.log(`✅ 清理完成：總共 ${totalCount} 個快取項目，已清理 ${cleanedCount} 個過期/無效項目，保留 ${totalCount - cleanedCount} 個有效項目`);
-      // console.log(`💡 提示：推薦商品快取最多保存 ${maxCacheItems} 筆，超過會自動刪除最舊的`);
       
       return { 
         total: totalCount, 
