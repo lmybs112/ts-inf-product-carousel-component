@@ -1975,6 +1975,18 @@ if (!customElements.get('inf-product-carousel-component')) {
       }
       
       // 沒有快取或是 reset 調用，顯示 loading 並開始載入
+      // 先確保輪播容器是隱藏的，避免同時顯示
+      const embeddedContainer = shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+      const textSection = shadowRoot.querySelector(`#${containerId} .text-section`);
+      
+      if (embeddedContainer) {
+        $(embeddedContainer).hide();
+        embeddedContainer.style.setProperty('display', 'none', 'important');
+      }
+      if (textSection) {
+        $(textSection).hide();
+      }
+      
       const loadingElement = shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
       if (loadingElement) {
         // 確保 CSS 樣式已完全應用且布局已計算完成後再顯示
@@ -1983,6 +1995,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             // 此時 CSS 的 flex 布局應該已經完全計算完成，可以安全顯示
+            // 確保輪播容器已完全隱藏後再顯示 loading
             $(loadingElement).fadeIn(300);
           });
         });
@@ -2415,8 +2428,26 @@ if (!customElements.get('inf-product-carousel-component')) {
           if (!this.isValidData(response)) {
             // 設置標記表示數據無效
             window.hasValidPopupData = false;
+            
+            // 確保輪播容器和文字區域是隱藏的
+            const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+            const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
+            if (embeddedContainer) {
+              $(embeddedContainer).hide();
+              embeddedContainer.style.setProperty('display', 'none', 'important');
+            }
+            if (textSection) {
+              $(textSection).hide();
+            }
+            
             // 隱藏 loading
-            $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
+            const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
+            if (loadingElement) {
+              $(loadingElement).fadeOut(400, () => {
+                loadingElement.style.setProperty('display', 'none', 'important');
+              });
+            }
+            
             if (containerId === 'personalized-recommendations') {
               $('#jump-recom').hide();
             }
@@ -2473,8 +2504,26 @@ if (!customElements.get('inf-product-carousel-component')) {
       if (!this.isValidData(response)) {
         // 設置標記表示數據無效
         window.hasValidPopupData = false;
+        
+        // 確保輪播容器和文字區域是隱藏的
+        const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+        const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
+        if (embeddedContainer) {
+          $(embeddedContainer).hide();
+          embeddedContainer.style.setProperty('display', 'none', 'important');
+        }
+        if (textSection) {
+          $(textSection).hide();
+        }
+        
         // 隱藏 loading
-        $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400);
+        const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
+        if (loadingElement) {
+          $(loadingElement).fadeOut(400, () => {
+            loadingElement.style.setProperty('display', 'none', 'important');
+          });
+        }
+        
         if (containerId === 'personalized-recommendations') {
           $('#jump-recom').hide();
         }
@@ -2642,10 +2691,28 @@ if (!customElements.get('inf-product-carousel-component')) {
       } else {
         // 數據無效，設置標記防止顯示 popup
         window.hasValidPopupData = false;
-        $(this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`)).fadeOut(400, () => {
-          // sourceData 為空時不顯示 popup
-          // console.log('sourceData 為空，不顯示 popup');
-        });
+        
+        // 確保輪播容器和文字區域是隱藏的
+        const embeddedContainer = this.shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+        const textSection = this.shadowRoot.querySelector(`#${containerId} .text-section`);
+        if (embeddedContainer) {
+          $(embeddedContainer).hide();
+          embeddedContainer.style.setProperty('display', 'none', 'important');
+        }
+        if (textSection) {
+          $(textSection).hide();
+        }
+        
+        // 隱藏 loading
+        const loadingElement = this.shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
+        if (loadingElement) {
+          $(loadingElement).fadeOut(400, () => {
+            loadingElement.style.setProperty('display', 'none', 'important');
+            // sourceData 為空時不顯示 popup
+            // console.log('sourceData 為空，不顯示 popup');
+          });
+        }
+        
         if (containerId === 'personalized-recommendations') {
           $('#jump-recom').hide();
         }
@@ -3055,11 +3122,23 @@ if (!customElements.get('inf-product-carousel-component')) {
                                 document.querySelector('.text-section');
             
             if (loadingElement) {
+              // 在開始隱藏 loading 之前，先確保輪播容器是隱藏的，避免同時顯示
+              if (embeddedContainer) {
+                $(embeddedContainer).hide();
+                embeddedContainer.style.setProperty('display', 'none', 'important');
+              }
+              if (textSection) {
+                $(textSection).hide();
+              }
+              
               $(loadingElement).fadeOut(400, () => {
+                // 確保 loading 完全隱藏
+                loadingElement.style.setProperty('display', 'none', 'important');
+                
+                // loading 完全隱藏後，再顯示輪播容器
                 if (embeddedContainer) {
-                  // 強制設定 display: block 來覆蓋 CSS 規則
                   embeddedContainer.style.setProperty('display', 'block', 'important');
-                  loadingElement.style.setProperty('display', 'none', 'important');
+                  $(embeddedContainer).show();
                 }
                 
                 // 載入完成後顯示文字區域
