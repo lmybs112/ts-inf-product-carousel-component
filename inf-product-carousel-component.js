@@ -923,7 +923,6 @@ if (!customElements.get('inf-product-carousel-component')) {
     ensureGtagLoaded(GA4Key, callback) {
       // 如果沒有配置 GA4Key，直接執行 callback
       if (!GA4Key) {
-        console.log('[InfCarousel] 未配置 GA4Key，跳過 Google Analytics 載入');
         if (callback) {
           callback();
         }
@@ -933,7 +932,6 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 檢查 gtag.js 腳本是否已存在（真正的腳本，不只是臨時函數）
       const existingScript = document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA4Key}"]`);
       if (existingScript) {
-        console.log('[InfCarousel] gtag.js 腳本已存在，跳過載入');
         // 確保 dataLayer 已初始化
         window.dataLayer = window.dataLayer || [];
         if (typeof window.gtag !== 'function') {
@@ -949,7 +947,6 @@ if (!customElements.get('inf-product-carousel-component')) {
 
       // 檢查是否已經在載入中
       if (window.gtagLoadingPromise) {
-        console.log('[InfCarousel] gtag.js 正在載入中，等待完成...');
         window.gtagLoadingPromise.then(() => {
           if (callback) {
             callback();
@@ -957,8 +954,6 @@ if (!customElements.get('inf-product-carousel-component')) {
         });
         return;
       }
-
-      console.log('[InfCarousel] 開始載入 Google Analytics，GA4Key:', GA4Key);
 
       // 創建載入 Promise，避免重複載入
       window.gtagLoadingPromise = new Promise((resolve, reject) => {
@@ -973,8 +968,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         // 初始化 GA4
         window.gtag('js', new Date());
         window.gtag('config', GA4Key, {
-          'send_page_view': true,
-          'debug_mode': true // 啟用偵錯模式，便於在 GA4 DebugView 中查看
+          'send_page_view': true
         });
 
         // 載入 gtag.js 腳本
@@ -984,8 +978,6 @@ if (!customElements.get('inf-product-carousel-component')) {
         script.id = 'inf-gtag-script';
         
         script.onload = () => {
-          console.log('[InfCarousel] ✅ Google Analytics 腳本載入成功');
-          console.log('[InfCarousel] dataLayer 內容:', window.dataLayer);
           // 標記 GA 已就緒
           window.infGAReady = true;
           resolve();
@@ -995,8 +987,6 @@ if (!customElements.get('inf-product-carousel-component')) {
         };
         
         script.onerror = (error) => {
-          console.error('[InfCarousel] ❌ Google Analytics 腳本載入失敗:', error);
-          console.error('[InfCarousel] 可能原因: 網路問題、廣告攔截器、防火牆阻擋');
           // 標記載入失敗
           window.infGAReady = false;
           window.infGALoadError = true;
@@ -1007,7 +997,6 @@ if (!customElements.get('inf-product-carousel-component')) {
         };
         
         document.head.appendChild(script);
-        console.log('[InfCarousel] gtag.js 腳本已添加到 head，等待載入...');
       });
     }
   
@@ -1557,7 +1546,6 @@ if (!customElements.get('inf-product-carousel-component')) {
       // 創建統一的 GA 事件發送函數，支援 gtag 和 dataLayer.push
       const sendGAEvent = (eventName, eventData) => {
         if (!GA4Key) {
-          console.log('[InfCarousel] 未配置 GA4Key，跳過事件發送');
           return; // 沒有配置 GA4Key，不發送事件
         }
 
@@ -1566,27 +1554,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           send_to: GA4Key
         };
 
-        // 檢查 GA 載入狀態
-        if (window.infGALoadError) {
-          console.warn('[InfCarousel] ⚠️ GA 載入失敗，事件將存入 dataLayer 但可能無法發送');
-        }
-
         // 優先使用 window.gtag（如果存在）
         if (typeof window.gtag === 'function') {
-          console.log('[InfCarousel] 📤 發送 GA4 事件:', {
-            eventName: eventName,
-            eventData: fullEventData,
-            gaReady: window.infGAReady || false
-          });
-          
-          // 使用 gtag 發送事件
           window.gtag('event', eventName, fullEventData);
-          
-          // 驗證事件是否已加入 dataLayer
-          if (window.dataLayer && window.dataLayer.length > 0) {
-            const lastEntry = window.dataLayer[window.dataLayer.length - 1];
-            console.log('[InfCarousel] 📊 dataLayer 最新條目:', lastEntry);
-          }
           return;
         }
 
@@ -1596,16 +1566,9 @@ if (!customElements.get('inf-product-carousel-component')) {
             event: eventName,
             ...fullEventData
           };
-          console.log('[InfCarousel] 📤 發送 GA 事件 (dataLayer):', {
-            eventName: eventName,
-            eventData: dataLayerEvent
-          });
           window.dataLayer.push(dataLayerEvent);
           return;
         }
-
-        // 如果兩者都不存在，顯示警告
-        console.warn('[InfCarousel] ❌ gtag 和 dataLayer 都不存在，無法發送 GA 事件。請確保已載入 Google Analytics 或 Google Tag Manager。');
       };
   
       $(() => {
@@ -1726,8 +1689,6 @@ if (!customElements.get('inf-product-carousel-component')) {
           });
         } else {
           // popup 類型且 autoShow = false：延遲載入，保存配置供 showPopup 使用
-          console.log('[InfCarousel] autoShow = false，延遲載入推薦內容');
-          
           // 保存配置信息到組件實例，供 showPopup 調用
           this.pendingLoadConfig = {
             ids,
@@ -2269,13 +2230,11 @@ if (!customElements.get('inf-product-carousel-component')) {
             }
             
           } catch (parseError) {
-            console.warn('[InfCarousel] 解析 BodyID_Foot_size 失敗:', parseError);
+            // 解析失敗，忽略
           }
-        } else if (bodyIdFootSize) {
-          console.log('[InfCarousel] BodyID_Foot_size 存在但 bid 不存在');
         }
       } catch (error) {
-        console.error('[InfCarousel] 檢查 BodyID_Foot_size 時發生錯誤:', error);
+        // 檢查失敗，忽略
       }
       
       // 如果是重置推薦，先隱藏當前內容並顯示 loading
@@ -2318,7 +2277,6 @@ if (!customElements.get('inf-product-carousel-component')) {
                 window.closePopup();
               }
               popupElement.remove();
-              console.log('[InfCarousel] 已移除無效快取數據的 popup 元素');
             }
           }
           // 繼續執行後續的 API 請求
@@ -3289,99 +3247,6 @@ if (!customElements.get('inf-product-carousel-component')) {
         maxPerType: maxCacheItems
       };
     } catch (error) {
-      console.error('❌ 清理過期快取時發生錯誤:', error);
       return null;
     }
-  };
-
-  // 提供 GA4 診斷函數，用於檢查 Google Analytics 狀態
-  window.infCarouselGADiagnose = function() {
-    console.log('🔍 [InfCarousel] Google Analytics 診斷報告');
-    console.log('='.repeat(50));
-    
-    // 1. 檢查 gtag 函數
-    console.log('\n1️⃣ gtag 函數狀態:');
-    const gtagExists = typeof window.gtag === 'function';
-    console.log('   存在:', gtagExists ? '✅ 是' : '❌ 否');
-    if (gtagExists) {
-      const gtagCode = window.gtag.toString();
-      console.log('   函數類型:', gtagCode.length > 200 ? '真實 GA 函數' : '臨時緩存函數');
-      console.log('   函數代碼預覽:', gtagCode.substring(0, 100) + '...');
-    }
-    
-    // 2. 檢查 GA 就緒狀態
-    console.log('\n2️⃣ GA 載入狀態:');
-    console.log('   infGAReady:', window.infGAReady ? '✅ 已就緒' : '⏳ 未就緒');
-    console.log('   infGALoadError:', window.infGALoadError ? '❌ 載入失敗' : '✅ 無錯誤');
-    console.log('   gtagLoadingPromise:', window.gtagLoadingPromise ? '存在' : '不存在');
-    
-    // 3. 檢查 gtag.js 腳本
-    console.log('\n3️⃣ gtag.js 腳本:');
-    const gaScripts = Array.from(document.querySelectorAll('script')).filter(script => 
-      script.src && script.src.includes('googletagmanager.com/gtag/js')
-    );
-    console.log('   腳本數量:', gaScripts.length);
-    gaScripts.forEach((script, index) => {
-      console.log(`   腳本 ${index + 1}:`, script.src);
-    });
-    
-    // 4. 檢查 dataLayer
-    console.log('\n4️⃣ dataLayer 狀態:');
-    console.log('   存在:', window.dataLayer ? '✅ 是' : '❌ 否');
-    if (window.dataLayer) {
-      console.log('   條目數量:', window.dataLayer.length);
-      console.log('   最後 3 個條目:');
-      window.dataLayer.slice(-3).forEach((item, index) => {
-        console.log(`     [${index}]:`, JSON.stringify(item).substring(0, 100));
-      });
-    }
-    
-    // 5. 測試發送事件
-    console.log('\n5️⃣ 測試發送事件:');
-    if (gtagExists) {
-      try {
-        window.gtag('event', 'inf_carousel_test', {
-          event_category: 'test',
-          event_label: 'GA診斷測試',
-          value: 1
-        });
-        console.log('   ✅ 測試事件已發送到 dataLayer');
-        console.log('   請在 Network 標籤中搜尋 "collect" 或 "google-analytics.com"');
-        console.log('   或在 GA4 即時報告中查看');
-      } catch (error) {
-        console.error('   ❌ 發送測試事件失敗:', error);
-      }
-    } else {
-      console.log('   ⚠️ gtag 函數不存在，無法發送測試事件');
-    }
-    
-    // 6. 建議
-    console.log('\n6️⃣ 診斷建議:');
-    if (!gtagExists) {
-      console.log('   ❌ 請檢查 GA4Key 配置是否正確');
-    } else if (window.infGALoadError) {
-      console.log('   ❌ gtag.js 載入失敗，請檢查:');
-      console.log('      - 網路連接是否正常');
-      console.log('      - 是否有廣告攔截器阻擋');
-      console.log('      - GA4Key 是否正確');
-    } else if (!window.infGAReady) {
-      console.log('   ⏳ gtag.js 正在載入中，請稍候再檢查');
-    } else {
-      console.log('   ✅ GA4 配置正常');
-      console.log('   💡 如果 Network 中仍看不到請求，請:');
-      console.log('      1. 在 Network 標籤選擇 "All" 而非 "JS"');
-      console.log('      2. 搜尋 "collect" 或 "google-analytics"');
-      console.log('      3. 觸發事件後等待 2-3 秒');
-    }
-    
-    console.log('\n' + '='.repeat(50));
-    console.log('診斷完成。如需更多幫助，請提供以上資訊。');
-    
-    return {
-      gtagExists,
-      gaReady: window.infGAReady || false,
-      loadError: window.infGALoadError || false,
-      dataLayerLength: window.dataLayer ? window.dataLayer.length : 0,
-      scriptsCount: gaScripts.length
-    };
   };
