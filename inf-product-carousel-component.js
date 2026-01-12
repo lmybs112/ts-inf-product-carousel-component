@@ -1738,11 +1738,13 @@ if (!customElements.get('inf-product-carousel-component')) {
         $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
           const title = $(this).data('title');
           const link = $(this).data('link');
+          const eventRecom = $(this).data('event-recom') || '';
           gtag('event', 'click_embedded_item' + test, {
             send_to: GA4Key,
             event_category: 'embedded',
             event_label: title,
-            event_value: link
+            event_value: link,
+            event_recom: eventRecom
           });
         });
   
@@ -1770,11 +1772,13 @@ if (!customElements.get('inf-product-carousel-component')) {
         $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .embeddedItem`, function() {
           const title = $(this).data('title');
           const link = $(this).data('link');
+          const eventRecom = $(this).data('event-recom') || '';
           gtag('event', 'corr_click_embedded_item' + test, {
             send_to: GA4Key,
             event_category: 'swiper-wrapper-corr-embedded',
             event_label: 'Title: ' + title,
-            value: link.length
+            value: link.length,
+            event_recom: eventRecom
           });
         });
   
@@ -1805,10 +1809,12 @@ if (!customElements.get('inf-product-carousel-component')) {
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
             const title = target.getAttribute('data-title');
             const link = target.getAttribute('data-link');
+            const eventRecom = target.getAttribute('data-event-recom') || '';
             sendGAEvent('bhv_click_embedded_item' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'Title: ' + title,
-              value: link ? link.length : 0
+              value: link ? link.length : 0,
+              event_recom: eventRecom
             });
           }
         });
@@ -1817,10 +1823,12 @@ if (!customElements.get('inf-product-carousel-component')) {
         $(shadowRoot).on('click', embeddedItemSelector, function(e) {
           const title = $(this).data('title');
           const link = $(this).data('link');
+          const eventRecom = $(this).data('event-recom') || '';
           sendGAEvent('bhv_click_embedded_item' + test, {
             event_category: 'infEmbeddedAdContainer-embedded',
             event_label: 'Title: ' + title,
-            value: link.length
+            value: link.length,
+            event_recom: eventRecom
           });
         });
   
@@ -2570,6 +2578,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           let newItem = Object.assign({}, item);
           newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
           newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+          // 自定義 EDM 資料沒有明確的推薦類型，設為空字串
+          newItem.event_recom = item.event_recom || '';
           return newItem;
         });
       } else {
@@ -2579,24 +2589,52 @@ if (!customElements.get('inf-product-carousel-component')) {
         if (displayMode === 'SaleRate') {
           // SaleRate 模式：優先使用 bhv 或 corr，然後是 sp_atc 或 sp_trans
           let sourceData = [];
+          let eventRecomType = '';
           
           // 優先取用 bhv 或 corr（需檢查是否在 sizeAiPtrValid 中）
           if (sizeAiPtrValid.includes('bhv') && response['bhv'] && response['bhv'].length > 0) {
             if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
-              sourceData = response['bhv'].concat(response['corr']);
+              // 合併 bhv 和 corr，並標記來源
+              const bhvData = response['bhv'].map(item => {
+                const newItem = Object.assign({}, item);
+                newItem.event_recom = 'bhv';
+                return newItem;
+              });
+              const corrData = response['corr'].map(item => {
+                const newItem = Object.assign({}, item);
+                newItem.event_recom = 'corr';
+                return newItem;
+              });
+              sourceData = bhvData.concat(corrData);
             } else {
-              sourceData = response['bhv'];
+              sourceData = response['bhv'].map(item => {
+                const newItem = Object.assign({}, item);
+                newItem.event_recom = 'bhv';
+                return newItem;
+              });
             }
           } else if (sizeAiPtrValid.includes('corr') && response['corr'] && response['corr'].length > 0) {
-            sourceData = response['corr'];
+            sourceData = response['corr'].map(item => {
+              const newItem = Object.assign({}, item);
+              newItem.event_recom = 'corr';
+              return newItem;
+            });
           }
           
           // 如果 bhv 和 corr 都沒有資料，則使用 sp_atc 或 sp_trans（需檢查是否在 sizeAiPtrValid 中）
           if (sourceData.length === 0) {
             if ((sizeAiPtrValid.includes('sp_atc') || sizeAiPtrValid.includes('sp_atc_sp_trans')) && response['sp_atc'] && response['sp_atc'].length > 0) {
-              sourceData = response['sp_atc'];
+              sourceData = response['sp_atc'].map(item => {
+                const newItem = Object.assign({}, item);
+                newItem.event_recom = 'sp_atc';
+                return newItem;
+              });
             } else if ((sizeAiPtrValid.includes('sp_trans') || sizeAiPtrValid.includes('sp_atc_sp_trans')) && response['sp_trans'] && response['sp_trans'].length > 0) {
-              sourceData = response['sp_trans'];
+              sourceData = response['sp_trans'].map(item => {
+                const newItem = Object.assign({}, item);
+                newItem.event_recom = 'sp_trans';
+                return newItem;
+              });
             }
           }
           
@@ -2606,6 +2644,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               let newItem = Object.assign({}, item);
               newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
               newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              // event_recom 已在上面添加，保留它
               return newItem;
             });
           }
@@ -2614,9 +2653,17 @@ if (!customElements.get('inf-product-carousel-component')) {
           let sourceData = [];
           
           if ((sizeAiPtrValid.includes('sp_atc') || sizeAiPtrValid.includes('sp_atc_sp_trans')) && response['sp_atc'] && response['sp_atc'].length > 0) {
-            sourceData = response['sp_atc'];
+            sourceData = response['sp_atc'].map(item => {
+              const newItem = Object.assign({}, item);
+              newItem.event_recom = 'sp_atc';
+              return newItem;
+            });
           } else if ((sizeAiPtrValid.includes('sp_trans') || sizeAiPtrValid.includes('sp_atc_sp_trans'))  && response['sp_trans'] && response['sp_trans'].length > 0) {
-            sourceData = response['sp_trans'];
+            sourceData = response['sp_trans'].map(item => {
+              const newItem = Object.assign({}, item);
+              newItem.event_recom = 'sp_trans';
+              return newItem;
+            });
           }
           // 處理資料並限制數量
           if (sourceData.length > 0) {
@@ -2624,6 +2671,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               let newItem = Object.assign({}, item);
               newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
               newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              // event_recom 已在上面添加，保留它
               return newItem;
             });
           }
@@ -2634,6 +2682,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               let newItem = Object.assign({}, item);
               newItem.sale_price = hide_discount ? null : item.sale_price ? parseInt(item.sale_price.replace(/\D/g, '')).toLocaleString() : '';
               newItem.price = parseInt(item.price.replace(/\D/g, '')).toLocaleString();
+              newItem.event_recom = 'bhv';
               return newItem;
             });
           }
@@ -2777,6 +2826,7 @@ if (!customElements.get('inf-product-carousel-component')) {
            ${shouldShowContent ? 'target="_blank"' : ''} 
            data-title="${img.title}" 
            data-link="${img.link}"
+           ${img.event_recom ? `data-event-recom="${img.event_recom}"` : ''}
            ${img.isBlankSlide ? 'style="pointer-events: none;"' : ''}>
           <div class="embeddedItem__img" style="position: relative;">
             <div class="embeddedItem__imgBox" style="background-color: #efefef;">
