@@ -1741,10 +1741,10 @@ if (!customElements.get('inf-product-carousel-component')) {
           const eventRecom = $(this).data('event-recom') || '';
           gtag('event', 'click_embedded_item' + test, {
             send_to: GA4Key,
-            event_category: 'embedded',
+            event_category: `embedded${eventRecom ? `[${eventRecom}]` : ''}`,
             event_label: title,
             event_value: link,
-            event_recom: eventRecom
+            
           });
         });
   
@@ -1775,10 +1775,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           const eventRecom = $(this).data('event-recom') || '';
           gtag('event', 'corr_click_embedded_item' + test, {
             send_to: GA4Key,
-            event_category: 'swiper-wrapper-corr-embedded',
+            event_category: `swiper-wrapper-corr-embedded${eventRecom ? `[${eventRecom}]` : ''}`,
             event_label: 'Title: ' + title,
             value: link.length,
-            event_recom: eventRecom
           });
         });
   
@@ -1811,10 +1810,9 @@ if (!customElements.get('inf-product-carousel-component')) {
             const link = target.getAttribute('data-link');
             const eventRecom = target.getAttribute('data-event-recom') || '';
             sendGAEvent('bhv_click_embedded_item' + test, {
-              event_category: 'infEmbeddedAdContainer-embedded',
+              event_category: `infEmbeddedAdContainer-embedded${eventRecom ? `[${eventRecom}]` : ''}`,
               event_label: 'Title: ' + title,
               value: link ? link.length : 0,
-              event_recom: eventRecom
             });
           }
         });
@@ -1825,10 +1823,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
           sendGAEvent('bhv_click_embedded_item' + test, {
-            event_category: 'infEmbeddedAdContainer-embedded',
+            event_category: `infEmbeddedAdContainer-embedded${eventRecom ? `[${eventRecom}]` : ''}`,
             event_label: 'Title: ' + title,
             value: link.length,
-            event_recom: eventRecom
           });
         });
   
