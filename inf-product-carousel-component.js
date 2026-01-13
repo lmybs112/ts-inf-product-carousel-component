@@ -1029,6 +1029,7 @@ if (!customElements.get('inf-product-carousel-component')) {
   
       const $ = jQuery;
       const shadowRoot = this.shadowRoot;
+      const componentInstance = this; // 保存組件實例引用，供事件處理函數使用
   
       const googleFontLink = document.createElement('link');
       googleFontLink.rel = 'preconnect';
@@ -1739,13 +1740,36 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
-          gtag('event', 'click_embedded_item' + test, {
+          
+          // 發送 gtag 事件
+          gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
             send_to: GA4Key,
             event_category: `embedded`,
             event_label: title,
             event_value: link,
             
           });
+          
+          // 同時發送 API 請求記錄點擊行為
+          const clickData = {
+            "Brand": brand, // Brand ex: DES
+            "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
+            "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
+            "MRID": ids.member_id, // MRID ex: xxxxxxxx
+            "recom_type": eventRecom || "", // eventRecom
+            "recom_loc": "embed",
+            "action": "click"
+          };
+          
+          componentInstance.recordMktClick(clickData)
+            .then(result => {
+              if (result) {
+                console.log('recordMktClick:', result);
+              }
+            })
+            .catch(error => {
+              console.error('recordMktClick:', error);
+            });
         });
   
         $(shadowRoot).on('click', `#${containerId} .a-left`, function() {
@@ -1773,12 +1797,35 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
+          
+          // 發送 gtag 事件
           gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
             send_to: GA4Key,
             event_category: `swiper-wrapper-corr-embedded`,
             event_label: 'Title: ' + title,
             value: link.length,
           });
+          
+          // 同時發送 API 請求記錄點擊行為
+          const clickData = {
+            "Brand": brand, // Brand ex: DES
+            "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
+            "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
+            "MRID": ids.member_id, // MRID ex: xxxxxxxx
+            "recom_type": eventRecom || "", // eventRecom
+            "recom_loc": "embed",
+            "action": "click"
+          };
+          
+          componentInstance.recordMktClick(clickData)
+            .then(result => {
+              if (result) {
+                console.log('行銷點擊記錄成功:', result);
+              }
+            })
+            .catch(error => {
+              console.error('行銷點擊記錄失敗:', error);
+            });
         });
   
         $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-left`, function() {
@@ -1814,6 +1861,27 @@ if (!customElements.get('inf-product-carousel-component')) {
               event_label: 'Title: ' + title,
               value: link ? link.length : 0,
             });
+            
+            // 同時發送 API 請求記錄點擊行為
+            const clickData = {
+              "Brand": brand, // Brand ex: DES
+              "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
+              "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
+              "MRID": ids.member_id, // MRID ex: xxxxxxxx
+              "recom_type": eventRecom || "", // eventRecom
+              "recom_loc": "embed",
+              "action": "click"
+            };
+            
+            componentInstance.recordMktClick(clickData)
+              .then(result => {
+                if (result) {
+                  console.log('行銷點擊記錄成功:', result);
+                }
+              })
+              .catch(error => {
+                console.error('行銷點擊記錄失敗:', error);
+              });
           }
         });
         
@@ -1827,6 +1895,27 @@ if (!customElements.get('inf-product-carousel-component')) {
             event_label: 'Title: ' + title,
             value: link.length,
           });
+          
+          // 同時發送 API 請求記錄點擊行為
+          const clickData = {
+            "Brand": brand, // Brand ex: DES
+            "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
+            "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
+            "MRID": ids.member_id, // MRID ex: xxxxxxxx
+            "recom_type": eventRecom || "", // eventRecom
+            "recom_loc": "embed",
+            "action": "click"
+          };
+          
+          componentInstance.recordMktClick(clickData)
+            .then(result => {
+              if (result) {
+                console.log('行銷點擊記錄成功:', result);
+              }
+            })
+            .catch(error => {
+              console.error('行銷點擊記錄失敗:', error);
+            });
         });
   
         // 綁定左箭頭點擊事件
@@ -1927,6 +2016,29 @@ if (!customElements.get('inf-product-carousel-component')) {
       });
     }
   
+    /**
+     * 記錄行銷點擊行為到 API
+     * @param {Object} data - 點擊數據對象
+     * @returns {Promise} API 響應結果
+     */
+    async recordMktClick(data) {
+      const API_ENDPOINT = 'https://api.inffits.com/mkt_click_action_record/';
+      
+      try {
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('記錄行銷點擊行為時發生錯誤:', error);
+        return null;
+      }
+    }
+  
     ids_init(skuContentType = 'shopline_sku') {
       const makeid = (length) => {
         let result = '';
@@ -1938,7 +2050,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         return result;
       };
 
-      let member_id = this.member_id_Shopline();
+      let member_id = skuContentType === 'app91_sku' ? this.member_id_91APP() : skuContentType === 'shopline_sku' ? this.member_id_Shopline() : this.member_id_plain_me();
       let lgiven_id = '';
       let lgvid_exist = false;
 
