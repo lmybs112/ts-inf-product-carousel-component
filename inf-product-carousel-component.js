@@ -765,7 +765,19 @@ if (!customElements.get('inf-product-carousel-component')) {
       let chklog1 = '"currentUser\\"';
       let chklog2 = ':null';
       if (!document.documentElement.innerHTML.includes(chklog1 + chklog2)) {
-          member_id = document.documentElement.innerHTML.split('href="/users/')[1].split('",')[0].split('/edit"')[0];
+          const htmlContent = document.documentElement.innerHTML;
+          const usersSplit = htmlContent.split('href="/users/');
+          if (usersSplit.length > 1 && usersSplit[1]) {
+              const afterUsers = usersSplit[1];
+              const quoteSplit = afterUsers.split('",');
+              if (quoteSplit.length > 0 && quoteSplit[0]) {
+                  const beforeQuote = quoteSplit[0];
+                  const editSplit = beforeQuote.split('/edit"');
+                  if (editSplit.length > 0 && editSplit[0]) {
+                      member_id = editSplit[0];
+                  }
+              }
+          }
       }
       return member_id;
     }
@@ -1874,7 +1886,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
               "MRID": ids.member_id, // MRID ex: xxxxxxxx
               "recom_type": eventRecom || "", // eventRecom
-              "recom_loc": "embed",
+              "recom_loc": "popup",
               "action": "click"
             };
             
