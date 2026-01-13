@@ -762,6 +762,11 @@ if (!customElements.get('inf-product-carousel-component')) {
   
     member_id_Shopline() {
       let member_id = '';
+      let chklog1 = '"currentUser\\"';
+      let chklog2 = ':null';
+      if (!document.documentElement.innerHTML.includes(chklog1 + chklog2)) {
+          member_id = document.documentElement.innerHTML.split('href="/users/')[1].split('",')[0].split('/edit"')[0];
+      }
       return member_id;
     }
   
