@@ -1768,9 +1768,9 @@ if (!customElements.get('inf-product-carousel-component')) {
           
           componentInstance.recordMktClick(clickData)
             .then(result => {
-              if (result) {
-                console.log('recordMktClick:', result);
-              }
+              // if (result) {
+              //   console.log('recordMktClick:', result);
+              // }
             })
             .catch(error => {
               console.error('recordMktClick:', error);
@@ -1824,12 +1824,12 @@ if (!customElements.get('inf-product-carousel-component')) {
           
           componentInstance.recordMktClick(clickData)
             .then(result => {
-              if (result) {
-                console.log('行銷點擊記錄成功:', result);
-              }
+              // if (result) {
+              //   console.log('recordMktClick:', result);
+              // }
             })
             .catch(error => {
-              console.error('行銷點擊記錄失敗:', error);
+              console.error('recordMktClick:', error);
             });
         });
   
@@ -1880,12 +1880,12 @@ if (!customElements.get('inf-product-carousel-component')) {
             
             componentInstance.recordMktClick(clickData)
               .then(result => {
-                if (result) {
-                  console.log('行銷點擊記錄成功:', result);
-                }
+                // if (result) {
+                //   console.log('recordMktClick:', result);
+                // }
               })
               .catch(error => {
-                console.error('行銷點擊記錄失敗:', error);
+                console.error('recordMktClick:', error);
               });
           }
         });
@@ -1914,12 +1914,12 @@ if (!customElements.get('inf-product-carousel-component')) {
           
           componentInstance.recordMktClick(clickData)
             .then(result => {
-              if (result) {
-                console.log('行銷點擊記錄成功:', result);
-              }
+              // if (result) {
+              //   console.log('recordMktClick:', result);
+              // }
             })
             .catch(error => {
-              console.error('行銷點擊記錄失敗:', error);
+              console.error('recordMktClick:', error);
             });
         });
   
