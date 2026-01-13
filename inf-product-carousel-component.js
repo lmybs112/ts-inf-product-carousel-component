@@ -1741,7 +1741,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           const eventRecom = $(this).data('event-recom') || '';
           gtag('event', 'click_embedded_item' + test, {
             send_to: GA4Key,
-            event_category: `embedded${eventRecom ? `[${eventRecom}]` : ''}`,
+            event_category: `embedded`,
             event_label: title,
             event_value: link,
             
@@ -1773,16 +1773,16 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
-          gtag('event', 'corr_click_embedded_item' + test, {
+          gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
             send_to: GA4Key,
-            event_category: `swiper-wrapper-corr-embedded${eventRecom ? `[${eventRecom}]` : ''}`,
+            event_category: `swiper-wrapper-corr-embedded`,
             event_label: 'Title: ' + title,
             value: link.length,
           });
         });
   
         $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-left`, function() {
-          gtag('event', 'corr_click_embedded_item' + test, {
+          gtag('event', 'click_embedded_item_arrow-left' + test, {
             send_to: GA4Key,
             event_category: 'swiper-wrapper-corr-embedded',
             event_label: 'arrow-left',
@@ -1791,7 +1791,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         });
   
         $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-right`, function() {
-          gtag('event', 'corr_click_embedded_item' + test, {
+          gtag('event', 'click_embedded_item_arrow-right' + test, {
             send_to: GA4Key,
             event_category: 'swiper-wrapper-corr-embedded',
             event_label: 'arrow-right',
@@ -1809,8 +1809,8 @@ if (!customElements.get('inf-product-carousel-component')) {
             const title = target.getAttribute('data-title');
             const link = target.getAttribute('data-link');
             const eventRecom = target.getAttribute('data-event-recom') || '';
-            sendGAEvent('bhv_click_embedded_item' + test, {
-              event_category: `infEmbeddedAdContainer-embedded${eventRecom ? `[${eventRecom}]` : ''}`,
+            sendGAEvent((eventRecom ? `${eventRecom}_` : '') +'click_embedded_item' + test, {
+              event_category: `infEmbeddedAdContainer-embedded`,
               event_label: 'Title: ' + title,
               value: link ? link.length : 0,
             });
@@ -1822,8 +1822,8 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
-          sendGAEvent('bhv_click_embedded_item' + test, {
-            event_category: `infEmbeddedAdContainer-embedded${eventRecom ? `[${eventRecom}]` : ''}`,
+          sendGAEvent((eventRecom ? `${eventRecom}_` : '') +'click_embedded_item' + test, {
+            event_category: `infEmbeddedAdContainer-embedded`,
             event_label: 'Title: ' + title,
             value: link.length,
           });
@@ -1836,7 +1836,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.a-left');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            sendGAEvent('bhv_click_embedded_item' + test, {
+            sendGAEvent('click_embedded_item_arrow_left' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'arrow-left',
               value: 10
@@ -1846,7 +1846,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', aLeftSelector, function(e) {
-          sendGAEvent('bhv_click_embedded_item' + test, {
+          sendGAEvent('click_embedded_item_arrow_left' + test, {
             event_category: 'infEmbeddedAdContainer-embedded',
             event_label: 'arrow-left',
             value: 10
@@ -1860,7 +1860,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.a-right');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            sendGAEvent('bhv_click_embedded_item' + test, {
+            sendGAEvent('click_embedded_item_arrow_right' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'arrow-right',
               value: 10
@@ -1870,7 +1870,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', aRightSelector, function(e) {
-          sendGAEvent('bhv_click_embedded_item' + test, {
+          sendGAEvent('click_embedded_item_arrow_right' + test, {
             event_category: 'infEmbeddedAdContainer-embedded',
             event_label: 'arrow-right',
             value: 10
@@ -1884,7 +1884,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.title-nav-prev');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            sendGAEvent('bhv_click_embedded_item' + test, {
+            sendGAEvent('click_embedded_item_title_nav_prev' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'title-nav-prev',
               value: 10
@@ -1894,7 +1894,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', titleNavPrevSelector, function(e) {
-          sendGAEvent('bhv_click_embedded_item' + test, {
+          sendGAEvent('click_embedded_item_title_nav_prev' + test, {
             event_category: 'infEmbeddedAdContainer-embedded',
             event_label: 'title-nav-prev',
             value: 10
@@ -1908,7 +1908,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         shadowRoot.addEventListener('click', function(e) {
           const target = e.target.closest('.title-nav-next');
           if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            sendGAEvent('bhv_click_embedded_item' + test, {
+            sendGAEvent('click_embedded_item_title_nav_next' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'title-nav-next',
               value: 10
@@ -1918,7 +1918,7 @@ if (!customElements.get('inf-product-carousel-component')) {
         
         // 同時保留 jQuery 事件委派作為備用
         $(shadowRoot).on('click', titleNavNextSelector, function(e) {
-          sendGAEvent('bhv_click_embedded_item' + test, {
+          sendGAEvent('click_embedded_item_title_nav_next' + test, {
             event_category: 'infEmbeddedAdContainer-embedded',
             event_label: 'title-nav-next',
             value: 10
