@@ -1757,6 +1757,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
+          const pid = $(this).data('pid') || $(this).attr('data-pid') || '';
           
           // 發送 gtag 事件
           gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
@@ -1774,8 +1775,11 @@ if (!customElements.get('inf-product-carousel-component')) {
             "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
             "MRID": ids.member_id, // MRID ex: xxxxxxxx
             "recom_type": eventRecom || "", // eventRecom
-            "recom_loc": "embed",
-            "action": "click"
+            "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
+            "action": "click",
+            "action_link": link || "", // 商品連結
+            "action_itemname": title || "", // 商品標題
+            "action_pid": pid || "" // 商品 product ID
           };
           
           componentInstance.recordMktClick(clickData)
@@ -1814,6 +1818,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
+          const pid = $(this).data('pid') || $(this).attr('data-pid') || '';
           
           // 發送 gtag 事件
           gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
@@ -1830,8 +1835,11 @@ if (!customElements.get('inf-product-carousel-component')) {
             "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
             "MRID": ids.member_id, // MRID ex: xxxxxxxx
             "recom_type": eventRecom || "", // eventRecom
-            "recom_loc": "embed",
-            "action": "click"
+            "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
+            "action": "click",
+            "action_link": link || "", // 商品連結
+            "action_itemname": title || "", // 商品標題
+            "action_pid": pid || "" // 商品 product ID
           };
           
           componentInstance.recordMktClick(clickData)
@@ -1873,6 +1881,7 @@ if (!customElements.get('inf-product-carousel-component')) {
             const title = target.getAttribute('data-title');
             const link = target.getAttribute('data-link');
             const eventRecom = target.getAttribute('data-event-recom') || '';
+            const pid = target.getAttribute('data-pid') || '';
             sendGAEvent((eventRecom ? `${eventRecom}_` : '') +'click_embedded_item' + test, {
               event_category: `infEmbeddedAdContainer-embedded`,
               event_label: 'Title: ' + title,
@@ -1886,8 +1895,11 @@ if (!customElements.get('inf-product-carousel-component')) {
               "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
               "MRID": ids.member_id, // MRID ex: xxxxxxxx
               "recom_type": eventRecom || "", // eventRecom
-              "recom_loc": "popup",
-              "action": "click"
+              "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
+              "action": "click",
+              "action_link": link || "", // 商品連結
+              "action_itemname": title || "", // 商品標題
+              "action_pid": pid || "" // 商品 product ID
             };
             
             componentInstance.recordMktClick(clickData)
@@ -1907,6 +1919,7 @@ if (!customElements.get('inf-product-carousel-component')) {
           const title = $(this).data('title');
           const link = $(this).data('link');
           const eventRecom = $(this).data('event-recom') || '';
+          const pid = $(this).data('pid') || $(this).attr('data-pid') || '';
           sendGAEvent((eventRecom ? `${eventRecom}_` : '') +'click_embedded_item' + test, {
             event_category: `infEmbeddedAdContainer-embedded`,
             event_label: 'Title: ' + title,
@@ -1920,8 +1933,11 @@ if (!customElements.get('inf-product-carousel-component')) {
             "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
             "MRID": ids.member_id, // MRID ex: xxxxxxxx
             "recom_type": eventRecom || "", // eventRecom
-            "recom_loc": "embed",
-            "action": "click"
+            "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
+            "action": "click",
+            "action_link": link || "", // 商品連結
+            "action_itemname": title || "", // 商品標題
+            "action_pid": pid || "" // 商品 product ID
           };
           
           componentInstance.recordMktClick(clickData)
@@ -2952,6 +2968,7 @@ if (!customElements.get('inf-product-carousel-component')) {
            ${shouldShowContent ? 'target="_blank"' : ''} 
            data-title="${img.title}" 
            data-link="${img.link}"
+           ${img.productid ? `data-pid="${img.productid}"` : (img.id ? `data-pid="${img.id}"` : '')}
            ${img.event_recom ? `data-event-recom="${img.event_recom}"` : ''}
            ${img.isBlankSlide ? 'style="pointer-events: none;"' : ''}>
           <div class="embeddedItem__img" style="position: relative;">
