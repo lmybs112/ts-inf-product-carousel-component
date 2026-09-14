@@ -3340,54 +3340,71 @@ if (!customElements.get('inf-product-carousel-component')) {
   customElements.define('inf-product-carousel-component', InfProductCarouselComponent);
   } // 結束 if 檢查
   
-  // 提供一個簡化的初始化函數
+  // 提供一個簡化的初始化函數（可傳 carousel 或 carousels）
   window.initInfProductCarouselComponent = function(config = {}) {
-    // 生成唯一標識符，用於檢查重複初始化
-    const carouselType = config?.carousel?.type || 'product';
-    const containerId = config?.carousel?.showPositionId?.top || 
-                        config?.carousel?.showPositionId?.bottom || 
-                        'default';
-    const instanceKey = `inf-carousel-${carouselType}-${containerId}`;
-    
-    // 檢查是否已經存在相同的組件實例
-    const existingCarousel = document.querySelector(`inf-product-carousel-component[data-instance-key="${instanceKey}"]`);
-    if (existingCarousel) {
-      return existingCarousel;
-    }
-    
-    
-    // 創建組件實例
-    const carousel = document.createElement('inf-product-carousel-component');
-    
-    // 設置唯一標識符
-    carousel.setAttribute('data-instance-key', instanceKey);
-    
-    // 設置配置
-    carousel.setAttribute('config', JSON.stringify(config));
-    
-    // 添加到 body，組件會自動處理後續邏輯
-    document.body.appendChild(carousel);
-    
-      // 添加調試方法到全域
-    window.debugCarousel = function() {
-      if (carousel.shadowRoot) {
-        const containers = carousel.shadowRoot.querySelectorAll('[id*="infFits"]');
-        
-        containers.forEach(container => {
-          const containerId = container.id;
-          const loading = container.querySelector('#recommendation-loading');
-          const embeddedContainer = container.querySelector('.infEmbeddedAdContainer');
-          const textSection = container.querySelector('.text-section');
-          
-          if (embeddedContainer) {
-            // 提供手動修復方法
-            embeddedContainer.style.setProperty('display', 'block', 'important');
-          }
-        });
+    const createInstance = function(instanceConfig) {
+      // 生成唯一標識符，用於檢查重複初始化
+      const carouselType = instanceConfig?.carousel?.type || 'product';
+      const containerId = instanceConfig?.carousel?.showPositionId?.top ||
+                          instanceConfig?.carousel?.showPositionId?.bottom ||
+                          'default';
+      const instanceKey = `inf-carousel-${carouselType}-${containerId}`;
+
+      // 檢查是否已經存在相同的組件實例
+      const existingCarousel = document.querySelector(`inf-product-carousel-component[data-instance-key="${instanceKey}"]`);
+      if (existingCarousel) {
+        return existingCarousel;
       }
+
+      // 創建組件實例
+      const carousel = document.createElement('inf-product-carousel-component');
+
+      // 設置唯一標識符
+      carousel.setAttribute('data-instance-key', instanceKey);
+
+      // 設置配置
+      carousel.setAttribute('config', JSON.stringify(instanceConfig));
+
+      // 添加到 body，組件會自動處理後續邏輯
+      document.body.appendChild(carousel);
+
+      // 添加調試方法到全域
+      window.debugCarousel = function() {
+        if (carousel.shadowRoot) {
+          const containers = carousel.shadowRoot.querySelectorAll('[id*="infFits"]');
+
+          containers.forEach(container => {
+            const embeddedContainer = container.querySelector('.infEmbeddedAdContainer');
+
+            if (embeddedContainer) {
+              // 提供手動修復方法
+              embeddedContainer.style.setProperty('display', 'block', 'important');
+            }
+          });
+        }
+      };
+
+      return carousel;
     };
-    
-    return carousel;
+
+    // 舊寫法：{ brand, GA4Key, carousel } 單筆初始化，維持原行為
+    if (config.carousel) {
+      return createInstance(config);
+    }
+
+    // 新寫法：一次傳入 carousels 陣列
+    if (Array.isArray(config.carousels) && config.carousels.length) {
+      const instances = config.carousels.map(function(carousel) {
+        return createInstance({
+          brand: config.brand,
+          GA4Key: config.GA4Key,
+          carousel: carousel || {}
+        });
+      });
+      return instances.length === 1 ? instances[0] : instances;
+    }
+
+    return createInstance(config);
   };
 
   // 提供手動清理過期快取的全域函數（僅處理推薦商品快取）
