@@ -1753,298 +1753,79 @@ if (!customElements.get('inf-product-carousel-component')) {
           }
         }
   
-        $(shadowRoot).on('click', `#${containerId} .embeddedItem`, function() {
-          const title = $(this).data('title');
-          const link = $(this).data('link');
-          const eventRecom = $(this).data('event-recom') || '';
-          const pid = $(this).data('pid') || $(this).attr('data-pid') || '';
-          
-          // 發送 gtag 事件
-          gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
-            send_to: GA4Key,
-            event_category: `embedded`,
-            event_label: title,
-            event_value: link,
-            
-          });
-          
-          // 同時發送 API 請求記錄點擊行為
-          const clickData = {
-            "Brand": brand, // Brand ex: DES
-            "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
-            "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
-            "MRID": ids.member_id, // MRID ex: xxxxxxxx
-            "recom_type": eventRecom || "", // eventRecom
-            "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
-            "action": "click",
-            "action_link": link || "", // 商品連結
-            "action_itemname": title || "", // 商品標題
-            "action_pid": pid || "" // 商品 product ID
-          };
-          
-          componentInstance.recordMktClick(clickData)
-            .then(result => {
-              // if (result) {
-              //   console.log('recordMktClick:', result);
-              // }
-            })
-            .catch(error => {
-              console.error('recordMktClick:', error);
-            });
-        });
-  
-        $(shadowRoot).on('click', `#${containerId} .a-left`, function() {
-          if (typeof gtag === 'function') {
-            gtag('event', 'click_embedded_item' + test, {
-              send_to: GA4Key,
-              event_category: 'embedded',
-              event_label: 'arrow-left',
-              event_value: 'left'
-            });
-          }
-        });
-  
-        $(shadowRoot).on('click', `#${containerId} .a-right`, function() {
-          if (typeof gtag === 'function') {
-            gtag('event', 'click_embedded_item' + test, {
-              send_to: GA4Key,
-              event_category: 'embedded',
-              event_label: 'arrow-right',
-              event_value: 'right'
-            });
-          }
-        });
-        $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .embeddedItem`, function() {
-          const title = $(this).data('title');
-          const link = $(this).data('link');
-          const eventRecom = $(this).data('event-recom') || '';
-          const pid = $(this).data('pid') || $(this).attr('data-pid') || '';
-          
-          // 發送 gtag 事件
-          gtag('event', eventRecom ? `${eventRecom}_` : '' +'click_embedded_item' + test, {
-            send_to: GA4Key,
-            event_category: `swiper-wrapper-corr-embedded`,
-            event_label: 'Title: ' + title,
-            value: link.length,
-          });
-          
-          // 同時發送 API 請求記錄點擊行為
-          const clickData = {
-            "Brand": brand, // Brand ex: DES
-            "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
-            "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
-            "MRID": ids.member_id, // MRID ex: xxxxxxxx
-            "recom_type": eventRecom || "", // eventRecom
-            "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
-            "action": "click",
-            "action_link": link || "", // 商品連結
-            "action_itemname": title || "", // 商品標題
-            "action_pid": pid || "" // 商品 product ID
-          };
-          
-          componentInstance.recordMktClick(clickData)
-            .then(result => {
-              // if (result) {
-              //   console.log('recordMktClick:', result);
-              // }
-            })
-            .catch(error => {
-              console.error('recordMktClick:', error);
-            });
-        });
-  
-        $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-left`, function() {
-          gtag('event', 'click_embedded_item_arrow-left' + test, {
-            send_to: GA4Key,
-            event_category: 'swiper-wrapper-corr-embedded',
-            event_label: 'arrow-left',
-            value: 10
-          });
-        });
-  
-        $(shadowRoot).on('click', `#${containerId} #swiper-wrapper-corr .a-right`, function() {
-          gtag('event', 'click_embedded_item_arrow-right' + test, {
-            send_to: GA4Key,
-            event_category: 'swiper-wrapper-corr-embedded',
-            event_label: 'arrow-right',
-            value: 10
-          });
-        });
-  
-        // 綁定 embeddedItem 點擊事件 - 使用事件委派在 shadowRoot 上
-        const embeddedItemSelector = `#${containerId} .infEmbeddedAdContainer .embeddedItem`;
-        
-        // 使用原生事件監聽器確保能正確觸發
+        // 統一於 Shadow DOM 委派點擊：每次互動只發送一次 GA4 事件
         shadowRoot.addEventListener('click', function(e) {
-          const target = e.target.closest('.embeddedItem');
-          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
-            const title = target.getAttribute('data-title');
-            const link = target.getAttribute('data-link');
-            const eventRecom = target.getAttribute('data-event-recom') || '';
-            const pid = target.getAttribute('data-pid') || '';
-            sendGAEvent((eventRecom ? `${eventRecom}_` : '') +'click_embedded_item' + test, {
-              event_category: `infEmbeddedAdContainer-embedded`,
+          const container = shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+          if (!container || !container.contains(e.target)) {
+            return;
+          }
+
+          const item = e.target.closest('.embeddedItem');
+          if (item && container.contains(item)) {
+            const title = item.getAttribute('data-title') || '';
+            const link = item.getAttribute('data-link') || '';
+            const eventRecom = item.getAttribute('data-event-recom') || '';
+            const pid = item.getAttribute('data-pid') || '';
+            sendGAEvent((eventRecom ? `${eventRecom}_` : '') + 'click_embedded_item' + test, {
+              event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'Title: ' + title,
-              value: link ? link.length : 0,
+              value: link.length,
             });
-            
-            // 同時發送 API 請求記錄點擊行為
-            const clickData = {
-              "Brand": brand, // Brand ex: DES
-              "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
-              "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
-              "MRID": ids.member_id, // MRID ex: xxxxxxxx
-              "recom_type": eventRecom || "", // eventRecom
-              "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
+            componentInstance.recordMktClick({
+              "Brand": brand,
+              "GVID": (bid && bid.GVID) ? bid.GVID : "",
+              "LGVID": ids.lgiven_id,
+              "MRID": ids.member_id,
+              "recom_type": eventRecom || "",
+              "recom_loc": carouselType === 'popup' ? 'popup' : 'embed',
               "action": "click",
-              "action_link": link || "", // 商品連結
-              "action_itemname": title || "", // 商品標題
-              "action_pid": pid || "" // 商品 product ID
-            };
-            
-            componentInstance.recordMktClick(clickData)
-              .then(result => {
-                // if (result) {
-                //   console.log('recordMktClick:', result);
-                // }
-              })
-              .catch(error => {
-                console.error('recordMktClick:', error);
-              });
-          }
-        });
-        
-        // 同時保留 jQuery 事件委派作為備用
-        $(shadowRoot).on('click', embeddedItemSelector, function(e) {
-          const title = $(this).data('title');
-          const link = $(this).data('link');
-          const eventRecom = $(this).data('event-recom') || '';
-          const pid = $(this).data('pid') || $(this).attr('data-pid') || '';
-          sendGAEvent((eventRecom ? `${eventRecom}_` : '') +'click_embedded_item' + test, {
-            event_category: `infEmbeddedAdContainer-embedded`,
-            event_label: 'Title: ' + title,
-            value: link.length,
-          });
-          
-          // 同時發送 API 請求記錄點擊行為
-          const clickData = {
-            "Brand": brand, // Brand ex: DES
-            "GVID": (bid && bid.GVID) ? bid.GVID : "", // 從 bid 中獲取，如果不存在則留空
-            "LGVID": ids.lgiven_id, // LGVID ex: rm0yjJaaxinsEyobEef9
-            "MRID": ids.member_id, // MRID ex: xxxxxxxx
-            "recom_type": eventRecom || "", // eventRecom
-            "recom_loc": carouselType === 'popup' ? 'popup' : 'embed', // 根據 carouselType 動態設置
-            "action": "click",
-            "action_link": link || "", // 商品連結
-            "action_itemname": title || "", // 商品標題
-            "action_pid": pid || "" // 商品 product ID
-          };
-          
-          componentInstance.recordMktClick(clickData)
-            .then(result => {
-              // if (result) {
-              //   console.log('recordMktClick:', result);
-              // }
-            })
-            .catch(error => {
+              "action_link": link,
+              "action_itemname": title,
+              "action_pid": pid
+            }).catch(error => {
               console.error('recordMktClick:', error);
             });
-        });
-  
-        // 綁定左箭頭點擊事件
-        const aLeftSelector = `#${containerId} .infEmbeddedAdContainer .a-left`;
-        
-        // 使用原生事件監聽器
-        shadowRoot.addEventListener('click', function(e) {
-          const target = e.target.closest('.a-left');
-          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+            return;
+          }
+
+          const leftArrow = e.target.closest('.a-left');
+          if (leftArrow && container.contains(leftArrow)) {
             sendGAEvent('click_embedded_item_arrow_left' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'arrow-left',
               value: 10
             });
+            return;
           }
-        });
-        
-        // 同時保留 jQuery 事件委派作為備用
-        $(shadowRoot).on('click', aLeftSelector, function(e) {
-          sendGAEvent('click_embedded_item_arrow_left' + test, {
-            event_category: 'infEmbeddedAdContainer-embedded',
-            event_label: 'arrow-left',
-            value: 10
-          });
-        });
 
-        // 綁定右箭頭點擊事件
-        const aRightSelector = `#${containerId} .infEmbeddedAdContainer .a-right`;
-
-        // 使用原生事件監聽器
-        shadowRoot.addEventListener('click', function(e) {
-          const target = e.target.closest('.a-right');
-          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+          const rightArrow = e.target.closest('.a-right');
+          if (rightArrow && container.contains(rightArrow)) {
             sendGAEvent('click_embedded_item_arrow_right' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'arrow-right',
               value: 10
             });
+            return;
           }
-        });
-        
-        // 同時保留 jQuery 事件委派作為備用
-        $(shadowRoot).on('click', aRightSelector, function(e) {
-          sendGAEvent('click_embedded_item_arrow_right' + test, {
-            event_category: 'infEmbeddedAdContainer-embedded',
-            event_label: 'arrow-right',
-            value: 10
-          });
-        });
 
-        // 綁定手機版左箭頭點擊事件（title-nav-prev）
-        const titleNavPrevSelector = `#${containerId} .infEmbeddedAdContainer .title-nav-prev`;
-        
-        // 使用原生事件監聽器
-        shadowRoot.addEventListener('click', function(e) {
-          const target = e.target.closest('.title-nav-prev');
-          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+          const titleNavPrev = e.target.closest('.title-nav-prev');
+          if (titleNavPrev && container.contains(titleNavPrev)) {
             sendGAEvent('click_embedded_item_title_nav_prev' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'title-nav-prev',
               value: 10
             });
+            return;
           }
-        });
-        
-        // 同時保留 jQuery 事件委派作為備用
-        $(shadowRoot).on('click', titleNavPrevSelector, function(e) {
-          sendGAEvent('click_embedded_item_title_nav_prev' + test, {
-            event_category: 'infEmbeddedAdContainer-embedded',
-            event_label: 'title-nav-prev',
-            value: 10
-          });
-        });
 
-        // 綁定手機版右箭頭點擊事件（title-nav-next）
-        const titleNavNextSelector = `#${containerId} .infEmbeddedAdContainer .title-nav-next`;
-        
-        // 使用原生事件監聽器
-        shadowRoot.addEventListener('click', function(e) {
-          const target = e.target.closest('.title-nav-next');
-          if (target && shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`).contains(target)) {
+          const titleNavNext = e.target.closest('.title-nav-next');
+          if (titleNavNext && container.contains(titleNavNext)) {
             sendGAEvent('click_embedded_item_title_nav_next' + test, {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'title-nav-next',
               value: 10
             });
           }
-        });
-        
-        // 同時保留 jQuery 事件委派作為備用
-        $(shadowRoot).on('click', titleNavNextSelector, function(e) {
-          sendGAEvent('click_embedded_item_title_nav_next' + test, {
-            event_category: 'infEmbeddedAdContainer-embedded',
-            event_label: 'title-nav-next',
-            value: 10
-          });
         });
       });
     }
