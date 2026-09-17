@@ -170,9 +170,11 @@
     }
     .slide__card:has(.pg){ max-width: 1360px; padding: 22px 20px 18px; }
     .pg{
-      display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 14px;
+      display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 14px;
       margin-top: 8px; min-height: 560px;
     }
+    .pg.is-focus{ grid-template-columns: 1fr; }
+    .pg.is-focus [data-pg-controls]{ display: none; }
     .pg__panel{
       border: 1px solid rgba(255,255,255,0.10); border-radius: 14px;
       background: rgba(0,0,0,0.22); padding: 12px; overflow: auto;
@@ -180,6 +182,21 @@
     .pg__panel h3{
       margin: 0 0 10px; font-size: 13px; letter-spacing: 0.02em;
       color: rgba(255,255,255,0.92);
+    }
+    .pg-presets{
+      display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;
+    }
+    .pg-presets__label{ font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .pg-chip{
+      appearance: none; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.88);
+      border-radius: 10px; padding: 8px 10px; font-size: 12px; cursor: pointer;
+      text-align: left; transition: background 120ms ease, border-color 120ms ease;
+    }
+    .pg-chip:hover{ background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
+    .pg-chip.is-active{
+      background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.38);
+      font-weight: 700;
     }
     .pg-field{ display: grid; gap: 4px; margin-bottom: 10px; }
     .pg-field label{ font-size: 11px; color: var(--muted); }
@@ -202,15 +219,31 @@
       user-select: none; margin-bottom: 8px;
     }
     .pg-preview{
-      display: flex; flex-direction: column; gap: 10px; min-height: 520px;
+      position: relative;
+      display: flex; flex-direction: column; gap: 10px; min-height: 560px;
     }
+    .pg-preview__bar{
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 2px;
+    }
+    .pg-preview__bar h3{ margin: 0; }
+    .pg-preview__tools{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pg-status{
+      font-size: 11px; color: var(--muted);
+      padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .pg-status.is-ok{ color: #86efac; border-color: rgba(52,211,153,0.35); }
+    .pg-status.is-err{ color: #fecdd3; border-color: rgba(251,113,133,0.45); }
+    .pg-status.is-loading{ color: #fde68a; border-color: rgba(251,191,36,0.35); }
     .pg-slot{
       min-height: 72px; border-radius: 12px;
       border: 1px dashed rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.03); padding: 8px;
     }
     .pg-slot--main{
-      flex: 1; min-height: 200px; border-style: solid;
+      flex: 1; min-height: 220px; border-style: solid;
       border-color: rgba(255,255,255,0.10);
       padding: 16px;
     }
@@ -231,7 +264,7 @@
     }
     .pg-modal.is-open{ display: flex; }
     .pg-modal__panel{
-      width: min(720px, 100%); max-height: min(80vh, 720px);
+      width: min(820px, 100%); max-height: min(84vh, 780px);
       display: flex; flex-direction: column; gap: 10px;
       border-radius: 16px; border: 1px solid rgba(255,255,255,0.14);
       background: #141414; box-shadow: var(--shadow); padding: 16px;
@@ -240,15 +273,39 @@
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
     }
     .pg-modal__head h3{ margin: 0; font-size: 15px; }
+    .pg-tabs{ display: flex; gap: 6px; flex-wrap: wrap; }
+    .pg-tab{
+      appearance: none; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.82);
+      border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+    }
+    .pg-tab.is-active{
+      background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.36);
+      color: #fff; font-weight: 700;
+    }
     .pg-code{
       flex: 1; margin: 0; padding: 12px; border-radius: 12px; overflow: auto;
-      min-height: 220px; font-family: var(--mono); font-size: 12px; line-height: 1.5;
+      min-height: 240px; font-family: var(--mono); font-size: 12px; line-height: 1.5;
       background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.10);
       color: rgba(255,255,255,0.90); white-space: pre;
     }
-    /* playground remount 時 popup 需壓過投影片 footer */
-    #infPopupproductCarousel{
-      z-index: 20000 !important;
+    .pg-checklist{
+      margin: 0; padding: 12px 12px 12px 28px;
+      border-radius: 12px; border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.35); color: rgba(255,255,255,0.88);
+      font-size: 13px; line-height: 1.55;
+    }
+    .pg-checklist li{ margin: 8px 0; }
+    .pg-pack-pane{ display: none; flex: 1; min-height: 0; overflow: auto; }
+    .pg-pack-pane.is-active{ display: block; }
+    /* playground：popup 浮層層級；可一鍵隱藏避免遮擋預覽 */
+    #infPopupproductCarousel{ z-index: 20000 !important; }
+    .pg.is-hide-popup ~ #infPopupproductCarousel,
+    body:has(.pg.is-hide-popup) #infPopupproductCarousel{
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
     @media (max-width: 1100px){
       .pg{ grid-template-columns: 1fr; min-height: 0; }
@@ -362,6 +419,12 @@
     <div class="pg" id="widgetPlayground">
       <div class="pg__panel" data-pg-controls>
         <h3>基本設定</h3>
+        <div class="pg-presets">
+          <div class="pg-presets__label">快速情境（一鍵套用）</div>
+          <button type="button" class="pg-chip is-active" data-pg-preset="both">兩者：product + popup</button>
+          <button type="button" class="pg-chip" data-pg-preset="product">只嵌入 product</button>
+          <button type="button" class="pg-chip" data-pg-preset="popup">只浮層 popup</button>
+        </div>
         <div class="pg-field">
           <label for="pg-mode">掛載模式</label>
           <select id="pg-mode" name="pg-mode">
@@ -429,19 +492,29 @@
           </div>
         </details>
         <div class="pg-actions">
-          <button type="button" class="btn btn--primary" data-pg-open-code>查看／複製引入碼</button>
+          <button type="button" class="btn btn--primary" data-pg-open-code>帶走上線包</button>
         </div>
-        <p class="pg-hint">預覽載入本機 widget；引入碼為正式 CDN，可直接貼到真實環境。</p>
+        <p class="pg-hint">預覽用本機 widget；上線包為正式 CDN + 容器 HTML + 檢查清單。</p>
       </div>
       <div class="pg__panel pg-preview" data-pg-preview>
-        <h3>即時預覽</h3>
+        <div class="pg-preview__bar">
+          <h3>即時預覽</h3>
+          <div class="pg-preview__tools">
+            <span class="pg-status" data-pg-status>待命</span>
+            <label class="pg-field--row" style="margin:0;">
+              <input name="pg-show-popup" type="checkbox" checked /> 顯示 popup
+            </label>
+            <button type="button" class="btn" data-pg-focus>專注預覽</button>
+            <button type="button" class="btn" data-pg-open-code>上線包</button>
+          </div>
+        </div>
         <div class="pg-slot">
           <div class="pg-slot__label">#pgHeader ← product top</div>
           <div id="pgHeader"></div>
         </div>
         <div class="pg-slot pg-slot--main">
           <div class="pg-slot__label">模擬店舖內容</div>
-          <p style="margin:0;color:rgba(255,255,255,0.72);font-size:13px;line-height:1.5;">調整左側參數會自動 remount。Popup 通常出現在畫面左下角。</p>
+          <p style="margin:0;color:rgba(255,255,255,0.72);font-size:13px;line-height:1.5;">用左側快捷情境開始；popup 可開關避免遮擋。專注預覽可隱藏設定欄。</p>
           <div class="pg-error" data-pg-error></div>
         </div>
         <div class="pg-slot">
@@ -452,15 +525,32 @@
       <div class="pg-modal" data-pg-modal aria-hidden="true">
         <div class="pg-modal__panel" role="dialog" aria-modal="true" aria-labelledby="pgCodeTitle">
           <div class="pg-modal__head">
-            <h3 id="pgCodeTitle">引入碼（可複製）</h3>
+            <h3 id="pgCodeTitle">上線包（可複製）</h3>
             <button type="button" class="btn" data-pg-close-code>關閉</button>
           </div>
-          <pre class="pg-code" data-pg-code tabindex="0"></pre>
+          <div class="pg-tabs" role="tablist">
+            <button type="button" class="pg-tab is-active" data-pg-tab="js">1. JS mount</button>
+            <button type="button" class="pg-tab" data-pg-tab="html">2. HTML 容器</button>
+            <button type="button" class="pg-tab" data-pg-tab="check">3. 檢查清單</button>
+            <button type="button" class="pg-tab" data-pg-tab="all">全部</button>
+          </div>
+          <div class="pg-pack-pane is-active" data-pg-pane="js">
+            <pre class="pg-code" data-pg-code-js tabindex="0"></pre>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="html">
+            <pre class="pg-code" data-pg-code-html tabindex="0"></pre>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="check">
+            <ul class="pg-checklist" data-pg-checklist></ul>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="all">
+            <pre class="pg-code" data-pg-code-all tabindex="0"></pre>
+          </div>
           <div class="pg-actions">
-            <button type="button" class="btn btn--primary" data-pg-copy>複製程式碼</button>
+            <button type="button" class="btn btn--primary" data-pg-copy>複製目前分頁</button>
             <span class="pg-hint" data-pg-copy-status></span>
           </div>
-          <p class="pg-hint">請在真實頁面先放好與 `showPositionId` 相同 id 的容器，再貼上此碼。</p>
+          <p class="pg-hint">建議順序：貼 HTML 容器 → 貼 JS → 依檢查清單驗證。</p>
         </div>
       </div>
     </div>
@@ -509,7 +599,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 
 # 即時上手
 
-調整參數即可預覽；「查看／複製引入碼」可取得正式 CDN 程式碼。
+快捷情境一鍵預覽；可專注預覽、開關 popup；「帶走上線包」含 JS／HTML／檢查清單。
 
 > 本機請用瀏覽器開啟此投影片檔（需能載入上一層的 `inf-product-carousel-widget.js`，並可連線 API）。
 
@@ -961,15 +1051,23 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 
     const PG_CDN = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js';
     // query 僅影響本機預覽快取；正式複製碼仍用 PG_CDN
-    const PG_LOCAL = '../inf-product-carousel-widget.js?v=20260917-popup2';
+    const PG_LOCAL = '../inf-product-carousel-widget.js?v=20260917-ux';
     let pgWidgetLoad = null;
     let pgRemountTimer = null;
+    let pgActiveTab = 'js';
 
     function pgVal(root, name){
       const el = root.querySelector(`[name="${name}"]`);
       if (!el) return '';
       if (el.type === 'checkbox') return el.checked;
       return el.value;
+    }
+
+    function pgSetVal(root, name, value){
+      const el = root.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = !!value;
+      else el.value = value;
     }
 
     function pgReadState(root){
@@ -984,6 +1082,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
         CarouselButton: !!pgVal(root, 'pg-btn'),
         Location: String(pgVal(root, 'pg-location') || 'bottom'),
         status: !!pgVal(root, 'pg-status'),
+        showPopup: pgVal(root, 'pg-show-popup') !== false,
         posTop: String(pgVal(root, 'pg-pos-top') || 'infFitsHeader').trim() || 'infFitsHeader',
         posBottom: String(pgVal(root, 'pg-pos-bottom') || 'infFitsFooter').trim() || 'infFitsFooter',
         posPopup: String(pgVal(root, 'pg-pos-popup') || 'popupProductContent').trim() || 'popupProductContent'
@@ -1005,7 +1104,8 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
     function pgBuildCarousels(state, ids){
       const carousels = [];
       const brandConfig = pgBrandConfig(state);
-      if (state.mode === 'popup' || state.mode === 'both') {
+      const wantPopup = (state.mode === 'popup' || state.mode === 'both') && state.showPopup !== false;
+      if (wantPopup) {
         carousels.push({
           type: 'popup',
           showPositionId: { bottom: ids.popup },
@@ -1018,6 +1118,26 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
           showPositionId: { top: ids.top, bottom: ids.bottom }
         });
       }
+      // 模式含 popup 但預覽關掉浮層時，仍讓匯出碼保留 popup
+      return carousels;
+    }
+
+    function pgExportCarousels(state){
+      const carousels = [];
+      const brandConfig = pgBrandConfig(state);
+      if (state.mode === 'popup' || state.mode === 'both') {
+        carousels.push({
+          type: 'popup',
+          showPositionId: { bottom: state.posPopup },
+          brandConfig
+        });
+      }
+      if (state.mode === 'product' || state.mode === 'both') {
+        carousels.push({
+          type: 'product',
+          showPositionId: { top: state.posTop, bottom: state.posBottom }
+        });
+      }
       return carousels;
     }
 
@@ -1025,11 +1145,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       return {
         brand: state.brand,
         GA4Key: state.GA4Key,
-        carousels: pgBuildCarousels(state, {
-          top: state.posTop,
-          bottom: state.posBottom,
-          popup: state.posPopup
-        })
+        carousels: pgExportCarousels(state)
       };
     }
 
@@ -1045,8 +1161,85 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       };
     }
 
-    function pgFormatCode(config){
+    function pgFormatJs(config){
       return `await import('${PG_CDN}');\n\nwindow.InfFitsProductCarousel.mount(${JSON.stringify(config, null, 2)});`;
+    }
+
+    function pgFormatHtml(state){
+      const lines = [];
+      if (state.mode === 'product' || state.mode === 'both') {
+        lines.push(`<div id="${state.posTop}"></div>`);
+        lines.push(`<div id="infFitsContent"><!-- 主內容 --></div>`);
+        lines.push(`<div id="${state.posBottom}"></div>`);
+      }
+      if (state.mode === 'popup' || state.mode === 'both') {
+        lines.push(`<!-- popup 會自動建立 #${state.posPopup} 浮層容器；頁面無需預先放置 -->`);
+      }
+      if (!lines.length) lines.push('<!-- 請先選擇掛載模式 -->');
+      return lines.join('\n');
+    }
+
+    function pgFormatChecklist(state){
+      return [
+        `brand 已改成真實品牌代碼（目前預覽：${state.brand}）`,
+        state.GA4Key ? `GA4Key 已填：${state.GA4Key}` : '若要追蹤，請填入真實 GA4Key；留空則不發 GA',
+        'HTML 容器 id 與 showPositionId 完全一致',
+        '頁面以 https 或 localhost 開啟（ESM import）',
+        '瀏覽器可連線 api.inffits.com',
+        state.mode !== 'product'
+          ? 'popup 需 brandConfig.status = true 才會顯示'
+          : '目前僅 product，確認 Location／容器位置',
+        '貼上 JS 前已先有容器 DOM',
+        '正式環境改用 CDN import（上線包已是 CDN）'
+      ];
+    }
+
+    function pgFormatAll(state){
+      const cfg = pgExportConfig(state);
+      const checks = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
+      return [
+        '/* ===== 1) HTML 容器 ===== */',
+        pgFormatHtml(state),
+        '',
+        '/* ===== 2) JS mount（CDN） ===== */',
+        pgFormatJs(cfg),
+        '',
+        '/* ===== 3) 檢查清單 ===== */',
+        checks
+      ].join('\n');
+    }
+
+    function pgSyncPresetChips(root){
+      const mode = pgVal(root, 'pg-mode') || 'both';
+      root.querySelectorAll('[data-pg-preset]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-pg-preset') === mode);
+      });
+    }
+
+    function pgApplyPreset(root, mode){
+      pgSetVal(root, 'pg-mode', mode);
+      pgSetVal(root, 'pg-brand', 'DES');
+      pgSetVal(root, 'pg-title', '您可能會喜歡');
+      pgSetVal(root, 'pg-recom', 'bhv');
+      pgSetVal(root, 'pg-layout', '2.5');
+      pgSetVal(root, 'pg-display', 'SaleRate');
+      pgSetVal(root, 'pg-location', 'bottom');
+      pgSetVal(root, 'pg-btn', true);
+      pgSetVal(root, 'pg-status', true);
+      pgSetVal(root, 'pg-pos-top', 'infFitsHeader');
+      pgSetVal(root, 'pg-pos-bottom', 'infFitsFooter');
+      pgSetVal(root, 'pg-pos-popup', 'popupProductContent');
+      if (mode === 'popup' || mode === 'both') pgSetVal(root, 'pg-show-popup', true);
+      pgSyncPresetChips(root);
+      pgScheduleRemount(root);
+    }
+
+    function pgSetStatus(root, text, kind){
+      const el = root.querySelector('[data-pg-status]');
+      if (!el) return;
+      el.textContent = text;
+      el.classList.remove('is-ok', 'is-err', 'is-loading');
+      if (kind) el.classList.add(kind);
     }
 
     function pgClearWidgets(){
@@ -1081,27 +1274,63 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       box.classList.add('is-on');
     }
 
-    function pgUpdateCode(root, state){
-      const codeEl = root.querySelector('[data-pg-code]');
-      if (!codeEl) return;
-      codeEl.textContent = pgFormatCode(pgExportConfig(state));
+    function pgUpdatePack(root, state){
+      const cfg = pgExportConfig(state);
+      const jsEl = root.querySelector('[data-pg-code-js]');
+      const htmlEl = root.querySelector('[data-pg-code-html]');
+      const allEl = root.querySelector('[data-pg-code-all]');
+      const listEl = root.querySelector('[data-pg-checklist]');
+      if (jsEl) jsEl.textContent = pgFormatJs(cfg);
+      if (htmlEl) htmlEl.textContent = pgFormatHtml(state);
+      if (allEl) allEl.textContent = pgFormatAll(state);
+      if (listEl) {
+        listEl.innerHTML = pgFormatChecklist(state).map((c) => `<li>${escapeHtml(c)}</li>`).join('');
+      }
+    }
+
+    function pgSetTab(root, tab){
+      pgActiveTab = tab || 'js';
+      root.querySelectorAll('[data-pg-tab]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-pg-tab') === pgActiveTab);
+      });
+      root.querySelectorAll('[data-pg-pane]').forEach((pane) => {
+        pane.classList.toggle('is-active', pane.getAttribute('data-pg-pane') === pgActiveTab);
+      });
+    }
+
+    function pgSyncPopupVisibility(root){
+      const show = !!pgVal(root, 'pg-show-popup');
+      root.classList.toggle('is-hide-popup', !show);
     }
 
     async function pgRemount(root){
       const state = pgReadState(root);
-      pgUpdateCode(root, state);
+      pgSyncPresetChips(root);
+      pgSyncPopupVisibility(root);
+      pgUpdatePack(root, state);
       pgSetError(root, '');
+      pgSetStatus(root, '載入中…', 'is-loading');
       try {
         await pgEnsureWidgetModule();
         pgClearWidgets();
-        const carousels = pgPreviewConfig(state).carousels;
-        if (!carousels.length) {
+        const preview = pgPreviewConfig(state);
+        if (!preview.carousels.length) {
+          // 模式有 popup 但關掉浮層、又沒 product 時
+          if ((state.mode === 'popup') && state.showPopup === false) {
+            pgSetStatus(root, '已隱藏 popup', '');
+            return;
+          }
           pgSetError(root, '請至少選擇一種掛載模式。');
+          pgSetStatus(root, '無內容', 'is-err');
           return;
         }
-        window.InfFitsProductCarousel.mount(pgPreviewConfig(state));
+        window.InfFitsProductCarousel.mount(preview);
+        pgSyncPopupVisibility(root);
+        const label = preview.carousels.map((c) => c.type).join(' + ');
+        pgSetStatus(root, `已掛載：${label}`, 'is-ok');
       } catch (err) {
         pgSetError(root, err?.message || String(err));
+        pgSetStatus(root, '失敗', 'is-err');
       }
     }
 
@@ -1113,7 +1342,8 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
     function pgOpenCodeModal(root){
       const modal = root.querySelector('[data-pg-modal]');
       if (!modal) return;
-      pgUpdateCode(root, pgReadState(root));
+      pgUpdatePack(root, pgReadState(root));
+      pgSetTab(root, pgActiveTab || 'js');
       modal.classList.add('is-open');
       modal.setAttribute('aria-hidden', 'false');
     }
@@ -1125,21 +1355,32 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       modal.setAttribute('aria-hidden', 'true');
     }
 
+    function pgToggleFocus(root){
+      const on = root.classList.toggle('is-focus');
+      const btn = root.querySelector('[data-pg-focus]');
+      if (btn) btn.textContent = on ? '顯示設定' : '專注預覽';
+    }
+
     async function pgCopy(root){
-      const codeEl = root.querySelector('[data-pg-code]');
+      const state = pgReadState(root);
+      let text = '';
+      if (pgActiveTab === 'html') text = pgFormatHtml(state);
+      else if (pgActiveTab === 'check') text = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
+      else if (pgActiveTab === 'all') text = pgFormatAll(state);
+      else text = pgFormatJs(pgExportConfig(state));
+
       const status = root.querySelector('[data-pg-copy-status]');
-      const text = codeEl?.textContent || '';
       try {
         await navigator.clipboard.writeText(text);
         if (status) status.textContent = '已複製';
       } catch (_) {
         try {
-          const range = document.createRange();
-          range.selectNodeContents(codeEl);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
           document.execCommand('copy');
+          ta.remove();
           if (status) status.textContent = '已複製';
         } catch (e2) {
           if (status) status.textContent = '複製失敗，請手動選取';
@@ -1151,16 +1392,35 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
     function initPlaygroundIfPresent(){
       const root = slideContent.querySelector('#widgetPlayground');
       if (!root) return;
+      pgActiveTab = 'js';
       root.querySelectorAll('input, select, textarea').forEach((el) => {
         el.addEventListener('input', () => pgScheduleRemount(root));
-        el.addEventListener('change', () => pgScheduleRemount(root));
+        el.addEventListener('change', () => {
+          if (el.name === 'pg-mode') pgSyncPresetChips(root);
+          if (el.name === 'pg-show-popup') {
+            pgSyncPopupVisibility(root);
+            pgScheduleRemount(root);
+            return;
+          }
+          pgScheduleRemount(root);
+        });
       });
-      root.querySelector('[data-pg-open-code]')?.addEventListener('click', () => pgOpenCodeModal(root));
+      root.querySelectorAll('[data-pg-preset]').forEach((btn) => {
+        btn.addEventListener('click', () => pgApplyPreset(root, btn.getAttribute('data-pg-preset')));
+      });
+      root.querySelectorAll('[data-pg-open-code]').forEach((btn) => {
+        btn.addEventListener('click', () => pgOpenCodeModal(root));
+      });
       root.querySelector('[data-pg-close-code]')?.addEventListener('click', () => pgCloseCodeModal(root));
       root.querySelector('[data-pg-copy]')?.addEventListener('click', () => pgCopy(root));
+      root.querySelector('[data-pg-focus]')?.addEventListener('click', () => pgToggleFocus(root));
+      root.querySelectorAll('[data-pg-tab]').forEach((btn) => {
+        btn.addEventListener('click', () => pgSetTab(root, btn.getAttribute('data-pg-tab')));
+      });
       root.querySelector('[data-pg-modal]')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) pgCloseCodeModal(root);
       });
+      pgSyncPresetChips(root);
       pgRemount(root);
     }
 
