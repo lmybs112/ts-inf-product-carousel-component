@@ -119,11 +119,12 @@ export function convertBrandConfig(brandConfig, config = {}) {
     };
   }
   if (brandConfig.Location) {
-    if (config.showPositionId) {
-      convertedConfig.showPositionId = config.showPositionId;
+    const showPositionId = config.showPositionId || carousel.showPositionId;
+    if (showPositionId) {
+      convertedConfig.showPositionId = showPositionId;
       convertedConfig.containerId = brandConfig.Location === 'top'
-        ? config.showPositionId.top
-        : config.showPositionId.bottom;
+        ? showPositionId.top
+        : showPositionId.bottom;
     } else {
       convertedConfig.showPositionId = {
         top: 'infFitsHeader',
@@ -3301,13 +3302,16 @@ if (!customElements.get('inf-product-carousel-widget')) {
 
     const carousel = document.createElement('inf-product-carousel-widget');
     carousel.setAttribute('data-instance-key', instanceKey);
+    // 先掛到 body，再寫 config：否則 attributeChangedCallback 會先把元件 append 到
+    // #popupProductContent，隨後 body.appendChild 又把它移回 body，造成空 popup。
+    document.body.appendChild(carousel);
     try {
       carousel.setAttribute('config', JSON.stringify(instanceConfig));
     } catch (err) {
       console.error('InfFitsProductCarousel.mount：config 無法序列化', err);
+      carousel.remove();
       throw new Error('InfFitsProductCarousel.mount：config 無法序列化為 JSON');
     }
-    document.body.appendChild(carousel);
 
     window.debugCarousel = function() {
       if (carousel.shadowRoot) {

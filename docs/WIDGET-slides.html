@@ -230,6 +230,10 @@
     }
     .pg-actions{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .pg-hint{ font-size: 11px; color: var(--faint); line-height: 1.4; }
+    /* playground remount 時 popup 需壓過投影片 footer */
+    #infPopupproductCarousel{
+      z-index: 20000 !important;
+    }
     @media (max-width: 1100px){
       .pg{ grid-template-columns: 1fr; min-height: 0; }
       .pg-code{ max-height: 260px; }
@@ -935,7 +939,8 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
     }
 
     const PG_CDN = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js';
-    const PG_LOCAL = '../inf-product-carousel-widget.js';
+    // query 僅影響本機預覽快取；正式複製碼仍用 PG_CDN
+    const PG_LOCAL = '../inf-product-carousel-widget.js?v=20260917-popup2';
     let pgWidgetLoad = null;
     let pgRemountTimer = null;
 
@@ -1025,6 +1030,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 
     function pgClearWidgets(){
       document.querySelectorAll('inf-product-carousel-widget').forEach((el) => el.remove());
+      document.querySelectorAll('#infPopupproductCarousel').forEach((el) => el.remove());
       const header = document.getElementById('pgHeader');
       const footer = document.getElementById('pgFooter');
       if (header) header.innerHTML = '';

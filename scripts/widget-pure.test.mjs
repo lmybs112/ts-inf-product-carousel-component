@@ -144,6 +144,24 @@ test('convertBrandConfig maps fields and tolerates missing carousel', () => {
   assert.doesNotThrow(() => convertBrandConfig({ Title: 'T' }, {}));
 });
 
+test('convertBrandConfig reads showPositionId from nested carousel (mount API)', () => {
+  const out = convertBrandConfig({
+    Location: 'bottom',
+    status: true,
+    Title: '您可能會喜歡'
+  }, {
+    brand: 'DES',
+    GA4Key: '',
+    carousel: {
+      type: 'popup',
+      showPositionId: { bottom: 'popupProductContent' }
+    }
+  });
+  assert.equal(out.containerId, 'popupProductContent');
+  assert.equal(out.showPositionId.bottom, 'popupProductContent');
+  assert.equal(out.title, '您可能會喜歡');
+});
+
 test('isValidRecommendationData', () => {
   assert.equal(isValidRecommendationData(null), false);
   assert.equal(isValidRecommendationData({}), false);
