@@ -685,8 +685,8 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       }
       flushCode(); flushPar(); flushList(); flushTable();
 
-      // inject SVG templates for <!--SEQ:seq-xxx-->
-      html = html.replace(/<!--SEQ:(seq-[a-z0-9-]+)-->/g, (_, id) => {
+      // inject SVG / iframe templates for <!--SEQ:seq-xxx--> / <!--SEQ:arch-xxx-->
+      html = html.replace(/<!--SEQ:((?:seq|arch)-[a-z0-9-]+)-->/g, (_, id) => {
         const tpl = document.getElementById('svg-' + id);
         return tpl ? tpl.innerHTML : '';
       });
