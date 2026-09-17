@@ -6,7 +6,14 @@ import {
   buildItemEventName,
   resolveRecommendApiUrl,
   safeJsonParse,
-  debounce
+  debounce,
+  convertBrandConfig,
+  isValidRecommendationData,
+  buildWidgetCacheKey,
+  buildProductClickGaPayload,
+  buildNavClickGaPayload,
+  resolveNavDisplayMode,
+  buildMktClickPayload
 } from '../inf-product-carousel-widget.js';
 
 test('assertMountConfig throws without carousel(s)', () => {
@@ -19,6 +26,14 @@ test('assertMountConfig throws on empty carousels', () => {
 
 test('assertMountConfig throws on non-object config', () => {
   assert.throws(() => assertMountConfig(null), /物件/);
+});
+
+test('assertMountConfig throws when carousel is not object', () => {
+  assert.throws(() => assertMountConfig({ brand: 'DES', carousel: 'x' }), /carousel/);
+});
+
+test('assertMountConfig accepts valid carousel', () => {
+  assert.doesNotThrow(() => assertMountConfig({ brand: 'DES', carousel: { type: 'product' } }));
 });
 
 test('expandMountConfigs expands carousels', () => {
@@ -42,9 +57,21 @@ test('expandMountConfigs prefers single carousel', () => {
   assert.equal(list[0].carousel.type, 'product');
 });
 
-test('buildItemEventName', () => {
+test('expandMountConfigs maps null carousel entry to empty object', () => {
+  const list = expandMountConfigs({
+    brand: 'DES',
+    carousels: [null]
+  });
+  assert.deepEqual(list[0].carousel, {});
+});
+
+test('buildItemEventName matrix', () => {
   assert.equal(buildItemEventName(''), 'click_embedded_itemA');
   assert.equal(buildItemEventName('bhv'), 'bhv_click_embedded_itemA');
+  assert.equal(buildItemEventName('corr'), 'corr_click_embedded_itemA');
+  assert.equal(buildItemEventName('sp_atc'), 'sp_atc_click_embedded_itemA');
+  assert.equal(buildItemEventName('sp_trans'), 'sp_trans_click_embedded_itemA');
+  assert.equal(buildItemEventName('bhv', 'B'), 'bhv_click_embedded_itemB');
 });
 
 test('resolveRecommendApiUrl', () => {
@@ -57,6 +84,10 @@ test('resolveRecommendApiUrl', () => {
     /HTTP_stock_cdp_product_recommendation/
   );
   assert.match(
+    resolveRecommendApiUrl({ brand: 'DES', carouselType: 'product', series_in: '["女"]' }),
+    /HTTP_stock_cdp_product_recommendation/
+  );
+  assert.match(
     resolveRecommendApiUrl({ brand: 'DES', carouselType: 'product' }),
     /HTTP_inf_alpha_bhv_cdp_product_recommendation/
   );
@@ -66,9 +97,10 @@ test('safeJsonParse', () => {
   assert.deepEqual(safeJsonParse('{"a":1}'), { a: 1 });
   assert.equal(safeJsonParse('{bad', null), null);
   assert.equal(safeJsonParse('', 42), 42);
+  assert.equal(safeJsonParse(null, 'x'), 'x');
 });
 
-test('debounce fires once after wait', async () => {
+test('debounce fires once after wait and cancel prevents fire', async () => {
   let count = 0;
   const d = debounce(() => { count += 1; }, 30);
   d();
@@ -77,5 +109,127 @@ test('debounce fires once after wait', async () => {
   assert.equal(count, 0);
   await new Promise((r) => setTimeout(r, 50));
   assert.equal(count, 1);
+
+  d();
   d.cancel();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(count, 1);
+});
+
+test('convertBrandConfig maps fields and tolerates missing carousel', () => {
+  const out = convertBrandConfig({
+    Title: '推薦',
+    Description: 'desc',
+    DisplayMode: 'SaleRate',
+    RecommendMode: 'bhv',
+    CarouselButton: false,
+    CarouselLayout: 3,
+    Location: 'top',
+    status: true
+  }, {
+    showPositionId: { top: 'H', bottom: 'F' },
+    carousel: { type: 'product', hide_size: true }
+  });
+  assert.equal(out.title, '推薦');
+  assert.equal(out.description, 'desc');
+  assert.equal(out.displayMode, 'SaleRate');
+  assert.equal(out.recommendMode, 'bhv');
+  assert.equal(out.arrowPosition, 'none');
+  assert.equal(out.hide_size, true);
+  assert.equal(out.containerId, 'H');
+  assert.equal(out.enabled, true);
+  assert.equal(out.breakpoints[768].slidesPerView, 3);
+
+  assert.deepEqual(convertBrandConfig(null), {});
+  assert.doesNotThrow(() => convertBrandConfig({ Title: 'T' }, {}));
+});
+
+test('isValidRecommendationData', () => {
+  assert.equal(isValidRecommendationData(null), false);
+  assert.equal(isValidRecommendationData({}), false);
+  assert.equal(isValidRecommendationData({ bhv: [] }), false);
+  assert.equal(isValidRecommendationData({ bhv: [{ id: 1 }] }), true);
+  assert.equal(isValidRecommendationData({ corr: [{ id: 1 }] }), true);
+  assert.equal(isValidRecommendationData({
+    bhv: [{ id: 1 }],
+    SIZEAI_result: { error: true }
+  }), false);
+  assert.equal(isValidRecommendationData({
+    bhv: [{ id: 1 }],
+    SIZEAI_result: { error_type: 'x' }
+  }), false);
+});
+
+test('buildWidgetCacheKey', () => {
+  assert.equal(
+    buildWidgetCacheKey('product', '/Products/ABC'),
+    'inf_widget_carousel_cache_product__products_abc'
+  );
+  assert.equal(
+    buildWidgetCacheKey('popup', '/'),
+    'inf_widget_carousel_cache_popup__'
+  );
+});
+
+test('buildProductClickGaPayload', () => {
+  const ga = buildProductClickGaPayload('鞋', 'https://x.com/a', 'bhv');
+  assert.equal(ga.eventName, 'bhv_click_embedded_itemA');
+  assert.equal(ga.eventData.event_category, 'infEmbeddedAdContainer-embedded');
+  assert.equal(ga.eventData.event_label, 'Title: 鞋');
+  assert.equal(ga.eventData.value, 'https://x.com/a'.length);
+
+  const empty = buildProductClickGaPayload('', null, '');
+  assert.equal(empty.eventName, 'click_embedded_itemA');
+  assert.equal(empty.eventData.value, 0);
+});
+
+test('buildNavClickGaPayload', () => {
+  assert.equal(buildNavClickGaPayload('left').eventName, 'click_embedded_item_arrow_leftA');
+  assert.equal(buildNavClickGaPayload('right').eventData.event_label, 'arrow-right');
+  assert.equal(buildNavClickGaPayload('prev').eventName, 'click_embedded_item_title_nav_prevA');
+  assert.equal(buildNavClickGaPayload('next').eventData.value, 10);
+  assert.throws(() => buildNavClickGaPayload('nope'), /未知 kind/);
+});
+
+test('resolveNavDisplayMode', () => {
+  assert.deepEqual(resolveNavDisplayMode('none', 1200), {
+    showSideArrows: false,
+    showTitleNav: false,
+    showCorrPrev: true
+  });
+  assert.deepEqual(resolveNavDisplayMode('center', 1200), {
+    showSideArrows: true,
+    showTitleNav: false,
+    showCorrPrev: true
+  });
+  assert.deepEqual(resolveNavDisplayMode('center', 375), {
+    showSideArrows: false,
+    showTitleNav: true,
+    showCorrPrev: false
+  });
+});
+
+test('buildMktClickPayload', () => {
+  const p = buildMktClickPayload({
+    brand: 'DES',
+    bid: { GVID: 'g1' },
+    ids: { lgiven_id: 'L', member_id: 'M' },
+    eventRecom: 'corr',
+    carouselType: 'popup',
+    link: 'https://a',
+    title: 'T',
+    pid: 'P1'
+  });
+  assert.equal(p.Brand, 'DES');
+  assert.equal(p.GVID, 'g1');
+  assert.equal(p.LGVID, 'L');
+  assert.equal(p.MRID, 'M');
+  assert.equal(p.recom_type, 'corr');
+  assert.equal(p.recom_loc, 'popup');
+  assert.equal(p.action, 'click');
+  assert.equal(p.action_pid, 'P1');
+
+  const embed = buildMktClickPayload({ brand: 'X', carouselType: 'product' });
+  assert.equal(embed.recom_loc, 'embed');
+  assert.equal(embed.GVID, '');
 });

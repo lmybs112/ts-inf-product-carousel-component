@@ -74,6 +74,168 @@ export function debounce(fn, wait = 150) {
   return debounced;
 }
 
+/** 品牌設定 → 內部設定（純函式，便於測試） */
+export function convertBrandConfig(brandConfig, config = {}) {
+  if (!brandConfig || typeof brandConfig !== 'object') return {};
+
+  const convertedConfig = {};
+  const carousel = (config && config.carousel && typeof config.carousel === 'object')
+    ? config.carousel
+    : {};
+
+  if (typeof brandConfig.CarouselButton === 'boolean') {
+    convertedConfig.arrowPosition = brandConfig.CarouselButton ? 'center' : 'none';
+  }
+  if (brandConfig.Description) {
+    convertedConfig.description = brandConfig.Description;
+  }
+  if (brandConfig.Title) {
+    convertedConfig.title = brandConfig.Title;
+  }
+  if (brandConfig.RecommendMode) {
+    convertedConfig.recommendMode = brandConfig.RecommendMode;
+  }
+  if (carousel.hide_size) {
+    convertedConfig.hide_size = carousel.hide_size;
+  }
+  if (carousel.bid) {
+    convertedConfig.bid = carousel.bid;
+  }
+  if (carousel.backgroundColor) {
+    convertedConfig.backgroundColor = carousel.backgroundColor;
+  }
+  if (carousel.skuContent) {
+    convertedConfig.skuContent = carousel.skuContent;
+  }
+  if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
+    convertedConfig.breakpoints = {
+      768: {
+        slidesPerView: brandConfig.CarouselLayout,
+        slidesPerGroup: Math.floor(brandConfig.CarouselLayout),
+        spaceBetween: carousel.type === 'product' ? 24 : 12,
+        resistanceRatio: 0,
+        loopFillGroupWithBlank: true
+      },
+    };
+  }
+  if (brandConfig.Location) {
+    if (config.showPositionId) {
+      convertedConfig.showPositionId = config.showPositionId;
+      convertedConfig.containerId = brandConfig.Location === 'top'
+        ? config.showPositionId.top
+        : config.showPositionId.bottom;
+    } else {
+      convertedConfig.showPositionId = {
+        top: 'infFitsHeader',
+        bottom: 'infFitsFooter'
+      };
+      convertedConfig.containerId = brandConfig.Location === 'top' ? 'infFitsHeader' : 'infFitsFooter';
+    }
+  }
+  if (brandConfig.DisplayMode) {
+    convertedConfig.displayMode = brandConfig.DisplayMode;
+  }
+  if (typeof brandConfig.status === 'boolean') {
+    convertedConfig.enabled = brandConfig.status;
+  }
+  return convertedConfig;
+}
+
+/** 推薦 API 回應是否可視為有效資料 */
+export function isValidRecommendationData(data) {
+  if (!data || typeof data !== 'object') return false;
+  if (data.SIZEAI_result) {
+    if (data.SIZEAI_result.error || data.SIZEAI_result.error_type) {
+      return false;
+    }
+  }
+  return (
+    (Array.isArray(data.bhv) && data.bhv.length > 0) ||
+    (Array.isArray(data.corr) && data.corr.length > 0) ||
+    (Array.isArray(data.sp_atc) && data.sp_atc.length > 0) ||
+    (Array.isArray(data.sp_trans) && data.sp_trans.length > 0)
+  );
+}
+
+/** 產生推薦快取 key */
+export function buildWidgetCacheKey(carouselType, pathname = '/') {
+  const path = String(pathname || '/').toLowerCase();
+  return `inf_widget_carousel_cache_${carouselType}_${path.replace(/\//g, '_')}`;
+}
+
+const GA_CATEGORY = 'infEmbeddedAdContainer-embedded';
+
+/** 商品點擊 GA4 payload */
+export function buildProductClickGaPayload(title, link, eventRecom, testSuffix = 'A') {
+  return {
+    eventName: buildItemEventName(eventRecom || '', testSuffix),
+    eventData: {
+      event_category: GA_CATEGORY,
+      event_label: 'Title: ' + (title || ''),
+      value: (link || '').length
+    }
+  };
+}
+
+/** 導覽點擊 GA4 payload：left | right | prev | next */
+export function buildNavClickGaPayload(kind, testSuffix = 'A') {
+  const table = {
+    left: { eventName: `click_embedded_item_arrow_left${testSuffix}`, event_label: 'arrow-left' },
+    right: { eventName: `click_embedded_item_arrow_right${testSuffix}`, event_label: 'arrow-right' },
+    prev: { eventName: `click_embedded_item_title_nav_prev${testSuffix}`, event_label: 'title-nav-prev' },
+    next: { eventName: `click_embedded_item_title_nav_next${testSuffix}`, event_label: 'title-nav-next' }
+  };
+  const row = table[kind];
+  if (!row) {
+    throw new Error(`buildNavClickGaPayload：未知 kind "${kind}"`);
+  }
+  return {
+    eventName: row.eventName,
+    eventData: {
+      event_category: GA_CATEGORY,
+      event_label: row.event_label,
+      value: 10
+    }
+  };
+}
+
+/** 依寬度與 arrowPosition 決定導覽模式 */
+export function resolveNavDisplayMode(arrowPosition, width) {
+  const isDesktop = Number(width) >= 768;
+  if (arrowPosition === 'none') {
+    return { showSideArrows: false, showTitleNav: false, showCorrPrev: true };
+  }
+  if (arrowPosition === 'center' && isDesktop) {
+    return { showSideArrows: true, showTitleNav: false, showCorrPrev: true };
+  }
+  return { showSideArrows: false, showTitleNav: true, showCorrPrev: false };
+}
+
+/** 後端 recordMktClick payload */
+export function buildMktClickPayload({
+  brand,
+  bid,
+  ids = {},
+  eventRecom = '',
+  carouselType = 'product',
+  link = '',
+  title = '',
+  pid = ''
+} = {}) {
+  return {
+    Brand: brand || '',
+    GVID: (bid && bid.GVID) ? bid.GVID : '',
+    LGVID: ids.lgiven_id || '',
+    MRID: ids.member_id || '',
+    recom_type: eventRecom || '',
+    recom_loc: carouselType === 'popup' ? 'popup' : 'embed',
+    action: 'click',
+    action_link: link || '',
+    action_itemname: title || '',
+    action_pid: pid || ''
+  };
+}
+
 const __infWidgetIsBrowser = typeof window !== 'undefined' && typeof customElements !== 'undefined';
 
 if (__infWidgetIsBrowser) {
@@ -565,90 +727,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
     }
   
     convertBrandConfig(brandConfig, config = {}) {
-      if (!brandConfig) return {};
-  
-      const convertedConfig = {};
-  
-      // CarouselButton: true → arrowPosition = 'center', false → arrowPosition = 'none'
-      if (typeof brandConfig.CarouselButton === 'boolean') {
-        convertedConfig.arrowPosition = brandConfig.CarouselButton ? 'center' : 'none';
-      }
-  
-      // Description: 變更 description
-      if (brandConfig.Description) {
-        convertedConfig.description = brandConfig.Description;
-      }
-        // Title: 變更 title
-      if (brandConfig.Title) {
-        convertedConfig.title = brandConfig.Title;
-      }
-  
-      //  RecommendMode: 變更 eecommendMode
-      if(brandConfig.RecommendMode) {
-        convertedConfig.recommendMode = brandConfig.RecommendMode;
-      }
-  
-      // hide_size
-      if (config.carousel.hide_size) {
-        convertedConfig.hide_size = config.carousel.hide_size;
-      }
-      // bid
-      if (config.carousel.bid) {
-        convertedConfig.bid = config.carousel.bid;
-      }
-      // background
-      if (config.carousel.backgroundColor) {
-        convertedConfig.backgroundColor = config.carousel.backgroundColor;
-      }
-      // skuContent
-      if (config.carousel.skuContent) {
-        convertedConfig.skuContent = config.carousel.skuContent;
-      }
-  
-      // CarouselLayout: 變更 breakpoints 768 的 slidesPerView, slidesPerGroup
-      if (brandConfig.CarouselLayout && typeof brandConfig.CarouselLayout === 'number') {
-        convertedConfig.breakpoints = {
-          768: {
-            slidesPerView: brandConfig.CarouselLayout,
-            slidesPerGroup: Math.floor(brandConfig.CarouselLayout),
-            spaceBetween: config.carousel.type === 'product' ? 24 : 12,
-            resistanceRatio: 0,
-            loopFillGroupWithBlank: true
-          },
-        };
-      }
-  
-      // Location: 新增 showPositionId 配置
-      if (brandConfig.Location) {
-        // 使用外部傳入的 showPositionId 配置，而不是寫死的值
-        if (config.showPositionId) {
-          convertedConfig.showPositionId = config.showPositionId;
-          // 根據 Location 設定對應的 containerId
-          convertedConfig.containerId = brandConfig.Location === 'top' ? config.showPositionId.top : config.showPositionId.bottom;
-        } else {
-          // 如果沒有外部 showPositionId 配置，使用預設值
-          convertedConfig.showPositionId = {
-            top: 'infFitsHeader',
-            bottom: 'infFitsFooter'
-          };
-          convertedConfig.containerId = brandConfig.Location === 'top' ? 'infFitsHeader' : 'infFitsFooter';
-        }
-      }
-  
-      // DisplayMode: 保留 (您已經寫好了)
-      if (brandConfig.DisplayMode) {
-        convertedConfig.displayMode = brandConfig.DisplayMode;
-        // console.log('convertBrandConfig - 從品牌配置讀取 DisplayMode:', brandConfig.DisplayMode);
-      } else {
-        // console.log('convertBrandConfig - 品牌配置中沒有 DisplayMode');
-      }
-  
-      // status: 組件啟用狀態
-      if (typeof brandConfig.status === 'boolean') {
-        convertedConfig.enabled = brandConfig.status;
-      }
-
-      return convertedConfig;
+      return convertBrandConfig(brandConfig, config);
     }
   
     initProductRecommendation(config = {}, shouldAutoAppend = false) {
@@ -1140,8 +1219,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
       const $host = window.jQuery(hostEl);
       const width = $host.width() || 0;
       const isDesktop = width >= 768;
-      const showSideArrows = arrowPosition === 'center' && isDesktop;
-      const showTitleNav = arrowPosition !== 'none' && !showSideArrows;
+      const nav = resolveNavDisplayMode(arrowPosition, width);
 
       const setDisplay = (selector, display) => {
         const el = shadowRoot.querySelector(selector);
@@ -1152,9 +1230,9 @@ if (!customElements.get('inf-product-carousel-widget')) {
         setDisplay(`#${containerId} .swiper-next`, 'none');
         setDisplay(`#${containerId} .swiper-prev`, 'none');
         setDisplay(`#${containerId} .swiper-next-corr`, 'none');
-        setDisplay(`#${containerId} .swiper-prev-corr`, 'block');
+        setDisplay(`#${containerId} .swiper-prev-corr`, nav.showCorrPrev ? 'block' : 'none');
         setDisplay(`#${containerId} .title-navigation`, 'none');
-      } else if (showSideArrows) {
+      } else if (nav.showSideArrows) {
         setDisplay(`#${containerId} .swiper-next`, 'block');
         setDisplay(`#${containerId} .swiper-prev`, 'block');
         setDisplay(`#${containerId} .swiper-next-corr`, 'block');
@@ -1165,7 +1243,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
         setDisplay(`#${containerId} .swiper-prev`, 'none');
         setDisplay(`#${containerId} .swiper-next-corr`, 'none');
         setDisplay(`#${containerId} .swiper-prev-corr`, 'none');
-        setDisplay(`#${containerId} .title-navigation`, showTitleNav ? 'inline-flex' : 'none');
+        setDisplay(`#${containerId} .title-navigation`, nav.showTitleNav ? 'inline-flex' : 'none');
       }
 
       $host
@@ -1888,23 +1966,18 @@ if (!customElements.get('inf-product-carousel-widget')) {
             const link = item.getAttribute('data-link') || '';
             const eventRecom = item.getAttribute('data-event-recom') || '';
             const pid = item.getAttribute('data-pid') || '';
-            sendGAEvent(buildItemEventName(eventRecom, test), {
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'Title: ' + title,
-              value: (link || '').length,
-            });
-            componentInstance.recordMktClick({
-              "Brand": brand,
-              "GVID": (bid && bid.GVID) ? bid.GVID : "",
-              "LGVID": ids.lgiven_id,
-              "MRID": ids.member_id,
-              "recom_type": eventRecom || "",
-              "recom_loc": carouselType === 'popup' ? 'popup' : 'embed',
-              "action": "click",
-              "action_link": link,
-              "action_itemname": title,
-              "action_pid": pid
-            }).catch(error => {
+            const ga = buildProductClickGaPayload(title, link, eventRecom, test);
+            sendGAEvent(ga.eventName, ga.eventData);
+            componentInstance.recordMktClick(buildMktClickPayload({
+              brand,
+              bid,
+              ids,
+              eventRecom,
+              carouselType,
+              link,
+              title,
+              pid
+            })).catch(error => {
               console.error('recordMktClick:', error);
             });
             return;
@@ -1912,41 +1985,29 @@ if (!customElements.get('inf-product-carousel-widget')) {
 
           const leftArrow = e.target.closest('.a-left');
           if (leftArrow && container.contains(leftArrow)) {
-            sendGAEvent('click_embedded_item_arrow_left' + test, {
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'arrow-left',
-              value: 10
-            });
+            const ga = buildNavClickGaPayload('left', test);
+            sendGAEvent(ga.eventName, ga.eventData);
             return;
           }
 
           const rightArrow = e.target.closest('.a-right');
           if (rightArrow && container.contains(rightArrow)) {
-            sendGAEvent('click_embedded_item_arrow_right' + test, {
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'arrow-right',
-              value: 10
-            });
+            const ga = buildNavClickGaPayload('right', test);
+            sendGAEvent(ga.eventName, ga.eventData);
             return;
           }
 
           const titleNavPrev = e.target.closest('.title-nav-prev');
           if (titleNavPrev && container.contains(titleNavPrev)) {
-            sendGAEvent('click_embedded_item_title_nav_prev' + test, {
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'title-nav-prev',
-              value: 10
-            });
+            const ga = buildNavClickGaPayload('prev', test);
+            sendGAEvent(ga.eventName, ga.eventData);
             return;
           }
 
           const titleNavNext = e.target.closest('.title-nav-next');
           if (titleNavNext && container.contains(titleNavNext)) {
-            sendGAEvent('click_embedded_item_title_nav_next' + test, {
-              event_category: 'infEmbeddedAdContainer-embedded',
-              event_label: 'title-nav-next',
-              value: 10
-            });
+            const ga = buildNavClickGaPayload('next', test);
+            sendGAEvent(ga.eventName, ga.eventData);
           }
         });
       });
@@ -2082,12 +2143,9 @@ if (!customElements.get('inf-product-carousel-widget')) {
       this.fetchRecommendations(ids, containerId, config);
     }
     
-    // 生成快取 key 的函數
     generateCacheKey(carouselType) {
-      // 根據輪播類型和當前頁面路徑生成唯一的快取 key
-      const pathname = location.pathname.toLowerCase();
-      const key = `inf_widget_carousel_cache_${carouselType}_${pathname.replace(/\//g, '_')}`;
-      return key;
+      const pathname = (typeof location !== 'undefined' && location.pathname) ? location.pathname : '/';
+      return buildWidgetCacheKey(carouselType, pathname);
     }
 
     // 從 localStorage 獲取快取資料
@@ -2119,26 +2177,8 @@ if (!customElements.get('inf-product-carousel-widget')) {
       }
     }
 
-    // 檢查數據是否有效（有內容）
     isValidData(data) {
-      // 檢查 SIZEAI_result 是否有錯誤
-      if (data.SIZEAI_result) {
-        if (data.SIZEAI_result.error || data.SIZEAI_result.error_type) {
-          return false;
-        }
-      }
-      // 檢查是否有任何有效的推薦數據
-      const hasValidData = 
-        (data.bhv && Array.isArray(data.bhv) && data.bhv.length > 0) ||
-        (data.corr && Array.isArray(data.corr) && data.corr.length > 0) ||
-        (data.sp_atc && Array.isArray(data.sp_atc) && data.sp_atc.length > 0) ||
-        (data.sp_trans && Array.isArray(data.sp_trans) && data.sp_trans.length > 0);
-      
-      if (!hasValidData) {
-        return false;
-      }
-      
-      return true;
+      return isValidRecommendationData(data);
     }
 
     // 將資料保存到 localStorage（實現 LRU 策略，最多保存 5 筆，僅處理推薦商品快取）
