@@ -436,3 +436,14 @@ npm test
 
 涵蓋：`mount` 參數驗證、推薦 URL、brandConfig 轉換、推薦資料有效性、快取 key、GA4／後端點擊 payload、導覽模式、debounce、模組 export 完整性。  
 目前為 Node 純函式／契約測試（不需瀏覽器）。視覺與整合可用本機 `demo-widget.html` 手動驗證。
+
+---
+
+## 17. 簡報（PPT 講解）
+
+| 檔案 | 用途 |
+|------|------|
+| `docs/InfFits-Product-Carousel-Widget-簡報.pptx` | PowerPoint，可下載投影 |
+| `docs/WIDGET-slides.html` | 瀏覽器全螢幕簡報（←→／空白鍵翻頁，F 全螢幕） |
+
+內容對齊本文件：兩行用法、product／popup、參數、GA4、FAQ。
