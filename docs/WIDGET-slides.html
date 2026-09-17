@@ -3,325 +3,562 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>InfFits Product Carousel Widget — 簡報</title>
+  <title>InfFits Product Carousel Widget — 功能簡報</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --navy: #0f2a43;
-      --teal: #1a7a6d;
-      --accent: #e8a047;
-      --light: #f4f7f6;
-      --muted: #5a6a72;
-      --dark: #1c2429;
+      --ink: #12202b;
+      --paper: #f7f3ec;
+      --panel: #ffffff;
+      --sea: #0e6b5c;
+      --sea-deep: #0a4f44;
+      --sand: #d9c4a5;
+      --amber: #c9842a;
+      --muted: #5f6d75;
+      --line: #e2d8c8;
+      --code-bg: #16303a;
+      --code-fg: #d5ebe4;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
-      font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
-      background: #111;
-      color: var(--dark);
+      font-family: "IBM Plex Sans TC", "PingFang TC", "Noto Sans TC", sans-serif;
+      background: #0c1418;
+      color: var(--ink);
       overflow: hidden;
-      height: 100vh;
     }
-    .deck { height: 100vh; position: relative; }
+
+    .deck { height: 100%; position: relative; }
     .slide {
       display: none;
-      height: 100vh;
-      padding: 48px 64px 72px;
-      background: var(--light);
+      height: 100%;
+      padding: clamp(36px, 5vw, 64px) clamp(28px, 6vw, 80px) 88px;
+      background:
+        radial-gradient(1200px 500px at 110% -10%, rgba(14, 107, 92, 0.12), transparent 55%),
+        linear-gradient(160deg, #fbf8f2 0%, var(--paper) 48%, #efe7da 100%);
       position: relative;
       flex-direction: column;
+      gap: 20px;
+      overflow: auto;
     }
-    .slide.active { display: flex; }
-    .slide.title {
-      background: var(--navy);
-      color: #fff;
-      justify-content: center;
-    }
-    .slide.title .band {
-      position: absolute; left: 0; right: 0; bottom: 0; height: 22%;
-      background: var(--teal);
+    .slide.active { display: flex; animation: in 320ms ease; }
+    @keyframes in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
     }
     .slide::before {
       content: "";
-      position: absolute; left: 0; top: 0; bottom: 0; width: 8px;
-      background: var(--teal);
+      position: absolute; left: 0; top: 0; bottom: 0; width: 10px;
+      background: linear-gradient(180deg, var(--sea), var(--amber));
     }
-    .slide.title::before { display: none; }
-    h1 { font-size: clamp(28px, 3.2vw, 40px); color: var(--navy); margin-bottom: 28px; }
-    .slide.title h1 { color: #fff; font-size: clamp(36px, 4vw, 48px); margin-bottom: 16px; }
-    .badge { color: var(--accent); font-weight: 700; letter-spacing: .04em; margin-bottom: 12px; }
-    .sub { color: #c8d8e0; font-size: 20px; margin-bottom: 24px; }
-    .hint { color: #fff; font-size: 16px; position: relative; z-index: 1; margin-top: 48px; }
-    ul { list-style: none; display: grid; gap: 12px; font-size: clamp(16px, 1.5vw, 20px); line-height: 1.45; }
-    ul li::before { content: "•"; color: var(--teal); font-weight: 700; margin-right: 10px; }
-    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; }
+    .slide.cover, .slide.end {
+      background:
+        radial-gradient(900px 420px at 80% 20%, rgba(201, 132, 42, 0.22), transparent 50%),
+        linear-gradient(145deg, #0d2a32 0%, #12353c 45%, #0e6b5c 100%);
+      color: #fff;
+      justify-content: center;
+    }
+    .slide.cover::before, .slide.end::before { display: none; }
+
+    .eyebrow {
+      font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--amber); font-weight: 600;
+    }
+    .cover .eyebrow { color: var(--sand); }
+    h1 {
+      font-size: clamp(28px, 3.4vw, 42px);
+      line-height: 1.2;
+      color: var(--ink);
+      max-width: 18em;
+    }
+    .cover h1, .end h1 { color: #fff; font-size: clamp(34px, 4.2vw, 52px); max-width: 14em; }
+    .lead { color: var(--muted); font-size: clamp(16px, 1.5vw, 19px); max-width: 40em; line-height: 1.55; }
+    .cover .lead { color: rgba(255,255,255,0.78); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; flex: 1; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1; }
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
     .card {
-      background: #fff; border: 1px solid #d5dee3; border-radius: 16px;
-      padding: 24px; box-shadow: 0 8px 24px rgba(15,42,67,.06);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px 22px 20px;
+      box-shadow: 0 10px 30px rgba(18, 32, 43, 0.05);
     }
-    .card h2 { color: var(--teal); font-size: 20px; margin-bottom: 16px; }
-    .card ul { font-size: 15px; gap: 10px; }
+    .card h2 {
+      font-size: 17px; color: var(--sea-deep); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card h2 .n {
+      width: 24px; height: 24px; border-radius: 999px;
+      background: var(--sea); color: #fff; font-size: 12px;
+      display: inline-grid; place-items: center; font-weight: 700;
+    }
+    ul { list-style: none; display: grid; gap: 10px; }
+    ul li {
+      font-size: clamp(14px, 1.35vw, 17px);
+      line-height: 1.45;
+      padding-left: 1em;
+      position: relative;
+    }
+    ul li::before {
+      content: "";
+      position: absolute; left: 0; top: 0.55em;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--sea);
+    }
+    .toc li { cursor: pointer; }
+    .toc li:hover { color: var(--sea-deep); }
+
+    pre, code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
     pre {
-      background: var(--navy); color: #d6eee8; border-radius: 16px;
-      padding: 28px 32px; font-size: clamp(13px, 1.2vw, 16px);
-      line-height: 1.55; overflow: auto; flex: 1;
-      font-family: Consolas, ui-monospace, monospace;
+      background: var(--code-bg);
+      color: var(--code-fg);
+      border-radius: 16px;
+      padding: 22px 24px;
+      font-size: clamp(12px, 1.15vw, 15px);
+      line-height: 1.55;
+      overflow: auto;
+      flex: 1;
+      border: 1px solid rgba(255,255,255,0.06);
     }
-    .note { margin-top: 16px; color: var(--teal); font-size: 14px; }
+    .kw { color: #7fd4c0; }
+    .str { color: #f0c27a; }
+    .cm { color: #7f939b; }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .chip {
+      border-radius: 999px; padding: 6px 12px; font-size: 13px;
+      background: rgba(14, 107, 92, 0.1); color: var(--sea-deep); font-weight: 500;
+    }
+    .table {
+      width: 100%; border-collapse: collapse; font-size: 14px;
+      background: #fff; border-radius: 14px; overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .table th, .table td {
+      text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .table th { background: #eef5f2; color: var(--sea-deep); font-weight: 600; }
+    .table tr:last-child td { border-bottom: 0; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 0.92em; }
+
+    .note {
+      margin-top: auto;
+      color: var(--sea-deep);
+      font-size: 14px;
+      background: rgba(14, 107, 92, 0.08);
+      border-left: 3px solid var(--sea);
+      padding: 10px 14px;
+      border-radius: 0 10px 10px 0;
+    }
+    .cover .note, .end .note {
+      background: rgba(255,255,255,0.08);
+      color: #e8f4ef;
+      border-left-color: var(--amber);
+    }
+
     .footer {
-      position: absolute; right: 48px; bottom: 24px; color: var(--muted); font-size: 13px;
+      position: absolute; right: clamp(20px, 4vw, 48px); bottom: 56px;
+      color: var(--muted); font-size: 12px;
     }
-    .slide.title .footer, .slide.end .footer { color: rgba(255,255,255,.55); }
+    .cover .footer, .end .footer { color: rgba(255,255,255,0.45); }
+
     .nav {
-      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-      display: flex; gap: 8px; z-index: 20; align-items: center;
-      background: rgba(15,42,67,.85); color: #fff; border-radius: 999px;
-      padding: 8px 14px; font-size: 13px;
+      position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+      z-index: 30; display: flex; align-items: center; gap: 10px;
+      background: rgba(18, 32, 43, 0.92);
+      backdrop-filter: blur(8px);
+      color: #fff; border-radius: 999px;
+      padding: 8px 12px 8px 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.28);
     }
     .nav button {
-      border: 0; background: var(--teal); color: #fff; border-radius: 999px;
-      padding: 6px 12px; cursor: pointer; font: inherit;
+      border: 0; background: var(--sea); color: #fff;
+      border-radius: 999px; padding: 7px 14px; cursor: pointer;
+      font: inherit; font-size: 13px; font-weight: 600;
     }
-    .slide.end { background: var(--navy); color: #fff; justify-content: center; }
-    .slide.end h1 { color: #fff; }
-    .slide.end pre { background: transparent; padding: 0; color: #b8d4ce; }
-    .kbd { opacity: .75; margin-left: 8px; }
+    .nav button:hover { background: var(--sea-deep); }
+    .nav button:disabled { opacity: 0.35; cursor: default; }
+    .dots { display: flex; gap: 5px; max-width: 42vw; overflow: hidden; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.28); border: 0; padding: 0; cursor: pointer;
+    }
+    .dot.on { background: var(--amber); transform: scale(1.15); }
+    .pos { font-size: 12px; opacity: 0.8; min-width: 3.5em; text-align: center; }
+    .kbd { font-size: 11px; opacity: 0.55; margin-left: 4px; white-space: nowrap; }
+    @media (max-width: 720px) {
+      .kbd { display: none; }
+      .dots { display: none; }
+    }
   </style>
 </head>
 <body>
-  <div class="deck" id="deck">
-    <section class="slide title active">
-      <div class="band"></div>
-      <div class="badge">使用說明簡報</div>
+  <div class="deck" id="deck" tabindex="0" aria-label="Product Carousel Widget 簡報">
+
+    <section class="slide cover active" data-title="封面">
+      <p class="eyebrow">InfFits · Open Slides</p>
       <h1>Product Carousel Widget</h1>
-      <p class="sub">infFITS 商品推薦輪播 · 兩行掛載、功能完整</p>
-      <p class="hint">兩行程式即可掛載 · product + popup 一次完成 · 與舊版互不依賴</p>
-      <div class="footer">InfFits Product Carousel Widget</div>
+      <p class="lead">商品推薦輪播的兩行掛載指南：功能、參數、GA4、Popup，方便後續整合與交接。</p>
+      <div class="chip-row" style="margin-top:20px">
+        <span class="chip" style="background:rgba(255,255,255,.12);color:#fff">ESM await import</span>
+        <span class="chip" style="background:rgba(255,255,255,.12);color:#fff">product + popup</span>
+        <span class="chip" style="background:rgba(255,255,255,.12);color:#fff">GA4 一點一筆</span>
+      </div>
+      <p class="note" style="margin-top:28px;max-width:36em">操作：← →／空白鍵翻頁 · F 全螢幕 · 點目錄可跳頁</p>
+      <div class="footer">docs/WIDGET-slides.html</div>
     </section>
 
-    <section class="slide">
+    <section class="slide" data-title="目錄">
+      <p class="eyebrow">Agenda</p>
       <h1>目錄</h1>
-      <ul>
-        <li>這是什麼？與舊版差異</li>
-        <li>兩行快速開始</li>
-        <li>product / popup 兩種型態</li>
-        <li>設定參數重點</li>
-        <li>GA4 事件怎麼看</li>
-        <li>Popup 控制與常見問題</li>
-        <li>測試與後續維護</li>
+      <ul class="toc" id="toc">
+        <li data-go="2">這是什麼？與舊版差異</li>
+        <li data-go="3">兩行快速開始</li>
+        <li data-go="4">頁面準備與 mount 規則</li>
+        <li data-go="5">product / popup 兩種型態</li>
+        <li data-go="6">參數怎麼記</li>
+        <li data-go="7">brandConfig 與推薦模式</li>
+        <li data-go="8">GA4 與後端點擊</li>
+        <li data-go="9">Popup API 與除錯</li>
+        <li data-go="10">範例與常見問題</li>
+        <li data-go="11">測試、檔案與下一步</li>
       </ul>
     </section>
 
-    <section class="slide">
+    <section class="slide" data-title="這是什麼">
+      <p class="eyebrow">Overview</p>
       <h1>這是什麼？</h1>
-      <div class="cols">
+      <div class="grid-2">
         <div class="card">
-          <h2>新 Widget</h2>
+          <h2><span class="n">新</span> Widget</h2>
           <ul>
-            <li>檔案：inf-product-carousel-widget.js</li>
-            <li>入口：InfFitsProductCarousel.mount()</li>
-            <li>Tag：&lt;inf-product-carousel-widget&gt;</li>
-            <li>ESM：await import(...) 即可</li>
-            <li>一次可掛 product + popup</li>
+            <li>檔案：<span class="mono">inf-product-carousel-widget.js</span></li>
+            <li>入口：<span class="mono">InfFitsProductCarousel.mount()</span></li>
+            <li>Tag：<span class="mono">&lt;inf-product-carousel-widget&gt;</span></li>
+            <li>Shadow DOM 渲染，自行載入 jQuery／Swiper</li>
+            <li>一次 mount 可同時掛 product + popup</li>
           </ul>
         </div>
         <div class="card">
-          <h2>與舊版關係</h2>
+          <h2><span class="n">舊</span> 關係</h2>
           <ul>
-            <li>舊檔完全不動、互不依賴</li>
-            <li>舊：initInfProductCarouselComponent</li>
+            <li>舊檔 <span class="mono">inf-product-carousel-component.js</span> 不動</li>
+            <li>互不 import、互不依賴</li>
             <li>新舊可同頁並存（不同 tag）</li>
             <li>參數結構對齊既有慣例</li>
-            <li>適合新站／新整合優先採用</li>
+            <li>新站／新整合建議走 Widget</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <section class="slide">
-      <h1>兩行用法（核心）</h1>
-      <pre>await import('https://…/inf-product-carousel-widget.js');
+    <section class="slide" data-title="兩行用法">
+      <p class="eyebrow">Quick start</p>
+      <h1>兩行就能掛上</h1>
+      <pre><span class="kw">await</span> <span class="kw">import</span>(<span class="str">'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js'</span>);
 
 window.InfFitsProductCarousel.mount({
-  brand: 'DES',
-  GA4Key: 'G-XXXXXXXXXX',
+  brand: <span class="str">'DES'</span>,
+  GA4Key: <span class="str">'G-XXXXXXXXXX'</span>,
   carousels: [
-    { type: 'popup',  /* ... */ },
-    { type: 'product', showPositionId: { top: 'infFitsHeader', bottom: 'infFitsFooter' } }
+    { type: <span class="str">'popup'</span>,  <span class="cm">/* brandConfig / bid … */</span> },
+    { type: <span class="str">'product'</span>, showPositionId: { top: <span class="str">'infFitsHeader'</span>, bottom: <span class="str">'infFitsFooter'</span> } }
   ]
 });</pre>
-      <p class="note">本機示範：demo-widget.html ｜ 完整文件：WIDGET.md</p>
+      <p class="note">本機可用相對路徑：await import('./inf-product-carousel-widget.js') · 示範頁 demo-widget.html</p>
     </section>
 
-    <section class="slide">
-      <h1>開始前準備</h1>
-      <ul>
-        <li>頁面先放容器，id 要與 showPositionId 一致</li>
-        <li>常見：#infFitsHeader、#infFitsFooter</li>
-        <li>popup 內容通常掛 popupProductContent</li>
-        <li>必須提供 carousel 或非空的 carousels，否則 throw</li>
-        <li>有傳 carousel 時優先單筆，不展開 carousels</li>
-      </ul>
-      <p class="note">回傳：單實例為 Element；多實例為陣列</p>
-    </section>
-
-    <section class="slide">
-      <h1>兩種輪播型態</h1>
-      <div class="cols">
+    <section class="slide" data-title="準備與規則">
+      <p class="eyebrow">Setup</p>
+      <h1>頁面準備與 mount 規則</h1>
+      <div class="grid-2">
         <div class="card">
-          <h2>product（嵌入）</h2>
+          <h2>容器</h2>
           <ul>
-            <li>掛在頁面 header / footer</li>
-            <li>會打品牌設定 API GetItems</li>
-            <li>可傳 brandConfig 覆寫 API</li>
-            <li>推薦 endpoint 依品牌／系列分流</li>
-            <li>適合商品詳情頁搭配推薦</li>
+            <li>先放 DOM，<span class="mono">id</span> 與 <span class="mono">showPositionId</span> 一致</li>
+            <li>常見：<span class="mono">#infFitsHeader</span>、<span class="mono">#infFitsFooter</span></li>
+            <li>popup 內容多掛 <span class="mono">popupProductContent</span></li>
           </ul>
         </div>
         <div class="card">
-          <h2>popup（浮動）</h2>
+          <h2>規則</h2>
           <ul>
-            <li>左下角 #infPopupproductCarousel</li>
-            <li>需 brandConfig.status === true</li>
-            <li>autoShow 控制是否自動跳出</li>
-            <li>專用推薦 endpoint（pidinfo）</li>
-            <li>showPopup / closePopup / resetRecom</li>
+            <li>必須有 <span class="mono">carousel</span> 或非空 <span class="mono">carousels</span>，否則 throw</li>
+            <li>有 <span class="mono">carousel</span> 時只跑單筆（優先）</li>
+            <li>同 <span class="mono">type + showPositionId</span> 不重複建立</li>
+            <li>回傳：單 Element 或陣列</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <section class="slide">
-      <h1>參數怎麼記（頂層）</h1>
-      <ul>
-        <li>brand：品牌代碼（API 用）</li>
-        <li>GA4Key：有才追蹤；空字串＝關閉 GA4</li>
-        <li>carousel：單筆設定</li>
-        <li>carousels：多筆陣列，可同時掛 product + popup</li>
-        <li>不另發明「自動猜 brand／GA4」；請明確傳入</li>
-      </ul>
+    <section class="slide" data-title="兩種型態">
+      <p class="eyebrow">Types</p>
+      <h1>product / popup</h1>
+      <div class="grid-2">
+        <div class="card">
+          <h2><span class="n">1</span> product 嵌入</h2>
+          <ul>
+            <li>掛在頁面 header／footer</li>
+            <li>打品牌設定 API <span class="mono">GetItems</span></li>
+            <li>可傳 <span class="mono">brandConfig</span> 覆寫</li>
+            <li>推薦 URL 依品牌／系列分流</li>
+            <li>適合商品詳情頁搭配</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2><span class="n">2</span> popup 浮動</h2>
+          <ul>
+            <li>左下角 <span class="mono">#infPopupproductCarousel</span></li>
+            <li>需 <span class="mono">brandConfig.status === true</span></li>
+            <li><span class="mono">autoShow</span> 控制是否自動跳出</li>
+            <li>專用推薦 endpoint（pidinfo）</li>
+            <li><span class="mono">showPopup / closePopup / resetRecom</span></li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <section class="slide">
-      <h1>carousel 常用欄位</h1>
-      <ul>
-        <li>type / showPositionId / hide_size / hide_discount</li>
-        <li>skuContent：shopline_sku｜app91_sku｜或直接 PID</li>
-        <li>series_in / series_out：系列白／黑名單（JSON 字串）</li>
-        <li>bid：試穿體型參數（影響 SIZEAI）</li>
-        <li>brandConfig：Title、RecommendMode、Location、status、autoShow…</li>
-        <li>recommendMode：bhv,corr,sp_atc,sp_trans</li>
-        <li>customEdm：有值則略過 API，用自訂商品</li>
-      </ul>
+    <section class="slide" data-title="參數">
+      <p class="eyebrow">Config</p>
+      <h1>參數怎麼記</h1>
+      <div class="grid-2">
+        <div class="card">
+          <h2>頂層</h2>
+          <ul>
+            <li><span class="mono">brand</span>：品牌代碼</li>
+            <li><span class="mono">GA4Key</span>：有才追蹤；空＝關 GA4</li>
+            <li><span class="mono">carousel</span>／<span class="mono">carousels</span>：單／多筆</li>
+            <li>不自動猜 brand／Measurement ID</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>carousel 常用</h2>
+          <ul>
+            <li><span class="mono">type</span>、<span class="mono">showPositionId</span></li>
+            <li><span class="mono">skuContent</span>：平台或直接 PID</li>
+            <li><span class="mono">series_in / out</span>、<span class="mono">bid</span></li>
+            <li><span class="mono">recommendMode</span>、<span class="mono">customEdm</span></li>
+            <li><span class="mono">hide_size</span>、<span class="mono">arrowPosition</span></li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <section class="slide">
-      <h1>GA4 事件（有 GA4Key 才發）</h1>
-      <ul>
-        <li>商品：{recom_}click_embedded_itemA（如 bhv_ / corr_）</li>
-        <li>桌面箭頭：click_embedded_item_arrow_leftA / _rightA</li>
-        <li>手機標題導覽：title_nav_prevA / title_nav_nextA</li>
-        <li>每次點擊只打 1 筆；category = infEmbeddedAdContainer-embedded</li>
-        <li>商品點擊另打後端 mkt_click_action_record（與 GA4 並行）</li>
-        <li>箭頭／標題導覽不會打後端點擊 API</li>
-      </ul>
-      <p class="note">寬螢幕用箭頭；窄螢幕或非 center 用 title-nav</p>
+    <section class="slide" data-title="brandConfig">
+      <p class="eyebrow">Brand config</p>
+      <h1>brandConfig 與推薦模式</h1>
+      <table class="table">
+        <thead>
+          <tr><th>欄位</th><th>作用</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">Title / Description</td><td>標題與描述</td></tr>
+          <tr><td class="mono">DisplayMode</td><td>SaleRate / SocialProofNum…</td></tr>
+          <tr><td class="mono">RecommendMode</td><td>bhv,corr,sp_atc,sp_trans</td></tr>
+          <tr><td class="mono">CarouselButton</td><td>true→箭頭 center；false→標題導覽</td></tr>
+          <tr><td class="mono">Location / status / autoShow</td><td>掛載位置、啟用、popup 自動顯示</td></tr>
+        </tbody>
+      </table>
+      <p class="note">商品卡會帶 data-event-recom，決定 GA4 事件名前綴（bhv_ / corr_ …）</p>
     </section>
 
-    <section class="slide">
-      <h1>Popup 操作 API</h1>
-      <ul>
-        <li>window.showPopup()：顯示（autoShow=false 時會先載入）</li>
-        <li>window.closePopup()：關閉</li>
-        <li>window.resetRecom(newBid?)：重拉推薦，可覆寫體型</li>
-        <li>除錯：popupautoShow / hasValidPopupData / resetRecomCalled</li>
-        <li>輔助：debugCarousel()、cleanupInfCarouselCache()</li>
-      </ul>
+    <section class="slide" data-title="GA4">
+      <p class="eyebrow">Analytics</p>
+      <h1>GA4 與後端點擊</h1>
+      <div class="grid-2">
+        <div class="card">
+          <h2>GA4（需 GA4Key）</h2>
+          <ul>
+            <li>商品：<span class="mono">{recom_}click_embedded_itemA</span></li>
+            <li>箭頭：<span class="mono">…arrow_leftA / _rightA</span></li>
+            <li>標題導覽：<span class="mono">…title_nav_prevA / _nextA</span></li>
+            <li>每次互動只打 <strong>1</strong> 筆</li>
+            <li>寬螢幕箭頭；窄螢幕 title-nav</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>後端紀錄</h2>
+          <ul>
+            <li>僅商品點擊 POST <span class="mono">mkt_click_action_record</span></li>
+            <li>與 GA4 並行、互不取代</li>
+            <li>箭頭／標題導覽<strong>不</strong>打此 API</li>
+            <li>含 recom_type、recom_loc、pid…</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <section class="slide">
-      <h1>最小可用範例（僅 product）</h1>
-      <pre>await import('./inf-product-carousel-widget.js');
+    <section class="slide" data-title="Popup API">
+      <p class="eyebrow">Runtime API</p>
+      <h1>Popup 控制與輔助</h1>
+      <div class="grid-3">
+        <div class="card">
+          <h2>顯示</h2>
+          <ul>
+            <li class="mono">showPopup()</li>
+            <li class="mono">closePopup()</li>
+            <li class="mono">resetRecom(bid?)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>狀態</h2>
+          <ul>
+            <li class="mono">popupautoShow</li>
+            <li class="mono">hasValidPopupData</li>
+            <li class="mono">resetRecomCalled</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>除錯</h2>
+          <ul>
+            <li class="mono">debugCarousel()</li>
+            <li class="mono">cleanupInfCarouselCache()</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">試穿完成後常見流程：resetRecom(newBid) → showPopup()</p>
+    </section>
 
+    <section class="slide" data-title="範例與 FAQ">
+      <p class="eyebrow">Recipes</p>
+      <h1>最小範例與常見問題</h1>
+      <pre><span class="kw">await</span> <span class="kw">import</span>(<span class="str">'./inf-product-carousel-widget.js'</span>);
 window.InfFitsProductCarousel.mount({
-  brand: 'DES',
-  GA4Key: 'G-G3WD6KWQG4',
+  brand: <span class="str">'DES'</span>,
+  GA4Key: <span class="str">'G-G3WD6KWQG4'</span>,
   carousel: {
-    type: 'product',
-    showPositionId: {
-      top: 'infFitsHeader',
-      bottom: 'infFitsFooter'
-    }
+    type: <span class="str">'product'</span>,
+    showPositionId: { top: <span class="str">'infFitsHeader'</span>, bottom: <span class="str">'infFitsFooter'</span> }
   }
 });</pre>
-    </section>
-
-    <section class="slide">
-      <h1>常見問題速查</h1>
-      <ul>
-        <li>沒畫面？檢查容器 id、brandConfig.status、popup 是否需手動 showPopup</li>
-        <li>重複 mount 沒新建？相同 type + showPositionId 會回傳既有實例</li>
-        <li>關閉追蹤？不傳 GA4Key 或傳空字串</li>
-        <li>指定商品？skuContent 設為實際 PID／SKU 字串</li>
-        <li>同頁舊新並存？可以，但勿同時掛兩套 popup</li>
+      <ul style="margin-top:8px">
+        <li>沒畫面？查容器 id、<span class="mono">status</span>、popup 是否要手動 show</li>
+        <li>關追蹤？不傳或空 <span class="mono">GA4Key</span></li>
+        <li>指定商品？<span class="mono">skuContent</span> 設成 PID 字串</li>
+        <li>同頁舊新可並存，但勿同時掛兩套 popup</li>
       </ul>
     </section>
 
-    <section class="slide">
-      <h1>測試與維護</h1>
-      <ul>
-        <li>跑測：npm test</li>
-        <li>本機預覽：demo-widget.html</li>
-        <li>完整文件：WIDGET.md</li>
-        <li>舊版腳本維持不動，新整合請走 Widget</li>
-        <li>CDN：…/inf-product-carousel-widget.js</li>
-      </ul>
+    <section class="slide" data-title="檔案與測試">
+      <p class="eyebrow">Ops</p>
+      <h1>檔案、測試與後續</h1>
+      <div class="grid-2">
+        <div class="card">
+          <h2>檔案</h2>
+          <ul>
+            <li><span class="mono">inf-product-carousel-widget.js</span></li>
+            <li><span class="mono">demo-widget.html</span></li>
+            <li><span class="mono">WIDGET.md</span>（完整說明）</li>
+            <li><span class="mono">docs/WIDGET-slides.html</span>（本簡報）</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>驗證</h2>
+          <ul>
+            <li>單元測試：<span class="mono">npm test</span></li>
+            <li>本機預覽：開啟 demo-widget.html</li>
+            <li>CDN：vercel.app／…／widget.js</li>
+            <li>舊版腳本維持不動</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <section class="slide end">
+    <section class="slide end" data-title="結尾">
+      <p class="eyebrow">Remember</p>
       <h1>記住這兩行，就能開始用</h1>
-      <pre>await import('…/inf-product-carousel-widget.js');
+      <pre style="background:transparent;border:0;padding:0;color:#d5ebe4;flex:0">await import('…/inf-product-carousel-widget.js');
 window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });</pre>
-      <p class="hint" style="margin-top:32px;color:var(--accent)">詳見 WIDGET.md · 示範 demo-widget.html · 測試 npm test</p>
+      <p class="note" style="margin-top:28px">詳見 WIDGET.md · 示範 demo-widget.html · 測試 npm test</p>
+      <div class="footer">InfFits Product Carousel Widget</div>
     </section>
   </div>
 
-  <div class="nav">
-    <button type="button" id="prev">上一頁</button>
-    <span id="pos">1 / 1</span>
-    <button type="button" id="next">下一頁</button>
-    <span class="kbd">← → 或空白鍵 · F 全螢幕</span>
+  <div class="nav" role="navigation" aria-label="簡報控制">
+    <button type="button" id="prev" aria-label="上一頁">上一頁</button>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <span class="pos" id="pos">1 / 1</span>
+    <button type="button" id="next" aria-label="下一頁">下一頁</button>
+    <span class="kbd">← → · Space · F</span>
   </div>
 
   <script>
     const slides = [...document.querySelectorAll('.slide')];
-    let i = 0;
     const pos = document.getElementById('pos');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const dots = document.getElementById('dots');
+    let i = 0;
+    let touchX = null;
+
+    slides.forEach((_, idx) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dot';
+      b.title = slides[idx].dataset.title || `第 ${idx + 1} 頁`;
+      b.addEventListener('click', () => show(idx));
+      dots.appendChild(b);
+    });
+
     function show(n) {
       i = Math.max(0, Math.min(slides.length - 1, n));
       slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+      [...dots.children].forEach((d, idx) => d.classList.toggle('on', idx === i));
       pos.textContent = `${i + 1} / ${slides.length}`;
-      slides[i].querySelector('.footer') || (() => {
-        const f = document.createElement('div');
-        f.className = 'footer';
-        f.textContent = `InfFits Product Carousel Widget  ·  ${i + 1}/${slides.length}`;
-        if (!slides[i].classList.contains('title') && !slides[i].classList.contains('end')) {
-          slides[i].appendChild(f);
-        }
-      })();
+      prevBtn.disabled = i === 0;
+      nextBtn.disabled = i === slides.length - 1;
+      history.replaceState(null, '', `#${i + 1}`);
+      slides[i].scrollTop = 0;
     }
-    document.getElementById('prev').onclick = () => show(i - 1);
-    document.getElementById('next').onclick = () => show(i + 1);
+
+    document.querySelectorAll('.toc [data-go]').forEach((el) => {
+      el.addEventListener('click', () => show(Number(el.dataset.go)));
+    });
+
+    prevBtn.onclick = () => show(i - 1);
+    nextBtn.onclick = () => show(i + 1);
+
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
-      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        show(i + 1);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        show(i - 1);
+      }
+      if (e.key === 'Home') show(0);
+      if (e.key === 'End') show(slides.length - 1);
       if (e.key === 'f' || e.key === 'F') {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
         else document.exitFullscreen?.();
       }
-      if (e.key === 'Home') show(0);
-      if (e.key === 'End') show(slides.length - 1);
     });
-    show(0);
+
+    window.addEventListener('touchstart', (e) => {
+      touchX = e.changedTouches[0].clientX;
+    }, { passive: true });
+    window.addEventListener('touchend', (e) => {
+      if (touchX == null) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      touchX = null;
+      if (Math.abs(dx) < 50) return;
+      show(i + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+
+    const hash = Number((location.hash || '').replace('#', ''));
+    show(Number.isFinite(hash) && hash >= 1 ? hash - 1 : 0);
+    document.getElementById('deck').focus({ preventScroll: true });
   </script>
 </body>
 </html>
