@@ -2,8 +2,6 @@
 
 ESM 商品推薦輪播。與舊版 `inf-product-carousel-component.js` **互不依賴**（tag 為 `<inf-product-carousel-widget>`，可同頁並存）。
 
-**網頁簡報（Open Slides）：** 開啟 [`docs/WIDGET-slides.html`](./docs/WIDGET-slides.html)（← →／空白鍵翻頁，F 全螢幕）。
-
 | 項目 | 說明 |
 |------|------|
 | 腳本 | `inf-product-carousel-widget.js` |
@@ -438,3 +436,13 @@ npm test
 
 涵蓋：`mount` 參數驗證、推薦 URL、brandConfig 轉換、推薦資料有效性、快取 key、GA4／後端點擊 payload、導覽模式、debounce、模組 export 完整性。  
 目前為 Node 純函式／契約測試（不需瀏覽器）。視覺與整合可用本機 `demo-widget.html` 手動驗證。
+
+---
+
+## 17. 投影片說明（與 SDK Guide 相同操作）
+
+開啟 `docs/WIDGET-slides.html`（瀏覽器直接開即可）：
+
+- 左側目錄跳頁；底部「上一頁／下一頁」與進度條
+- 快捷鍵：`←` `→`、`Home` `End`、空白鍵
+- 內容以 Markdown 分頁（`---` 分隔），風格對齊 [infFITS SDK 整合說明](https://ts-webview-sdk-5xan.vercel.app/infs_sdk_guide.html)
