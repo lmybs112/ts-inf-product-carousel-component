@@ -7,8 +7,17 @@
  */
 
 export function assertMountConfig(config) {
-  if (!config || (config.carousel == null && !Array.isArray(config.carousels))) {
-    throw new Error('InfFitsProductCarousel.mount：必須提供 carousel 或 carousels');
+  if (!config || typeof config !== 'object') {
+    throw new Error('InfFitsProductCarousel.mount：config 必須為物件');
+  }
+  if (config.carousel != null) {
+    if (typeof config.carousel !== 'object') {
+      throw new Error('InfFitsProductCarousel.mount：carousel 必須為物件');
+    }
+    return;
+  }
+  if (!Array.isArray(config.carousels) || config.carousels.length === 0) {
+    throw new Error('InfFitsProductCarousel.mount：必須提供 carousel 或非空的 carousels');
   }
 }
 
@@ -18,7 +27,7 @@ export function expandMountConfigs(config) {
   if (config.carousel != null) {
     return [{ brand, GA4Key, carousel: config.carousel }];
   }
-  return config.carousels.map((carousel) => ({ brand, GA4Key, carousel }));
+  return config.carousels.map((carousel) => ({ brand, GA4Key, carousel: carousel || {} }));
 }
 
 export function buildItemEventName(eventRecom, testSuffix = 'A') {
@@ -38,6 +47,33 @@ export function resolveRecommendApiUrl({ brand, carouselType, series_in, series_
   return `https://api.inffits.com/${path}/extension/recom_product`;
 }
 
+/** 安全 JSON.parse，失敗回傳 fallback */
+export function safeJsonParse(text, fallback = null) {
+  if (text == null || text === '') return fallback;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return fallback;
+  }
+}
+
+/** 簡易防抖 */
+export function debounce(fn, wait = 150) {
+  let timer = null;
+  const debounced = function (...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn.apply(this, args);
+    }, wait);
+  };
+  debounced.cancel = () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+  };
+  return debounced;
+}
+
 const __infWidgetIsBrowser = typeof window !== 'undefined' && typeof customElements !== 'undefined';
 
 if (__infWidgetIsBrowser) {
@@ -47,20 +83,41 @@ if (!customElements.get('inf-product-carousel-widget')) {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-      // API 請求防抖計時器
       this.fetchDebounceTimer = null;
-      // 用於取消進行中的請求
       this.abortController = null;
-      // 已註冊的事件監聽器標記
       this.hasPopupEventListener = false;
-      // 延遲載入的配置（autoShow = false 時使用）
       this.pendingLoadConfig = null;
-      // 資料是否已載入的標記
       this.isDataLoaded = false;
+      this._onWindowResize = null;
+      this._resizeTargetSelector = null;
+      this._isInitializing = false;
     }
   
     static get observedAttributes() {
       return ['config'];
+    }
+
+    disconnectedCallback() {
+      if (this.fetchDebounceTimer) {
+        clearTimeout(this.fetchDebounceTimer);
+        this.fetchDebounceTimer = null;
+      }
+      if (this.abortController) {
+        try { this.abortController.abort(); } catch (_) { /* ignore */ }
+        this.abortController = null;
+      }
+      if (this._onWindowResize) {
+        window.removeEventListener('resize', this._onWindowResize);
+        if (typeof this._onWindowResize.cancel === 'function') {
+          this._onWindowResize.cancel();
+        }
+        this._onWindowResize = null;
+      }
+      if (this.hasPopupEventListener && this.popupReloadHandler) {
+        document.removeEventListener('popup-reload-recommendations', this.popupReloadHandler);
+        this.hasPopupEventListener = false;
+        this.popupReloadHandler = null;
+      }
     }
   
             // 整合的彈窗處理函數
@@ -432,70 +489,78 @@ if (!customElements.get('inf-product-carousel-widget')) {
     }
   
     attributeChangedCallback(name, oldValue, newValue) {
-      if (name === 'config' && oldValue !== newValue) {
-        const config = JSON.parse(newValue || '{}');
-        this.fetchBrandConfigAndInit(config);
+      if (name !== 'config' || oldValue === newValue) return;
+      const config = safeJsonParse(newValue, null);
+      if (!config || typeof config !== 'object') {
+        console.error('InfProductCarouselWidget：config attribute 不是有效 JSON');
+        return;
       }
-        }
+      this.fetchBrandConfigAndInit(config);
+    }
   
     async fetchBrandConfigAndInit(config = {}) {
-      const { brand, carousel, GA4Key} = config;
-      let brandConfig = {};
+      const { brand, carousel, GA4Key } = config;
+      if (!carousel || typeof carousel !== 'object') {
+        console.error('InfProductCarouselWidget：缺少有效的 carousel 設定');
+        return;
+      }
+      if (this._isInitializing) return;
+      this._isInitializing = true;
+
       config.showPositionId = carousel.showPositionId;
-      
-      // 在組件初始化時清理過期快取
       this.cleanupExpiredCache();
-      
+
       try {
-        // 直接調用品牌配置 API，不使用快取（確保獲取最新配置）
-        const brandConfigResponse = carousel.type === 'product' ? await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ Brand: brand })
-        }): {ok: true, json: () => Promise.resolve({})};
-  
-        if (!brandConfigResponse.ok) {
-          throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
+        let brandConfig = carousel.brandConfig || null;
+
+        if (!brandConfig && carousel.type === 'product') {
+          const brandConfigResponse = await fetch('https://api.inffits.com/mkt_brand_config_proc/GetItems', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ Brand: brand })
+          });
+
+          if (!brandConfigResponse.ok) {
+            throw new Error(`品牌配置 API 調用失敗: ${brandConfigResponse.status}`);
+          }
+
+          const brandConfigResponseData = await brandConfigResponse.json();
+          const list = Array.isArray(brandConfigResponseData) ? brandConfigResponseData : [];
+          brandConfig = list.find((item) => item?.Module === 'Product_Carousel_Widget')
+            ?.ConfigData?.Section_Info?.[0] || {};
         }
-  
-        const brandConfigResponseData = await brandConfigResponse.json();
-        brandConfig =carousel.brandConfig? carousel.brandConfig :  brandConfigResponseData.find(
-            item => item.Module === 'Product_Carousel_Widget'
-          )?.ConfigData.Section_Info[0];
+
+        brandConfig = brandConfig && typeof brandConfig === 'object' ? brandConfig : {};
         brandConfig.type = carousel.type;
-        // console.log('品牌配置資料:', brandConfig);
-  
-        // 將 brandConfig 轉換為標準配置格式
+
         const convertedBrandConfig = this.convertBrandConfig(brandConfig, config);
-        // console.log('轉換後的品牌配置:', convertedBrandConfig);
-        // 將轉換後的品牌配置合併到原有配置中
         const mergedConfig = {
           ...config,
           ...convertedBrandConfig,
-          ...carousel, // 新增：確保 carousel 配置（包括 skuContent）被包含
-          brandConfig: brandConfig, // 保留原始 brandConfig 供其他地方使用
-          carouselType: carousel.type, // 添加 carousel 類型
-          GA4Key: GA4Key || '' // 保留 GA4Key 設定
+          ...carousel,
+          brandConfig,
+          carouselType: carousel.type || 'product',
+          GA4Key: GA4Key || ''
         };
-  
-        if(mergedConfig.brandConfig?.status && mergedConfig.carouselType === 'popup'){
+
+        if (mergedConfig.brandConfig?.status && mergedConfig.carouselType === 'popup') {
           this.handlePopup(mergedConfig.brandConfig.autoShow);
         }
-  
-        // 使用合併後的配置進行初始化，並在初始化後自動移動到目標容器
+
         this.initProductRecommendation(mergedConfig, true);
-        
       } catch (error) {
         console.error('獲取品牌配置時發生錯誤:', error);
-        // 如果品牌配置 API 失敗，仍然使用原有配置初始化
-        const fallbackConfig = {
+        this.initProductRecommendation({
           ...config,
-          GA4Key: config.GA4Key || '' // 確保 GA4Key 被傳遞
-        };
-        this.initProductRecommendation(fallbackConfig);
+          ...carousel,
+          carouselType: carousel.type || 'product',
+          GA4Key: config.GA4Key || ''
+        }, true);
+      } finally {
+        this._isInitializing = false;
       }
     }
   
@@ -1060,6 +1125,59 @@ if (!customElements.get('inf-product-carousel-widget')) {
       });
     }
   
+    /**
+     * 依容器寬度更新箭頭／標題導覽與 padding（resize 與初次渲染共用）
+     */
+    applyResponsiveLayout(shadowRoot, {
+      containerId,
+      showPositionSelector,
+      arrowPosition,
+      customPadding
+    }) {
+      const hostEl = shadowRoot.querySelector(showPositionSelector);
+      if (!hostEl || typeof window.jQuery === 'undefined') return;
+
+      const $host = window.jQuery(hostEl);
+      const width = $host.width() || 0;
+      const isDesktop = width >= 768;
+      const showSideArrows = arrowPosition === 'center' && isDesktop;
+      const showTitleNav = arrowPosition !== 'none' && !showSideArrows;
+
+      const setDisplay = (selector, display) => {
+        const el = shadowRoot.querySelector(selector);
+        if (el) el.style.display = display;
+      };
+
+      if (arrowPosition === 'none') {
+        setDisplay(`#${containerId} .swiper-next`, 'none');
+        setDisplay(`#${containerId} .swiper-prev`, 'none');
+        setDisplay(`#${containerId} .swiper-next-corr`, 'none');
+        setDisplay(`#${containerId} .swiper-prev-corr`, 'block');
+        setDisplay(`#${containerId} .title-navigation`, 'none');
+      } else if (showSideArrows) {
+        setDisplay(`#${containerId} .swiper-next`, 'block');
+        setDisplay(`#${containerId} .swiper-prev`, 'block');
+        setDisplay(`#${containerId} .swiper-next-corr`, 'block');
+        setDisplay(`#${containerId} .swiper-prev-corr`, 'block');
+        setDisplay(`#${containerId} .title-navigation`, 'none');
+      } else {
+        setDisplay(`#${containerId} .swiper-next`, 'none');
+        setDisplay(`#${containerId} .swiper-prev`, 'none');
+        setDisplay(`#${containerId} .swiper-next-corr`, 'none');
+        setDisplay(`#${containerId} .swiper-prev-corr`, 'none');
+        setDisplay(`#${containerId} .title-navigation`, showTitleNav ? 'inline-flex' : 'none');
+      }
+
+      $host
+        .css('padding', customPadding ? customPadding : (isDesktop ? '32px' : '8px'))
+        .toggleClass('small-container', !isDesktop);
+
+      if (customPadding) {
+        const small = shadowRoot.querySelector(`#${containerId}.small-container`);
+        if (small) small.style.padding = customPadding;
+      }
+    }
+
     loadEmbeddedScript(containerId, config) {
       const {
         brand,
@@ -1665,68 +1783,29 @@ if (!customElements.get('inf-product-carousel-widget')) {
           </div>
         `;
   
-        $(shadowRoot.querySelector(show_up_position_before)).append(embeddedContainer);
-  
-        $(window).resize(() => {
-          const newContainerWidth = $(shadowRoot.querySelector(show_up_position_before)).width();
-          if (arrowPosition === 'none') {
-            $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
-            $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
-          } else {
-            if (arrowPosition === 'center' && newContainerWidth >= 768) {
-              $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'block');
-              $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'block');
-              $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'block');
-              $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
-              $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
-            } else {
-              $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
-              $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
-              $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
-              $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'none');
-              $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'inline-flex');
-            }
-          }
-          $(shadowRoot.querySelector(show_up_position_before))
-            .css('padding', customPadding ? customPadding : newContainerWidth >= 768 ? '32px' : '8px')
-            .toggleClass('small-container', newContainerWidth < 768);
-          if (customPadding) {
-            $(shadowRoot.querySelector(`#${containerId}.small-container`)).css('padding', customPadding);
-          }
-        });
-  
-        const containerWidth = $(shadowRoot.querySelector(show_up_position_before)).width();
-        $(shadowRoot.querySelector(show_up_position_before))
-          .css('padding', customPadding ? customPadding : containerWidth >= 768 ? '32px' : '8px')
-          .toggleClass('small-container', containerWidth < 768);
-        if (customPadding) {
-          $(shadowRoot.querySelector(`#${containerId}.small-container`)).css('padding', customPadding);
+        const mountPoint = shadowRoot.querySelector(show_up_position_before);
+        if (!mountPoint) {
+          console.error('InfProductCarouselWidget：找不到掛載點', show_up_position_before);
+          return;
         }
-  
-        if (arrowPosition === 'none') {
-          $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
-          $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
-          $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
-          $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
-          $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
-        } else {
-          if (arrowPosition === 'center' && containerWidth >= 768) {
-            $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'block');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'block');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'block');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'block');
-            $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'none');
-          } else {
-            $(shadowRoot.querySelector(`#${containerId} .swiper-next`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-prev`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-next-corr`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .swiper-prev-corr`)).css('display', 'none');
-            $(shadowRoot.querySelector(`#${containerId} .title-navigation`)).css('display', 'inline-flex');
-          }
+        $(mountPoint).append(embeddedContainer);
+
+        const layoutOpts = {
+          containerId,
+          showPositionSelector: show_up_position_before,
+          arrowPosition,
+          customPadding
+        };
+        this.applyResponsiveLayout(shadowRoot, layoutOpts);
+
+        if (this._onWindowResize) {
+          window.removeEventListener('resize', this._onWindowResize);
+          if (typeof this._onWindowResize.cancel === 'function') this._onWindowResize.cancel();
         }
+        this._onWindowResize = debounce(() => {
+          this.applyResponsiveLayout(shadowRoot, layoutOpts);
+        }, 150);
+        window.addEventListener('resize', this._onWindowResize, { passive: true });
   
         // 樣式載入完成後，根據 autoShow 決定是否立即載入推薦內容
         const shouldLoadImmediately = !(carouselType === 'popup' && autoShow === false);
@@ -1812,7 +1891,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
             sendGAEvent(buildItemEventName(eventRecom, test), {
               event_category: 'infEmbeddedAdContainer-embedded',
               event_label: 'Title: ' + title,
-              value: link.length,
+              value: (link || '').length,
             });
             componentInstance.recordMktClick({
               "Brand": brand,
@@ -2019,13 +2098,16 @@ if (!customElements.get('inf-product-carousel-widget')) {
           return null;
         }
 
-        const { data, timestamp } = JSON.parse(cached);
+        const parsed = safeJsonParse(cached, null);
+        if (!parsed || typeof parsed !== 'object') {
+          localStorage.removeItem(cacheKey);
+          return null;
+        }
+        const { data, timestamp } = parsed;
         const now = Date.now();
         const cacheExpiry = 10 * 60 * 1000; // 10 分鐘（毫秒）
 
-        // 檢查快取是否過期
-        if (now - timestamp > cacheExpiry) {
-          // 快取已過期，移除舊快取
+        if (!timestamp || now - timestamp > cacheExpiry) {
           localStorage.removeItem(cacheKey);
           return null;
         }
@@ -2884,7 +2966,9 @@ if (!customElements.get('inf-product-carousel-widget')) {
   
     // 處理項目數量不足的問題 - 動態添加重複項目或空白項目
     adjustSwiperConfigForInsufficientItems(breakpoints, itemCount) {
-      const adjustedBreakpoints = JSON.parse(JSON.stringify(breakpoints)); // 深拷貝
+      const adjustedBreakpoints = (typeof structuredClone === 'function')
+        ? structuredClone(breakpoints)
+        : safeJsonParse(JSON.stringify(breakpoints), {});
       
       // 標記是否需要添加項目
       this.needsMoreSlides = false;
@@ -3177,7 +3261,12 @@ if (!customElements.get('inf-product-carousel-widget')) {
 
     const carousel = document.createElement('inf-product-carousel-widget');
     carousel.setAttribute('data-instance-key', instanceKey);
-    carousel.setAttribute('config', JSON.stringify(instanceConfig));
+    try {
+      carousel.setAttribute('config', JSON.stringify(instanceConfig));
+    } catch (err) {
+      console.error('InfFitsProductCarousel.mount：config 無法序列化', err);
+      throw new Error('InfFitsProductCarousel.mount：config 無法序列化為 JSON');
+    }
     document.body.appendChild(carousel);
 
     window.debugCarousel = function() {
