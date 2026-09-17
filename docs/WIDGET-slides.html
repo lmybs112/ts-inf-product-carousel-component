@@ -324,7 +324,7 @@
       <div class="brand">
         <div>
           <div class="brand__title">infFITS Product Carousel Widget 整合說明</div>
-          <div class="brand__subtitle">更新日期：2026-09-17｜兩行 mount API、參數、GA4、Popup。</div>
+          <div class="brand__subtitle">更新日期：2026-09-17｜試用 → 上線包 → 精要參數（詳見 WIDGET.md）。</div>
         </div>
         <div class="brand__hint">
           <div><span class="kbd">←</span> <span class="kbd">→</span></div>
@@ -557,30 +557,42 @@
   </template>
 
   <script type="text/x-markdown" id="md_widget">
-# 這是什麼？
+# 開始用
 
-ESM 商品推薦輪播 **Widget**，用兩行就能掛上：
+商品推薦輪播 Widget：兩行掛上，一次可同時放 **product**（嵌入）與 **popup**（左下浮層）。
 
 ```js
 await import('https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js');
 window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 ```
 
-| 項目 | 說明 |
+| | |
 | :--- | :--- |
-| 腳本 | `inf-product-carousel-widget.js` |
-| 入口 | `window.InfFitsProductCarousel.mount(config)` |
-| Custom Element | `<inf-product-carousel-widget>` |
-| 渲染 | Shadow DOM（自行載入 jQuery／Swiper；有 `GA4Key` 時載入 gtag） |
+| 腳本 | `inf-product-carousel-widget.js`（ESM／Shadow DOM） |
+| 與舊版 | 不同 tag，可同頁並存；新整合走 Widget |
 
-支援兩種型態，**一次 mount 可同時掛**：
+下一頁直接試；完整說明見 `WIDGET.md`。
 
-| `carousel.type` | 說明 |
-| :--- | :--- |
-| `product` | 嵌入頁面指定容器 |
-| `popup` | 左下角浮動彈窗 |
+---
 
-> 與舊版 `inf-product-carousel-component.js` **互不依賴**（不同 tag，可同頁並存）。舊檔維持不動；新整合建議走 Widget。
+# 即時上手
+
+用快捷情境看效果 →「帶走上線包」複製 JS／HTML／檢查清單。
+
+> 本機開本檔（需載入上一層 widget，並可連 API）。
+
+---
+
+# 怎麼運作
+
+![Widget mount 時序](#seq-mount)
+
+1. `import` → `mount(config)`
+2. 建立 `<inf-product-carousel-widget>`（同 key 不重複）
+3. product：GetItems → recom_product；popup：pidinfo 推薦
+4. 有 `GA4Key` 才打 GA；商品點擊另記 `mkt_click_action_record`
+
+架構細節：`docs/widget-architecture.html`（或下一頁）。
 
 ---
 
@@ -588,277 +600,56 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 
 ![Widget 架構圖](#arch-diagram)
 
-## 讀圖重點
-
-1. **Host Page** 兩行：`import` → `mount(config)`。
-2. **Widget Runtime** 建立 Custom Element，Shadow DOM 渲染 product／popup。
-3. **APIs**：GetItems（品牌設定）→ recom_product（推薦）→ localStorage 快取。
-4. **追蹤**：商品點擊並行打 GA4（有 `GA4Key`）與 `mkt_click_action_record`。
+Host → mount → Custom Element → API／快取 → GA4 + 點擊記錄。
 
 ---
 
-# 即時上手
-
-快捷情境一鍵預覽；可專注預覽、開關 popup；「帶走上線包」含 JS／HTML／檢查清單。
-
-> 本機請用瀏覽器開啟此投影片檔（需能載入上一層的 `inf-product-carousel-widget.js`，並可連線 API）。
-
----
-
-# 兩行快速開始
+# 參數精要
 
 ```js
-await import('https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js');
-
-window.InfFitsProductCarousel.mount({
-  brand: 'DES',
-  GA4Key: 'G-XXXXXXXXXX',
-  carousels: [
-    {
-      type: 'popup',
-      showPositionId: { bottom: 'popupProductContent' },
-      brandConfig: {
-        DisplayMode: 'SaleRate',
-        CarouselButton: true,
-        RecommendMode: 'bhv',
-        CarouselLayout: 2.5,
-        Title: '您可能會喜歡',
-        Location: 'bottom',
-        status: true
-      }
-    },
-    {
-      type: 'product',
-      showPositionId: {
-        top: 'infFitsHeader',
-        bottom: 'infFitsFooter'
-      }
-    }
-  ]
-});
+{ brand, GA4Key, carousel | carousels }
 ```
 
-本機亦可用：`await import('./inf-product-carousel-widget.js')`。  
-示範頁：`demo-widget.html`。
-
-頁面需先有掛載容器（`id` 與 `showPositionId` 一致）：
-
-```html
-<div id="infFitsHeader"></div>
-<div id="infFitsContent"><!-- 主內容 --></div>
-<div id="infFitsFooter"></div>
-```
-
----
-
-# 整合時序（總覽）
-
-![Widget mount 時序](#seq-mount)
-
-## 流程說明
-
-1. **頁面 → Widget**：`await import(widget.js)` 載入 ESM。
-2. **頁面 → Widget**：呼叫 `InfFitsProductCarousel.mount(config)`。
-3. **Widget → DOM**：依 `carousel`／`carousels` 建立 `<inf-product-carousel-widget>`，寫入 `config` attribute。
-4. **Widget → API**：product 打品牌設定 `GetItems`；再拉推薦 `recom_product`。
-5. **互動 → GA4**：有 `GA4Key` 時，商品／箭頭／標題導覽各點一次只打一筆事件。
-6. **互動 → 後端**：僅商品點擊另 POST `mkt_click_action_record`（與 GA4 並行）。
-
----
-
-# mount 行為規則
-
-1. **必須**提供 `carousel` 或**非空** `carousels`，否則 `throw`。
-2. 有 `carousel` 時只初始化該筆（即使也有 `carousels`）。
-3. 僅有 `carousels` 時展開為多個實例。
-4. 依 `type` + `showPositionId` 產生 `data-instance-key`，相同 key 不重複建立。
-5. 先 append 到 `body`，再依品牌 `Location` 移到目標容器。
-
-回傳值：單一輪播為 Custom Element；多個為陣列。
-
-```js
-{
-  brand: string,       // 品牌代碼
-  GA4Key: string,      // 不傳或 '' 則不追蹤
-  carousel: { ... },   // 單筆；有值時優先
-  carousels: [ ... ]   // 多筆；未傳 carousel 時展開
-}
-```
-
----
-
-# 頂層參數
-
-| 參數 | 型別 | 說明 |
-| :--- | :--- | :--- |
-| `brand` | `string` | 品牌代碼，用於品牌設定 API 與推薦 API |
-| `GA4Key` | `string` | GA4 Measurement ID；空則不載入 gtag、不發事件 |
-| `carousel` | `object` | 單一輪播 |
-| `carousels` | `object[]` | 多個輪播；與 `carousel` 二擇一（`carousel` 優先） |
-
-> Widget **不自動猜** brand／Measurement ID；缺關鍵設定會明確失敗。
-
----
-
-# carousel 常用參數
-
-| 參數 | 型別 | 說明 |
-| :--- | :--- | :--- |
-| `type` | `'product'` \| `'popup'` | 輪播型態 |
-| `showPositionId` | `{ top?, bottom? }` | 掛載容器 DOM id |
-| `skuContent` | `string` | `'shopline_sku'`／`'app91_sku'`／直接 PID；未傳則自動判斷 |
-| `series_in` / `series_out` | `string` | 系列白／黑名單（JSON 字串） |
-| `bid` | `object` | 體型／試穿參數（SIZEAI） |
-| `brandConfig` | `object` | 覆寫後端品牌設定 |
-| `customEdm` | `array` | 自訂商品；有值優先於 API |
-| `recommendMode` | `string` | 如 `'bhv,corr,sp_atc,sp_trans'` |
-| `displayMode` | `string` | `SaleRate`／`SocialProofNum` 等 |
-| `hide_size` / `hide_discount` | `boolean` | 隱藏尺寸／折扣 |
-| `arrowPosition` | `'center'` \| `'none'` | 箭頭；`none` 改用標題旁導覽 |
-| `autoplay` | `boolean` | 自動輪播 |
-
-### `type: 'product'`
-
-- 呼叫 `POST …/mkt_brand_config_proc/GetItems`
-- 有本地 `brandConfig` 則優先
-- 推薦 URL：`DABE` 或有 `series_*` → stock；其餘 → alpha_bhv
-
-### `type: 'popup'`
-
-- 建立 `#infPopupproductCarousel`
-- 需 `brandConfig.status === true`
-- `autoShow`：`true` 自動顯示；`false` 需 `showPopup()`
-- 推薦 endpoint：`HTTP_pidinfo_cdp_product_recommendation`
-
----
-
-# brandConfig
-
-| 欄位 | 對應 | 說明 |
-| :--- | :--- | :--- |
-| `Title` / `Description` | 標題／描述 | 顯示文案 |
-| `DisplayMode` | `displayMode` | `SaleRate`／`SocialProofNum`… |
-| `RecommendMode` | `recommendMode` | `bhv`、`bhv,corr`… |
-| `CarouselButton` | `arrowPosition` | `true`→center；`false`→none |
-| `CarouselLayout` | 桌面張數 | 數字 |
-| `Location` | 上下掛載 | `'top'`／`'bottom'` |
-| `status` | 是否啟用 | `false` 不初始化 |
-| `autoShow` | popup 自動顯示 | 僅 popup |
-
-```js
-brandConfig: {
-  DisplayMode: 'SaleRate',
-  CarouselButton: true,
-  RecommendMode: 'bhv',
-  CarouselLayout: 2.5,
-  Title: '您可能會喜歡',
-  Location: 'bottom',
-  status: true,
-  autoShow: true
-}
-```
-
-商品卡會帶 `data-event-recom`，決定 GA4 事件名前綴。
-
----
-
-# GA4 事件總表
-
-前提：與 `brand` 同層傳入非空 `GA4Key`。每次點擊只發送 **1** 次；後綴目前為 `A`。
-
-| 使用者行為 | 事件名稱 | event_label | value |
-| :--- | :--- | :--- | :--- |
-| 載入 gtag | `page_view` | — | — |
-| 點商品（無 recom） | `click_embedded_itemA` | `Title: {標題}` | 連結長度 |
-| 行為／關聯／SP | `{bhv\|corr\|sp_atc\|sp_trans}_click_embedded_itemA` | 同上 | 同上 |
-| 桌面左／右箭 | `…arrow_leftA`／`…arrow_rightA` | `arrow-left`／`right` | `10` |
-| 標題上一／下一頁 | `…title_nav_prevA`／`…nextA` | `title-nav-prev`／`next` | `10` |
-
-| 條件 | 顯示 | 事件 |
-| :--- | :--- | :--- |
-| 寬度 ≥ 768 且 `arrowPosition === 'center'` | 側箭頭 | arrow_* |
-| 否則 | 標題導覽 | title_nav_* |
-
-箭頭／標題導覽**不會**打後端點擊 API。
-
----
-
-# 後端點擊與 Popup API
-
-僅「點擊商品」另 POST `https://api.inffits.com/mkt_click_action_record/`：
-
-| 欄位 | 說明 |
+| 參數 | 重點 |
 | :--- | :--- |
-| `recom_loc` | `popup` 或 `embed` |
-| `recom_type` | 同 `data-event-recom` |
-| `action_*` | link／名稱／pid |
+| `brand` / `GA4Key` | 必填品牌；`GA4Key` 空＝不追蹤 |
+| `carousel` vs `carousels` | 有 `carousel` 只跑該筆；否則展開陣列 |
+| `type` | `product` \| `popup` |
+| `showPositionId` | 容器 DOM id（須先存在） |
+| `brandConfig` | `Title`、`RecommendMode`、`CarouselLayout`、`Location`、`status`、`autoShow` |
 
-### Popup 全域 API
-
-| API | 說明 |
-| :--- | :--- |
-| `window.showPopup()` | 顯示；`autoShow === false` 時會先載入 |
-| `window.closePopup()` | 關閉 |
-| `window.resetRecom(newBid?)` | 重拉推薦，可覆寫 `bid` |
-
-```js
-window.resetRecom({ HV: '25.5', WV: '0', Gender: 'F', Brand: 'CLARKS' });
-window.showPopup();
-```
-
-輔助：`debugCarousel()`、`cleanupInfCarouselCache()`（快取前綴 `inf_widget_carousel_cache_`）。
+**規則：** 缺 `carousel(s)` 會 throw；popup 需 `status: true`；`autoShow: false` 時呼叫 `showPopup()`。
 
 ---
 
-# 完整範例與 FAQ
+# 追蹤與 FAQ
 
-### 僅 product
+**GA4**（有 `GA4Key`）：商品 `…click_embedded_itemA`；箭頭 `…arrow_*A`；標題導覽 `…title_nav_*A`。每點一次只打一筆。
 
-```js
-await import('https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js');
-window.InfFitsProductCarousel.mount({
-  brand: 'DES',
-  GA4Key: 'G-G3WD6KWQG4',
-  carousel: {
-    type: 'product',
-    hide_size: true,
-    showPositionId: { top: 'infFitsHeader', bottom: 'infFitsFooter' }
-  }
-});
-```
+**後端：** 僅商品點擊 POST `mkt_click_action_record`（`recom_loc` = embed／popup）。
+
+**Popup：** `showPopup()`／`closePopup()`／`resetRecom(newBid?)`。
 
 ### FAQ
 
-- **沒畫面？** 查容器 id、`status`、popup 是否要手動 `showPopup`、`hasValidPopupData`
-- **關追蹤？** 不傳或空 `GA4Key`
-- **指定商品？** `skuContent` 設成 PID 字串
-- **重複 mount？** 同 `type + showPositionId` 回傳既有實例
-- **同頁舊新？** 可並存，但勿同時掛兩套 popup
+- 沒畫面 → 查容器 id、`status`、是否要手動 `showPopup`
+- 關追蹤 → 不傳或空 `GA4Key`
+- 指定商品 → `skuContent` 設 PID
+- 重複 mount → 同 `type + showPositionId` 回既有實例
 
 ---
 
-# 檔案、測試與 CDN
+# 檔案與 CDN
 
-| 檔案 | 說明 |
+| | |
 | :--- | :--- |
-| `inf-product-carousel-widget.js` | Widget 本體（ESM） |
-| `demo-widget.html` | 兩行用法示範 |
-| `WIDGET.md` | 完整文字說明 |
-| `docs/WIDGET-slides.html` | 本投影片（與 SDK Guide 相同操作方式） |
+| 本體 | `inf-product-carousel-widget.js` |
+| 示範 | `demo-widget.html` |
+| 文件 | `WIDGET.md` |
+| CDN | `https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js` |
 
 ```bash
 npm test
-```
-
-CDN 預期：
-
-`https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js`
-
-記住這兩行就能開始用：
-
-```js
-await import('…/inf-product-carousel-widget.js');
-window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 ```
   </script>
 

@@ -445,6 +445,6 @@ npm test
 
 - 左側目錄跳頁；底部「上一頁／下一頁」與進度條
 - 快捷鍵：`←` `→`、`Home` `End`、空白鍵
-- 內容以 Markdown 分頁（`---` 分隔），風格對齊 [infFITS SDK 整合說明](https://ts-webview-sdk-5xan.vercel.app/infs_sdk_guide.html)
-- 「系統架構圖」頁內嵌 `docs/widget-architecture.html`（[Cocoon-AI architecture-diagram](https://github.com/Cocoon-AI/architecture-diagram-generator) 風格；可 Copy／PNG／PDF）
-- 「即時上手」頁：快捷情境、專注預覽、popup 開關；上線包含 JS／HTML／檢查清單
+- 精簡路徑：**開始用 → 即時上手（試＋上線包）→ 怎麼運作／架構 → 參數精要 → FAQ**
+- 完整參數與事件表以本檔（`WIDGET.md`）為準，投影片不重複貼長表
+- 架構圖：`docs/widget-architecture.html`
