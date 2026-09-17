@@ -447,4 +447,4 @@ npm test
 - 快捷鍵：`←` `→`、`Home` `End`、空白鍵
 - 內容以 Markdown 分頁（`---` 分隔），風格對齊 [infFITS SDK 整合說明](https://ts-webview-sdk-5xan.vercel.app/infs_sdk_guide.html)
 - 「系統架構圖」頁內嵌 `docs/widget-architecture.html`（[Cocoon-AI architecture-diagram](https://github.com/Cocoon-AI/architecture-diagram-generator) 風格；可 Copy／PNG／PDF）
-- 「即時上手」頁可調參數預覽並一鍵複製 CDN 引入碼（直接貼到真實環境）
+- 「即時上手」頁可調參數預覽；基本設定內可開彈窗複製 CDN 引入碼
