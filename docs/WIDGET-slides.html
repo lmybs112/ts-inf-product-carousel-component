@@ -168,6 +168,72 @@
     .arch-frame__caption{
       margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.45;
     }
+    .slide__card:has(.pg){ max-width: 1280px; padding: 22px 20px 18px; }
+    .pg{
+      display: grid; grid-template-columns: 220px minmax(0,1fr) 280px; gap: 14px;
+      margin-top: 8px; min-height: 520px;
+    }
+    .pg__panel{
+      border: 1px solid rgba(255,255,255,0.10); border-radius: 14px;
+      background: rgba(0,0,0,0.22); padding: 12px; overflow: auto;
+    }
+    .pg__panel h3{
+      margin: 0 0 10px; font-size: 13px; letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.92);
+    }
+    .pg-field{ display: grid; gap: 4px; margin-bottom: 10px; }
+    .pg-field label{ font-size: 11px; color: var(--muted); }
+    .pg-field input, .pg-field select{
+      width: 100%; box-sizing: border-box;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.92);
+      padding: 8px 10px; font-size: 12px; font-family: var(--sans);
+    }
+    .pg-field--row{
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+      font-size: 12px; color: rgba(255,255,255,0.86);
+    }
+    .pg-field--row input{ width: auto; }
+    .pg details{
+      margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;
+    }
+    .pg summary{
+      cursor: pointer; font-size: 12px; color: rgba(255,255,255,0.88);
+      user-select: none; margin-bottom: 8px;
+    }
+    .pg-preview{
+      display: flex; flex-direction: column; gap: 10px; min-height: 480px;
+    }
+    .pg-slot{
+      min-height: 72px; border-radius: 12px;
+      border: 1px dashed rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.03); padding: 8px;
+    }
+    .pg-slot--main{
+      flex: 1; min-height: 180px; border-style: solid;
+      border-color: rgba(255,255,255,0.10);
+      padding: 16px;
+    }
+    .pg-slot__label{ font-size: 11px; color: var(--faint); margin-bottom: 6px; }
+    .pg-error{
+      display: none; margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid rgba(251,113,133,0.45); background: rgba(136,19,55,0.25);
+      color: #fecdd3; font-size: 12px; white-space: pre-wrap;
+    }
+    .pg-error.is-on{ display: block; }
+    .pg-code-wrap{ display: flex; flex-direction: column; height: 100%; gap: 8px; }
+    .pg-code{
+      flex: 1; margin: 0; padding: 10px; border-radius: 12px; overflow: auto;
+      max-height: 420px; font-family: var(--mono); font-size: 11px; line-height: 1.45;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.88); white-space: pre;
+    }
+    .pg-actions{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pg-hint{ font-size: 11px; color: var(--faint); line-height: 1.4; }
+    @media (max-width: 1100px){
+      .pg{ grid-template-columns: 1fr; min-height: 0; }
+      .pg-code{ max-height: 260px; }
+    }
     @media (max-width: 980px){
       .app{ grid-template-columns: 1fr; }
       .sidebar{ display: none; }
@@ -273,6 +339,108 @@
     <p class="arch-frame__caption">完整單頁架構圖（可匯出 Copy / PNG / PDF）：開啟 <a href="./widget-architecture.html" target="_blank" rel="noopener">docs/widget-architecture.html</a>。風格依 <a href="https://github.com/Cocoon-AI/architecture-diagram-generator" target="_blank" rel="noopener">Cocoon-AI architecture-diagram-generator</a>。</p>
   </template>
 
+  <template id="svg-playground">
+    <div class="pg" id="widgetPlayground">
+      <div class="pg__panel" data-pg-controls>
+        <h3>基本設定</h3>
+        <div class="pg-field">
+          <label for="pg-mode">掛載模式</label>
+          <select id="pg-mode" name="pg-mode">
+            <option value="both" selected>兩者（product + popup）</option>
+            <option value="product">只 product</option>
+            <option value="popup">只 popup</option>
+          </select>
+        </div>
+        <div class="pg-field">
+          <label for="pg-brand">brand</label>
+          <input id="pg-brand" name="pg-brand" type="text" value="DES" autocomplete="off" />
+        </div>
+        <div class="pg-field">
+          <label for="pg-ga4">GA4Key（可留空）</label>
+          <input id="pg-ga4" name="pg-ga4" type="text" value="" placeholder="G-XXXXXXXXXX" autocomplete="off" />
+        </div>
+        <div class="pg-field">
+          <label for="pg-title">popup Title</label>
+          <input id="pg-title" name="pg-title" type="text" value="您可能會喜歡" autocomplete="off" />
+        </div>
+        <details>
+          <summary>進階設定</summary>
+          <div class="pg-field">
+            <label for="pg-recom">RecommendMode</label>
+            <select id="pg-recom" name="pg-recom">
+              <option value="bhv" selected>bhv</option>
+              <option value="corr">corr</option>
+              <option value="sp_atc">sp_atc</option>
+              <option value="sp_trans">sp_trans</option>
+              <option value="bhv,corr,sp_atc,sp_trans">bhv,corr,sp_atc,sp_trans</option>
+            </select>
+          </div>
+          <div class="pg-field">
+            <label for="pg-layout">CarouselLayout</label>
+            <input id="pg-layout" name="pg-layout" type="number" step="0.5" min="1" value="2.5" />
+          </div>
+          <div class="pg-field">
+            <label for="pg-display">DisplayMode</label>
+            <select id="pg-display" name="pg-display">
+              <option value="SaleRate" selected>SaleRate</option>
+              <option value="Price">Price</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+          <div class="pg-field">
+            <label for="pg-location">Location</label>
+            <select id="pg-location" name="pg-location">
+              <option value="bottom" selected>bottom</option>
+              <option value="top">top</option>
+            </select>
+          </div>
+          <label class="pg-field--row"><input name="pg-btn" type="checkbox" checked /> CarouselButton</label>
+          <label class="pg-field--row"><input name="pg-status" type="checkbox" checked /> status</label>
+          <div class="pg-field">
+            <label for="pg-pos-top">showPositionId.top（product）</label>
+            <input id="pg-pos-top" name="pg-pos-top" type="text" value="infFitsHeader" />
+          </div>
+          <div class="pg-field">
+            <label for="pg-pos-bottom">showPositionId.bottom（product）</label>
+            <input id="pg-pos-bottom" name="pg-pos-bottom" type="text" value="infFitsFooter" />
+          </div>
+          <div class="pg-field">
+            <label for="pg-pos-popup">showPositionId.bottom（popup）</label>
+            <input id="pg-pos-popup" name="pg-pos-popup" type="text" value="popupProductContent" />
+          </div>
+        </details>
+        <p class="pg-hint">預覽載入本機 `../inf-product-carousel-widget.js`；右側複製碼為正式 CDN，可直接貼到真實環境。</p>
+      </div>
+      <div class="pg__panel pg-preview" data-pg-preview>
+        <h3>即時預覽</h3>
+        <div class="pg-slot">
+          <div class="pg-slot__label">#pgHeader ← product top</div>
+          <div id="pgHeader"></div>
+        </div>
+        <div class="pg-slot pg-slot--main">
+          <div class="pg-slot__label">模擬店舖內容</div>
+          <p style="margin:0;color:rgba(255,255,255,0.72);font-size:13px;line-height:1.5;">調整左側參數會自動 remount。Popup 通常出現在畫面左下角。</p>
+          <div class="pg-error" data-pg-error></div>
+        </div>
+        <div class="pg-slot">
+          <div class="pg-slot__label">#pgFooter ← product bottom</div>
+          <div id="pgFooter"></div>
+        </div>
+      </div>
+      <div class="pg__panel">
+        <h3>引入碼（可複製）</h3>
+        <div class="pg-code-wrap">
+          <pre class="pg-code" data-pg-code tabindex="0"></pre>
+          <div class="pg-actions">
+            <button type="button" class="btn btn--primary" data-pg-copy>複製程式碼</button>
+            <span class="pg-hint" data-pg-copy-status></span>
+          </div>
+          <p class="pg-hint">請在真實頁面先放好與 `showPositionId` 相同 id 的容器，再貼上此碼。</p>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <script type="text/x-markdown" id="md_widget">
 # 這是什麼？
 
@@ -311,6 +479,14 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
 2. **Widget Runtime** 建立 Custom Element，Shadow DOM 渲染 product／popup。
 3. **APIs**：GetItems（品牌設定）→ recom_product（推薦）→ localStorage 快取。
 4. **追蹤**：商品點擊並行打 GA4（有 `GA4Key`）與 `mkt_click_action_record`。
+
+---
+
+# 即時上手
+
+調整參數即可預覽；右側程式碼可直接複製到真實環境（CDN）。
+
+> 本機請用瀏覽器開啟此投影片檔（需能載入上一層的 `inf-product-carousel-widget.js`，並可連線 API）。
 
 ---
 
@@ -593,7 +769,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
         let t = escapeHtml(text);
         t = t.replace(/`([^`]+)`/g, (_,c)=>`<code>${c}</code>`);
         t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        // 圖片必須先於連結，否則 ![alt](#id) 會被吃成「! + <a>」
         t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_,alt,src)=>{
           const s = String(src);
           if (s.startsWith('#seq-') || s.startsWith('#arch-')) {
@@ -601,6 +777,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
           }
           return `<img alt="${alt}" src="${src}" />`;
         });
+        t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
         return t;
       }
 
@@ -685,7 +862,7 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       }
       flushCode(); flushPar(); flushList(); flushTable();
 
-      // inject SVG / iframe templates for <!--SEQ:seq-xxx--> / <!--SEQ:arch-xxx-->
+      // inject templates for <!--SEQ:seq-xxx--> / <!--SEQ:arch-xxx-->
       html = html.replace(/<!--SEQ:((?:seq|arch)-[a-z0-9-]+)-->/g, (_, id) => {
         const tpl = document.getElementById('svg-' + id);
         return tpl ? tpl.innerHTML : '';
@@ -757,9 +934,197 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       render();
     }
 
+    const PG_CDN = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js';
+    const PG_LOCAL = '../inf-product-carousel-widget.js';
+    let pgWidgetLoad = null;
+    let pgRemountTimer = null;
+
+    function pgVal(root, name){
+      const el = root.querySelector(`[name="${name}"]`);
+      if (!el) return '';
+      if (el.type === 'checkbox') return el.checked;
+      return el.value;
+    }
+
+    function pgReadState(root){
+      return {
+        mode: pgVal(root, 'pg-mode') || 'both',
+        brand: String(pgVal(root, 'pg-brand') || 'DES').trim() || 'DES',
+        GA4Key: String(pgVal(root, 'pg-ga4') || '').trim(),
+        Title: String(pgVal(root, 'pg-title') || '您可能會喜歡').trim() || '您可能會喜歡',
+        RecommendMode: String(pgVal(root, 'pg-recom') || 'bhv'),
+        CarouselLayout: Number(pgVal(root, 'pg-layout') || 2.5),
+        DisplayMode: String(pgVal(root, 'pg-display') || 'SaleRate'),
+        CarouselButton: !!pgVal(root, 'pg-btn'),
+        Location: String(pgVal(root, 'pg-location') || 'bottom'),
+        status: !!pgVal(root, 'pg-status'),
+        posTop: String(pgVal(root, 'pg-pos-top') || 'infFitsHeader').trim() || 'infFitsHeader',
+        posBottom: String(pgVal(root, 'pg-pos-bottom') || 'infFitsFooter').trim() || 'infFitsFooter',
+        posPopup: String(pgVal(root, 'pg-pos-popup') || 'popupProductContent').trim() || 'popupProductContent'
+      };
+    }
+
+    function pgBrandConfig(state){
+      return {
+        DisplayMode: state.DisplayMode,
+        CarouselButton: state.CarouselButton,
+        RecommendMode: state.RecommendMode,
+        CarouselLayout: Number.isFinite(state.CarouselLayout) ? state.CarouselLayout : 2.5,
+        Title: state.Title,
+        Location: state.Location,
+        status: state.status
+      };
+    }
+
+    function pgBuildCarousels(state, ids){
+      const carousels = [];
+      const brandConfig = pgBrandConfig(state);
+      if (state.mode === 'popup' || state.mode === 'both') {
+        carousels.push({
+          type: 'popup',
+          showPositionId: { bottom: ids.popup },
+          brandConfig
+        });
+      }
+      if (state.mode === 'product' || state.mode === 'both') {
+        carousels.push({
+          type: 'product',
+          showPositionId: { top: ids.top, bottom: ids.bottom }
+        });
+      }
+      return carousels;
+    }
+
+    function pgExportConfig(state){
+      return {
+        brand: state.brand,
+        GA4Key: state.GA4Key,
+        carousels: pgBuildCarousels(state, {
+          top: state.posTop,
+          bottom: state.posBottom,
+          popup: state.posPopup
+        })
+      };
+    }
+
+    function pgPreviewConfig(state){
+      return {
+        brand: state.brand,
+        GA4Key: state.GA4Key,
+        carousels: pgBuildCarousels(state, {
+          top: 'pgHeader',
+          bottom: 'pgFooter',
+          popup: state.posPopup
+        })
+      };
+    }
+
+    function pgFormatCode(config){
+      return `await import('${PG_CDN}');\n\nwindow.InfFitsProductCarousel.mount(${JSON.stringify(config, null, 2)});`;
+    }
+
+    function pgClearWidgets(){
+      document.querySelectorAll('inf-product-carousel-widget').forEach((el) => el.remove());
+      const header = document.getElementById('pgHeader');
+      const footer = document.getElementById('pgFooter');
+      if (header) header.innerHTML = '';
+      if (footer) footer.innerHTML = '';
+    }
+
+    function pgEnsureWidgetModule(){
+      if (window.InfFitsProductCarousel?.mount) return Promise.resolve();
+      if (!pgWidgetLoad) {
+        pgWidgetLoad = import(PG_LOCAL).catch((err) => {
+          pgWidgetLoad = null;
+          throw err;
+        });
+      }
+      return pgWidgetLoad;
+    }
+
+    function pgSetError(root, msg){
+      const box = root.querySelector('[data-pg-error]');
+      if (!box) return;
+      if (!msg) {
+        box.textContent = '';
+        box.classList.remove('is-on');
+        return;
+      }
+      box.textContent = msg;
+      box.classList.add('is-on');
+    }
+
+    function pgUpdateCode(root, state){
+      const codeEl = root.querySelector('[data-pg-code]');
+      if (!codeEl) return;
+      codeEl.textContent = pgFormatCode(pgExportConfig(state));
+    }
+
+    async function pgRemount(root){
+      const state = pgReadState(root);
+      pgUpdateCode(root, state);
+      pgSetError(root, '');
+      try {
+        await pgEnsureWidgetModule();
+        pgClearWidgets();
+        const carousels = pgPreviewConfig(state).carousels;
+        if (!carousels.length) {
+          pgSetError(root, '請至少選擇一種掛載模式。');
+          return;
+        }
+        window.InfFitsProductCarousel.mount(pgPreviewConfig(state));
+      } catch (err) {
+        pgSetError(root, err?.message || String(err));
+      }
+    }
+
+    function pgScheduleRemount(root){
+      clearTimeout(pgRemountTimer);
+      pgRemountTimer = setTimeout(() => { pgRemount(root); }, 200);
+    }
+
+    async function pgCopy(root){
+      const codeEl = root.querySelector('[data-pg-code]');
+      const status = root.querySelector('[data-pg-copy-status]');
+      const text = codeEl?.textContent || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        if (status) status.textContent = '已複製';
+      } catch (_) {
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(codeEl);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          document.execCommand('copy');
+          if (status) status.textContent = '已複製';
+        } catch (e2) {
+          if (status) status.textContent = '複製失敗，請手動選取';
+        }
+      }
+      setTimeout(() => { if (status) status.textContent = ''; }, 2000);
+    }
+
+    function initPlaygroundIfPresent(){
+      const root = slideContent.querySelector('#widgetPlayground');
+      if (!root) return;
+      root.querySelectorAll('input, select, textarea').forEach((el) => {
+        el.addEventListener('input', () => pgScheduleRemount(root));
+        el.addEventListener('change', () => pgScheduleRemount(root));
+      });
+      root.querySelector('[data-pg-copy]')?.addEventListener('click', () => pgCopy(root));
+      pgRemount(root);
+    }
+
     function render(){
       const s = slides[index];
       slideContent.innerHTML = parseMarkdown(s.md);
+      // 即時上手：直接掛 template，不走 Markdown 圖片注入
+      if (s.title === '即時上手') {
+        const tpl = document.getElementById('svg-playground');
+        if (tpl) slideContent.insertAdjacentHTML('beforeend', tpl.innerHTML);
+      }
       pageLabel.textContent = `${index + 1} / ${slides.length}`;
       deckLabel.textContent = s.deckName;
       progressBar.style.width = `${((index + 1) / slides.length) * 100}%`;
@@ -770,11 +1135,16 @@ window.InfFitsProductCarousel.mount({ brand, GA4Key, carousels });
       });
       history.replaceState(null, '', `#${index + 1}`);
       document.getElementById('slide').scrollTop = 0;
+      initPlaygroundIfPresent();
     }
 
     btnPrev.addEventListener('click', () => setIndex(index - 1));
     btnNext.addEventListener('click', () => setIndex(index + 1));
     window.addEventListener('keydown', (e) => {
+      const t = e.target;
+      if (t && (t.closest?.('input, textarea, select, button, .pg-code') || ['INPUT','TEXTAREA','SELECT','BUTTON'].includes(t.tagName))) {
+        return;
+      }
       if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault(); setIndex(index + 1);
