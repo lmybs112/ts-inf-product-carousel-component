@@ -183,6 +183,23 @@
       margin: 0 0 10px; font-size: 13px; letter-spacing: 0.02em;
       color: rgba(255,255,255,0.92);
     }
+    .pg-must{
+      margin: 0 0 12px; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid rgba(251,191,36,0.35);
+      background: rgba(120,53,15,0.28);
+      color: #fde68a; font-size: 11px; line-height: 1.45;
+    }
+    .pg-must strong{ color: #fef3c7; }
+    .pg-must code{
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(0,0,0,0.28); border-radius: 6px; padding: 1px 5px;
+    }
+    .pg-cta{
+      width: 100%; padding: 10px 12px !important;
+      font-size: 13px !important; font-weight: 800 !important;
+      border-color: rgba(255,255,255,0.42) !important;
+      background: rgba(255,255,255,0.18) !important;
+    }
     .pg-presets{
       display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;
     }
@@ -307,7 +324,7 @@
       opacity: 0 !important;
       pointer-events: none !important;
     }
-    @media (max-width: 1100px){
+    @media (max-width: 900px){
       .pg{ grid-template-columns: 1fr; min-height: 0; }
     }
     @media (max-width: 980px){
@@ -418,6 +435,10 @@
   <template id="svg-playground">
     <div class="pg" id="widgetPlayground">
       <div class="pg__panel" data-pg-controls>
+        <div class="pg-must">
+          <strong>零基礎：</strong>點情境看預覽 →「一鍵複製上線包」→ 只改
+          <code>brand</code>／容器 id／<code>GA4Key</code>
+        </div>
         <h3>基本設定</h3>
         <div class="pg-presets">
           <div class="pg-presets__label">快速情境（一鍵套用）</div>
@@ -492,9 +513,9 @@
           </div>
         </details>
         <div class="pg-actions">
-          <button type="button" class="btn btn--primary" data-pg-open-code>帶走上線包</button>
+          <button type="button" class="btn btn--primary pg-cta" data-pg-open-code data-pg-copy-all>一鍵複製上線包（全部）</button>
         </div>
-        <p class="pg-hint">預覽用本機 widget；上線包為正式 CDN + 容器 HTML + 檢查清單。</p>
+        <p class="pg-hint">預覽成功＝右邊／左下有商品。上線請用 https 或 localhost，並可連外網 API。</p>
       </div>
       <div class="pg__panel pg-preview" data-pg-preview>
         <div class="pg-preview__bar">
@@ -505,7 +526,7 @@
               <input name="pg-show-popup" type="checkbox" checked /> 顯示 popup
             </label>
             <button type="button" class="btn" data-pg-focus>專注預覽</button>
-            <button type="button" class="btn" data-pg-open-code>上線包</button>
+            <button type="button" class="btn btn--primary" data-pg-open-code>上線包</button>
           </div>
         </div>
         <div class="pg-slot">
@@ -525,16 +546,23 @@
       <div class="pg-modal" data-pg-modal aria-hidden="true">
         <div class="pg-modal__panel" role="dialog" aria-modal="true" aria-labelledby="pgCodeTitle">
           <div class="pg-modal__head">
-            <h3 id="pgCodeTitle">上線包（可複製）</h3>
+            <h3 id="pgCodeTitle">上線包（貼到網站就能用）</h3>
             <button type="button" class="btn" data-pg-close-code>關閉</button>
           </div>
-          <div class="pg-tabs" role="tablist">
-            <button type="button" class="pg-tab is-active" data-pg-tab="js">1. JS mount</button>
-            <button type="button" class="pg-tab" data-pg-tab="html">2. HTML 容器</button>
-            <button type="button" class="pg-tab" data-pg-tab="check">3. 檢查清單</button>
-            <button type="button" class="pg-tab" data-pg-tab="all">全部</button>
+          <div class="pg-must" style="margin-top:0;">
+            <strong>貼上後只改 3 處：</strong>
+            <code>brand</code>、<code>showPositionId</code> 對應的容器 id、<code>GA4Key</code>（可留空）。
           </div>
-          <div class="pg-pack-pane is-active" data-pg-pane="js">
+          <div class="pg-tabs" role="tablist">
+            <button type="button" class="pg-tab is-active" data-pg-tab="all">全部（建議）</button>
+            <button type="button" class="pg-tab" data-pg-tab="js">1. JS</button>
+            <button type="button" class="pg-tab" data-pg-tab="html">2. HTML</button>
+            <button type="button" class="pg-tab" data-pg-tab="check">3. 檢查清單</button>
+          </div>
+          <div class="pg-pack-pane is-active" data-pg-pane="all">
+            <pre class="pg-code" data-pg-code-all tabindex="0"></pre>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="js">
             <pre class="pg-code" data-pg-code-js tabindex="0"></pre>
           </div>
           <div class="pg-pack-pane" data-pg-pane="html">
@@ -543,25 +571,22 @@
           <div class="pg-pack-pane" data-pg-pane="check">
             <ul class="pg-checklist" data-pg-checklist></ul>
           </div>
-          <div class="pg-pack-pane" data-pg-pane="all">
-            <pre class="pg-code" data-pg-code-all tabindex="0"></pre>
-          </div>
           <div class="pg-actions">
-            <button type="button" class="btn btn--primary" data-pg-copy>複製目前分頁</button>
+            <button type="button" class="btn btn--primary" data-pg-copy>一鍵複製目前內容</button>
             <span class="pg-hint" data-pg-copy-status></span>
           </div>
-          <p class="pg-hint">建議順序：貼 HTML 容器 → 貼 JS → 依檢查清單驗證。</p>
+          <p class="pg-hint">建議：先貼 HTML 容器到頁面 → 再貼 JS → 依檢查清單打勾。</p>
         </div>
       </div>
     </div>
   </template>
 
-  <script type="text/x-markdown" id="md_widget">
+  <script type="text/plain" id="md_widget">
 # 即時上手
 
-商品推薦輪播 Widget（product／popup）。用快捷情境看效果 →「帶走上線包」複製 JS／HTML／檢查清單。
+**零基礎路徑：** 點情境看預覽有商品 →「一鍵複製上線包」→ 貼到網站後只改 `brand`／容器 id／`GA4Key`。
 
-> 本機開本檔（需載入上一層 widget，並可連 API）。完整說明見 `WIDGET.md`。
+> 請用瀏覽器開啟本檔（建議 `python3 -m http.server` 在專案根目錄），並可連外網。細節見 `WIDGET.md`。
 
 ---
 
@@ -811,7 +836,7 @@ npm test
         }
         const item = document.createElement('div');
         item.className = 'toc__item' + (i === index ? ' is-active' : '');
-        item.innerHTML = `<div class="toc__index">${String(s.indexInDeck).padStart(2,'0')}</div><div class="toc__label">${escapeHtml(s.title)}</div>`;
+        item.innerHTML = `<div class="toc__index">${String(s.indexInDeck).padStart(2,'0')}<` + `/div><div class="toc__label">${escapeHtml(s.title)}<` + `/div>`;
         item.addEventListener('click', () => setIndex(i));
         list.appendChild(item);
       });
@@ -827,7 +852,7 @@ npm test
     const PG_LOCAL = '../inf-product-carousel-widget.js?v=20260917-ux';
     let pgWidgetLoad = null;
     let pgRemountTimer = null;
-    let pgActiveTab = 'js';
+    let pgActiveTab = 'all';
 
     function pgVal(root, name){
       const el = root.querySelector(`[name="${name}"]`);
@@ -935,35 +960,45 @@ npm test
     }
 
     function pgFormatJs(config){
-      return `await import('${PG_CDN}');\n\nwindow.InfFitsProductCarousel.mount(${JSON.stringify(config, null, 2)});`;
+      return [
+        '// ===== 正式環境 JS（CDN）=====',
+        '// 複製後請改：brand、showPositionId 的容器 id、GA4Key（可留 ""）',
+        `await import('${PG_CDN}');`,
+        '',
+        `window.InfFitsProductCarousel.mount(${JSON.stringify(config, null, 2)});`
+      ].join('\n');
     }
 
     function pgFormatHtml(state){
-      const lines = [];
+      const lines = [
+        '<!' + '-- ===== 請先貼到網頁 HTML ===== -->',
+        '<!' + '-- id 必須與 JS 裡 showPositionId 完全相同 -->'
+      ];
       if (state.mode === 'product' || state.mode === 'both') {
-        lines.push(`<div id="${state.posTop}"></div>`);
-        lines.push(`<div id="infFitsContent"><!-- 主內容 --></div>`);
-        lines.push(`<div id="${state.posBottom}"></div>`);
+        lines.push(`<div id="${state.posTop}"><` + `/div>`);
+        lines.push(`<div id="page-main-content"><!` + `-- 你的原本頁面內容 --><` + `/div>`);
+        lines.push(`<div id="${state.posBottom}"><` + `/div>`);
       }
       if (state.mode === 'popup' || state.mode === 'both') {
-        lines.push(`<!-- popup 會自動建立 #${state.posPopup} 浮層容器；頁面無需預先放置 -->`);
+        lines.push(`<!` + `-- popup 會自動出現在左下角，通常不用先做容器（id: ${state.posPopup}） -->`);
       }
-      if (!lines.length) lines.push('<!-- 請先選擇掛載模式 -->');
+      if (lines.length <= 2) lines.push('<!' + '-- 請先在左邊選擇情境 -->');
       return lines.join('\n');
     }
 
     function pgFormatChecklist(state){
       return [
-        `brand 已改成真實品牌代碼（目前預覽：${state.brand}）`,
-        state.GA4Key ? `GA4Key 已填：${state.GA4Key}` : '若要追蹤，請填入真實 GA4Key；留空則不發 GA',
-        'HTML 容器 id 與 showPositionId 完全一致',
-        '頁面以 https 或 localhost 開啟（ESM import）',
-        '瀏覽器可連線 api.inffits.com',
-        state.mode !== 'product'
-          ? 'popup 需 brandConfig.status = true 才會顯示'
-          : '目前僅 product，確認 Location／容器位置',
-        '貼上 JS 前已先有容器 DOM',
-        '正式環境改用 CDN import（上線包已是 CDN）'
+        `【必改】把 brand 從「${state.brand}」改成你的品牌代碼`,
+        state.mode === 'popup'
+          ? '【popup】確認 brandConfig.status 為 true（預設已是）'
+          : `【必改】頁面要有 id="${state.posTop}" 與 id="${state.posBottom}" 的區塊`,
+        state.GA4Key
+          ? `【追蹤】GA4Key 目前是 ${state.GA4Key}，請改成正式 G- 開頭代碼`
+          : '【追蹤】GA4Key 目前空白＝不上報；要追蹤再填 G-XXXXXXXX',
+        '【環境】網站用 https 或 localhost 開啟（不要用無法載入模組的離線路徑）',
+        '【網路】瀏覽器可連線 api.inffits.com',
+        '【順序】先有 HTML 容器，再執行 JS',
+        '【成功標準】頁面出現推薦商品；若有 popup，左下角會浮出白框'
       ];
     }
 
@@ -971,15 +1006,57 @@ npm test
       const cfg = pgExportConfig(state);
       const checks = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
       return [
-        '/* ===== 1) HTML 容器 ===== */',
+        '/* ============================================',
+        '   infFITS Product Carousel 上線包',
+        '   只改 3 件事：brand / 容器 id / GA4Key',
+        '   ============================================ */',
+        '',
+        '/* --- A) 先貼 HTML 容器到網頁 --- */',
         pgFormatHtml(state),
         '',
-        '/* ===== 2) JS mount（CDN） ===== */',
+        '/* --- B) 再貼這段 JS（通常放在 body 結尾前）--- */',
         pgFormatJs(cfg),
         '',
-        '/* ===== 3) 檢查清單 ===== */',
+        '/* --- C) 上線檢查 --- */',
         checks
       ].join('\n');
+    }
+
+    function pgFriendlyError(err){
+      const raw = String(err?.message || err || '未知錯誤');
+      if (/Failed to fetch|NetworkError|Load failed|net::|CORS|network/i.test(raw)) {
+        return [
+          '連線失敗：無法載入元件或呼叫 API。',
+          '請這樣做：',
+          '1) 在專案根目錄執行 python3 -m http.server 8767',
+          '2) 用瀏覽器打開 http://127.0.0.1:8767/docs/WIDGET-slides.html',
+          '3) 確認電腦可上網（需連 api.inffits.com）',
+          '',
+          '技術訊息：' + raw
+        ].join('\n');
+      }
+      if (/404|Cannot find module|Failed to resolve|error loading dynamically imported/i.test(raw)) {
+        return [
+          '找不到 widget 檔案。',
+          '請確認：',
+          '1) 開啟的是 docs/WIDGET-slides.html',
+          '2) 上一層資料夾有 inf-product-carousel-widget.js',
+          '',
+          '技術訊息：' + raw
+        ].join('\n');
+      }
+      if (/品牌|GetItems|brand/i.test(raw)) {
+        return [
+          '品牌設定讀取失敗。',
+          '請確認 brand 代碼正確，且網路可連 API。',
+          '',
+          '技術訊息：' + raw
+        ].join('\n');
+      }
+      if (/必須提供 carousel|config 必須/i.test(raw)) {
+        return '設定不完整：請先點左邊「快速情境」再試。\n\n技術訊息：' + raw;
+      }
+      return '載入失敗。\n若預覽空白：檢查網路、brand、以及是否用本機伺服器開啟本頁。\n\n技術訊息：' + raw;
     }
 
     function pgSyncPresetChips(root){
@@ -1062,7 +1139,7 @@ npm test
     }
 
     function pgSetTab(root, tab){
-      pgActiveTab = tab || 'js';
+      pgActiveTab = tab || 'all';
       root.querySelectorAll('[data-pg-tab]').forEach((btn) => {
         btn.classList.toggle('is-active', btn.getAttribute('data-pg-tab') === pgActiveTab);
       });
@@ -1088,22 +1165,36 @@ npm test
         pgClearWidgets();
         const preview = pgPreviewConfig(state);
         if (!preview.carousels.length) {
-          // 模式有 popup 但關掉浮層、又沒 product 時
           if ((state.mode === 'popup') && state.showPopup === false) {
-            pgSetStatus(root, '已隱藏 popup', '');
+            pgSetStatus(root, '已隱藏 popup（可再開「顯示 popup」）', '');
             return;
           }
-          pgSetError(root, '請至少選擇一種掛載模式。');
-          pgSetStatus(root, '無內容', 'is-err');
+          pgSetError(root, '還沒選擇情境。請先點左邊「兩者／只 product／只 popup」。');
+          pgSetStatus(root, '待選擇', 'is-err');
           return;
         }
         window.InfFitsProductCarousel.mount(preview);
         pgSyncPopupVisibility(root);
         const label = preview.carousels.map((c) => c.type).join(' + ');
         pgSetStatus(root, `已掛載：${label}`, 'is-ok');
+        // 商品在 Shadow DOM 內；稍後確認是否有內容
+        setTimeout(() => {
+          const hosts = document.querySelectorAll('inf-product-carousel-widget');
+          let hasProduct = false;
+          hosts.forEach((host) => {
+            const sr = host.shadowRoot;
+            if (!sr) return;
+            if (sr.querySelector('.embeddedItem, .product-item, img, a')) hasProduct = true;
+          });
+          if (hasProduct) {
+            pgSetStatus(root, `成功：已看到商品（${label}）`, 'is-ok');
+          } else {
+            pgSetStatus(root, `已掛載 ${label}（若仍空白：查 brand／網路）`, 'is-loading');
+          }
+        }, 1800);
       } catch (err) {
-        pgSetError(root, err?.message || String(err));
-        pgSetStatus(root, '失敗', 'is-err');
+        pgSetError(root, pgFriendlyError(err));
+        pgSetStatus(root, '失敗：看紅字說明', 'is-err');
       }
     }
 
@@ -1112,11 +1203,11 @@ npm test
       pgRemountTimer = setTimeout(() => { pgRemount(root); }, 200);
     }
 
-    function pgOpenCodeModal(root){
+    function pgOpenCodeModal(root, preferAll){
       const modal = root.querySelector('[data-pg-modal]');
       if (!modal) return;
       pgUpdatePack(root, pgReadState(root));
-      pgSetTab(root, pgActiveTab || 'js');
+      pgSetTab(root, preferAll === false ? (pgActiveTab || 'all') : 'all');
       modal.classList.add('is-open');
       modal.setAttribute('aria-hidden', 'false');
     }
@@ -1134,18 +1225,19 @@ npm test
       if (btn) btn.textContent = on ? '顯示設定' : '專注預覽';
     }
 
-    async function pgCopy(root){
+    async function pgCopy(root, forceAll){
       const state = pgReadState(root);
+      const tab = forceAll ? 'all' : pgActiveTab;
       let text = '';
-      if (pgActiveTab === 'html') text = pgFormatHtml(state);
-      else if (pgActiveTab === 'check') text = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
-      else if (pgActiveTab === 'all') text = pgFormatAll(state);
+      if (tab === 'html') text = pgFormatHtml(state);
+      else if (tab === 'check') text = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
+      else if (tab === 'all') text = pgFormatAll(state);
       else text = pgFormatJs(pgExportConfig(state));
 
       const status = root.querySelector('[data-pg-copy-status]');
       try {
         await navigator.clipboard.writeText(text);
-        if (status) status.textContent = '已複製';
+        if (status) status.textContent = forceAll || tab === 'all' ? '已複製完整上線包' : '已複製';
       } catch (_) {
         try {
           const ta = document.createElement('textarea');
@@ -1156,16 +1248,16 @@ npm test
           ta.remove();
           if (status) status.textContent = '已複製';
         } catch (e2) {
-          if (status) status.textContent = '複製失敗，請手動選取';
+          if (status) status.textContent = '複製失敗：請在彈窗內手動全選複製';
         }
       }
-      setTimeout(() => { if (status) status.textContent = ''; }, 2000);
+      setTimeout(() => { if (status) status.textContent = ''; }, 2500);
     }
 
     function initPlaygroundIfPresent(){
       const root = slideContent.querySelector('#widgetPlayground');
       if (!root) return;
-      pgActiveTab = 'js';
+      pgActiveTab = 'all';
       root.querySelectorAll('input, select, textarea').forEach((el) => {
         el.addEventListener('input', () => pgScheduleRemount(root));
         el.addEventListener('change', () => {
@@ -1182,10 +1274,14 @@ npm test
         btn.addEventListener('click', () => pgApplyPreset(root, btn.getAttribute('data-pg-preset')));
       });
       root.querySelectorAll('[data-pg-open-code]').forEach((btn) => {
-        btn.addEventListener('click', () => pgOpenCodeModal(root));
+        btn.addEventListener('click', async () => {
+          const copyAll = btn.hasAttribute('data-pg-copy-all');
+          pgOpenCodeModal(root, true);
+          if (copyAll) await pgCopy(root, true);
+        });
       });
       root.querySelector('[data-pg-close-code]')?.addEventListener('click', () => pgCloseCodeModal(root));
-      root.querySelector('[data-pg-copy]')?.addEventListener('click', () => pgCopy(root));
+      root.querySelector('[data-pg-copy]')?.addEventListener('click', () => pgCopy(root, false));
       root.querySelector('[data-pg-focus]')?.addEventListener('click', () => pgToggleFocus(root));
       root.querySelectorAll('[data-pg-tab]').forEach((btn) => {
         btn.addEventListener('click', () => pgSetTab(root, btn.getAttribute('data-pg-tab')));
@@ -1199,6 +1295,11 @@ npm test
 
     function render(){
       const s = slides[index];
+      if (!s) {
+        slideContent.innerHTML = '<p style="color:#fecdd3;">投影片資料為空。請用本機伺服器開啟本檔（不要用 IDE 預覽），並強制重新整理。</p>';
+        pageLabel.textContent = `0 / ${slides.length}`;
+        return;
+      }
       slideContent.innerHTML = parseMarkdown(s.md);
       // 即時上手：直接掛 template，不走 Markdown 圖片注入
       if (s.title === '即時上手') {
@@ -1245,9 +1346,20 @@ npm test
       if (e.key === 'End') setIndex(slides.length - 1);
     });
 
-    buildToc();
-    const hash = Number((location.hash || '').replace('#',''));
-    setIndex(Number.isFinite(hash) && hash >= 1 ? hash - 1 : 0);
+    try {
+      buildToc();
+      const hash = Number((location.hash || '').replace('#',''));
+      setIndex(Number.isFinite(hash) && hash >= 1 ? hash - 1 : 0);
+      if (!slides.length) {
+        slideContent.innerHTML = '<p style="color:#fecdd3;">讀不到投影片 Markdown。請確認本檔完整，並用 http://127.0.0.1:8767/docs/WIDGET-slides.html 開啟。</p>';
+      }
+    } catch (err) {
+      const msg = String(err && err.message ? err.message : err);
+      if (slideContent) {
+        slideContent.innerHTML = `<p style="color:#fecdd3;white-space:pre-wrap;">投影片初始化失敗：${escapeHtml(msg)}</p>`;
+      }
+      console.error(err);
+    }
   </script>
 </body>
 </html>
