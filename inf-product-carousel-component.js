@@ -1,3 +1,40 @@
+// 商品圖缺失時的占位圖（灰底，避免 src 變成字串 "undefined"）
+const INF_PRODUCT_IMAGE_PLACEHOLDER =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWZlZmVmIi8+PC9zdmc+';
+
+function infIsUsableImageUrl(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return trimmed !== '' && trimmed !== 'undefined' && trimmed !== 'null';
+}
+
+function infResolveProductImageUrl(item, placeholder = INF_PRODUCT_IMAGE_PLACEHOLDER) {
+  if (typeof item === 'string') {
+    return infIsUsableImageUrl(item) ? item.trim() : placeholder;
+  }
+  if (!item || typeof item !== 'object') {
+    return placeholder;
+  }
+  const candidates = [
+    item.image_link,
+    item.imageLink,
+    item.image_url,
+    item.imageUrl,
+    item.image,
+    item.img,
+    item.thumbnail,
+    item.cover,
+    item.ImageLink,
+    item.Image
+  ];
+  for (const candidate of candidates) {
+    if (infIsUsableImageUrl(candidate)) {
+      return candidate.trim();
+    }
+  }
+  return placeholder;
+}
+
 // 檢查是否已經定義過，避免重複定義
 if (!customElements.get('inf-product-carousel-component')) {
   class InfProductCarouselComponent extends HTMLElement {
@@ -38,7 +75,7 @@ if (!customElements.get('inf-product-carousel-component')) {
                   bottom: 20px;
                   width: 350px;
                   max-width: calc(100vw - 40px);
-                  min-height: 240px;
+                  min-height: 280px;
                   max-height: 80vh;
                   background: rgba(255, 255, 255, 1);
                   // background: rgba(255, 255, 255, 0.98);
@@ -48,12 +85,14 @@ if (!customElements.get('inf-product-carousel-component')) {
                       0 2px 8px rgba(0, 0, 0, 0.04),
                       inset 0 1px 0 rgba(255, 255, 255, 0.8);
                   z-index: 1000;
-                  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
                   border: 1px solid rgba(0, 0, 0, 0.06);
                   backdrop-filter: blur(20px);
                   display: none !important;
                   visibility: hidden !important;
                   opacity: 0 !important;
+                  flex-direction: column;
+                  overflow: hidden;
               }
   
               /* 小螢幕響應式設計 */
@@ -63,13 +102,13 @@ if (!customElements.get('inf-product-carousel-component')) {
                       left: -100vw;
                       bottom: 16px;
                       border-radius: 12px;
-                      min-height: 240px;
+                      min-height: 280px;
                       max-height: 70vh;
                   }
                   
                   #infPopupproductCarousel.show {
                       left: 20px;
-                      display: block !important;
+                      display: flex !important;
                       visibility: visible !important;
                       opacity: 1 !important;
                   }
@@ -86,7 +125,7 @@ if (!customElements.get('inf-product-carousel-component')) {
                   
                   #infPopupproductCarousel.show {
                       left: 12px;
-                      display: block !important;
+                      display: flex !important;
                       visibility: visible !important;
                       opacity: 1 !important;
                   }
@@ -94,7 +133,7 @@ if (!customElements.get('inf-product-carousel-component')) {
   
               #infPopupproductCarousel.show {
                   left: 20px;
-                  display: block !important;
+                  display: flex !important;
                   visibility: visible !important;
                   opacity: 1 !important;
               }
@@ -137,59 +176,41 @@ if (!customElements.get('inf-product-carousel-component')) {
   
               .popup-content {
                   padding: 12px;
-                  height: 100%;
+                  width: 100%;
+                  flex: 0 0 auto;
+                  min-height: 256px;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   max-width: 100%;
-                  overflow: auto;
+                  overflow: visible;
               }
               
               /* 確保組件在 popup 內正確顯示 */
               #infPopupproductCarousel {
-                  position: fixed;
-                  left: -500px;
-                  bottom: 20px;
-                  max-width: calc(100vw - 40px);
-                  min-height: 240px;
-                  max-height: 80vh;
-                  background: rgba(255, 255, 255, 1);
-              //     background: linear-gradient(135deg, 
-              // rgba(255, 255, 255, 0.75) 0%, 
-              // rgba(255, 255, 255, 0.5) 100%);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-                  border-radius: 16px;
-                  box-shadow: 
-                      0 8px 32px rgba(0, 0, 0, 0.08),
-                      0 2px 8px rgba(0, 0, 0, 0.04),
-                      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-                  z-index: 1000;
-                  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-                  border: 1px solid rgba(0, 0, 0, 0.06);
-                  overflow: hidden;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-              }
-  
-              #infPopupproductCarousel.show {
-                  left: 20px;
-                  display: block !important;
-                  visibility: visible !important;
-                  opacity: 1 !important;
+                  backdrop-filter: blur(20px) saturate(180%);
+                  -webkit-backdrop-filter: blur(20px) saturate(180%);
               }
               
-              /* 限制組件在 popup 內的顯示 */
+              /* 限制組件在 popup 內的顯示（勿用 max-height:100%，會被 min-height 卡住而裁切內容） */
               #infPopupproductCarousel inf-product-carousel-component {
                   width: 100% !important;
-                  height: 100% !important;
+                  height: auto !important;
+                  min-height: 256px !important;
                   max-width: 100% !important;
-                  max-height: 100% !important;
-                  overflow: hidden !important;
+                  max-height: none !important;
+                  overflow: visible !important;
+                  display: block !important;
               }
               /* 確保 popupProductContent 容器正確限制組件 */
-                #popupProductContent #recommendation-loading,
+                #popupProductContent {
+                  width: 100% !important;
+                  min-height: 256px !important;
+                  height: auto !important;
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+              }
                 #popupProductContent .embeddedAdContainer__wrapper {
                   width: 100% !important;
                   height: auto !important;
@@ -197,16 +218,6 @@ if (!customElements.get('inf-product-carousel-component')) {
                   max-height: none !important;
                   overflow: visible !important;
                   position: relative !important;
-              }
-              
-              /* 讓 loading 在彈窗中置中顯示 */
-              #popupProductContent #recommendation-loading {
-                  display: flex !important;
-                  align-items: center !important;
-                  justify-content: center !important;
-                  min-height: 200px !important;
-                  width: 100% !important;
-                  height: auto !important;
               }
               
               /* 防止組件內容溢出 */
@@ -226,7 +237,7 @@ if (!customElements.get('inf-product-carousel-component')) {
               <div id="infPopupproductCarousel">
                   <button class="popup-close-btn" onclick="closePopup()">×</button>
                   <div class="popup-content">
-                      <div id="popupProductContent" style="width: 100%; height: auto; overflow: visible;">
+                      <div id="popupProductContent" style="width: 100%; min-height: 256px; height: auto; overflow: visible;">
                       </div>
                   </div>
               </div>
@@ -266,9 +277,9 @@ if (!customElements.get('inf-product-carousel-component')) {
                       }
                       
                       popup.classList.add('show');
-                      // 直接設置樣式確保彈窗顯示
+                      // 直接設置樣式確保彈窗顯示（flex 以在 loading 階段置中）
                       popup.style.left = '20px';
-                      popup.style.display = 'block';
+                      popup.style.display = 'flex';
                       popup.style.visibility = 'visible';
                       popup.style.opacity = '1';
                       isPopupVisible = true;
@@ -1092,18 +1103,23 @@ if (!customElements.get('inf-product-carousel-component')) {
           --swiper-wrapper-transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
         }
         #${containerId} #recommendation-loading {
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          width: 100% !important;
-          min-height: 200px !important;
-          height: 100%;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          min-height: 220px;
+          height: auto;
           position: relative;
           box-sizing: border-box;
         }
+        #${containerId} #recommendation-loading.is-visible {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
         @media (min-width: 480px) {
           #${containerId} #recommendation-loading {
-            min-height: 250px;
+            min-height: 256px;
           }
         }
         #${containerId} #recommendation-loading .loading-text {
@@ -1312,6 +1328,16 @@ if (!customElements.get('inf-product-carousel-component')) {
           place-items: center;
           border-radius: 8px; /* 直接使用值，確保圓角生效 */
           will-change: transform;
+          background-color: #efefef;
+        }
+        #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__imgBox img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 8px;
         }
         #${containerId} .infEmbeddedAdContainer .embeddedAdImgContainer .embeddedItem .embeddedItem__img .embeddedItem__sizeTag {
           position: absolute;
@@ -1912,16 +1938,25 @@ if (!customElements.get('inf-product-carousel-component')) {
         }
       }
       
-      // 沒有快取或是 reset 調用，顯示 loading 並開始載入
+      // 沒有快取或是 reset 調用：先隱藏內容，再顯示 loading
+      const embeddedContainer = shadowRoot.querySelector(`#${containerId} .infEmbeddedAdContainer`);
+      const textSection = shadowRoot.querySelector(`#${containerId} .text-section`);
+      if (embeddedContainer) {
+        embeddedContainer.style.setProperty('display', 'none', 'important');
+      }
+      if (textSection) {
+        textSection.style.setProperty('display', 'none', 'important');
+      }
+
       const loadingElement = shadowRoot.querySelector(`#${containerId} #recommendation-loading`);
       if (loadingElement) {
-        // 確保 CSS 樣式已完全應用且布局已計算完成後再顯示
-        // 使用雙重 requestAnimationFrame 確保瀏覽器完成樣式計算和布局
-        // 這可以解決 CSS 載入時機和元素顯示時機的競態條件問題
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            // 此時 CSS 的 flex 布局應該已經完全計算完成，可以安全顯示
-            $(loadingElement).fadeIn(300);
+            loadingElement.classList.add('is-visible');
+            loadingElement.style.setProperty('display', 'flex', 'important');
+            loadingElement.style.setProperty('visibility', 'visible', 'important');
+            loadingElement.style.setProperty('opacity', '1', 'important');
+            $(loadingElement).stop(true, true).css('opacity', 0).animate({ opacity: 1 }, 300);
           });
         });
       }
@@ -2742,6 +2777,8 @@ if (!customElements.get('inf-product-carousel-component')) {
         // 檢查是否為空白項目或重複項目，決定顯示內容
         const isSpecialSlide = img.isBlankSlide || img.isDuplicateSlide;
         const shouldShowContent = !img.isBlankSlide; // 空白項目不顯示內容，重複項目顯示內容
+        const imageSrc = infResolveProductImageUrl(img);
+        const imageAlt = (img.description || img.title || '').replace(/"/g, '&quot;');
         
         return `
         <a class="embeddedItem swiper-slide ${isSpecialSlide ? 'special-slide' : ''}" 
@@ -2756,9 +2793,10 @@ if (!customElements.get('inf-product-carousel-component')) {
             <div class="embeddedItem__imgBox" style="background-color: #efefef;">
               ${img.size_tag && !hide_size && shouldShowContent ? `<div class="embeddedItem__sizeTag">${img.size_tag}</div>` : ''}
               <img loading="lazy" 
-                   src="${img.image_link}" 
-                   alt="${img.description}" 
-                   style="width: 100%; height: auto; object-fit: cover; ${img.isBlankSlide ? 'opacity: 0.3;' : ''}">
+                   src="${imageSrc}" 
+                   alt="${imageAlt}" 
+                   onerror="this.onerror=null;this.src='${INF_PRODUCT_IMAGE_PLACEHOLDER}';"
+                   style="width: 100%; height: 100%; object-fit: cover; ${img.isBlankSlide ? 'opacity: 0.3;' : ''}">
             </div>
           </div>
           ${shouldShowContent ? `

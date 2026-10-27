@@ -15,7 +15,8 @@ const REQUIRED_EXPORTS = [
   'buildProductClickGaPayload',
   'buildNavClickGaPayload',
   'resolveNavDisplayMode',
-  'buildMktClickPayload'
+  'buildMktClickPayload',
+  'resolveProductImageUrl'
 ];
 
 test('widget module exports all public helpers', () => {

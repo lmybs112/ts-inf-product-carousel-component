@@ -13,7 +13,9 @@ import {
   buildProductClickGaPayload,
   buildNavClickGaPayload,
   resolveNavDisplayMode,
-  buildMktClickPayload
+  buildMktClickPayload,
+  resolveProductImageUrl,
+  PRODUCT_IMAGE_PLACEHOLDER
 } from '../inf-product-carousel-widget.js';
 
 test('assertMountConfig throws without carousel(s)', () => {
@@ -250,4 +252,33 @@ test('buildMktClickPayload', () => {
   const embed = buildMktClickPayload({ brand: 'X', carouselType: 'product' });
   assert.equal(embed.recom_loc, 'embed');
   assert.equal(embed.GVID, '');
+});
+
+test('resolveProductImageUrl falls back for missing/undefined values', () => {
+  assert.equal(resolveProductImageUrl(undefined), PRODUCT_IMAGE_PLACEHOLDER);
+  assert.equal(resolveProductImageUrl(null), PRODUCT_IMAGE_PLACEHOLDER);
+  assert.equal(resolveProductImageUrl({}), PRODUCT_IMAGE_PLACEHOLDER);
+  assert.equal(resolveProductImageUrl({ image_link: undefined }), PRODUCT_IMAGE_PLACEHOLDER);
+  assert.equal(resolveProductImageUrl({ image_link: 'undefined' }), PRODUCT_IMAGE_PLACEHOLDER);
+  assert.equal(resolveProductImageUrl({ image_link: 'null' }), PRODUCT_IMAGE_PLACEHOLDER);
+  assert.equal(resolveProductImageUrl({ image_link: '  ' }), PRODUCT_IMAGE_PLACEHOLDER);
+});
+
+test('resolveProductImageUrl prefers usable fields', () => {
+  assert.equal(
+    resolveProductImageUrl({ image_link: 'https://cdn.example/a.jpg' }),
+    'https://cdn.example/a.jpg'
+  );
+  assert.equal(
+    resolveProductImageUrl({ imageUrl: 'https://cdn.example/b.jpg' }),
+    'https://cdn.example/b.jpg'
+  );
+  assert.equal(
+    resolveProductImageUrl({ image_link: undefined, image: 'https://cdn.example/c.jpg' }),
+    'https://cdn.example/c.jpg'
+  );
+  assert.equal(
+    resolveProductImageUrl('https://cdn.example/direct.jpg'),
+    'https://cdn.example/direct.jpg'
+  );
 });
