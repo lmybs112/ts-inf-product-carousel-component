@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>infFITS Product Carousel Widget 整合說明</title>
+  <style>
+    :root{
+      --bg: #0d0d0d;
+      --panel: rgba(255,255,255,0.06);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --faint: rgba(255,255,255,0.55);
+      --accent: #e5e5e5;
+      --shadow: 0 18px 60px rgba(0,0,0,0.45);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Heiti TC", Arial, sans-serif;
+    }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 15% 10%, rgba(255,255,255,0.06), transparent 55%),
+        radial-gradient(1000px 700px at 85% 18%, rgba(255,255,255,0.05), transparent 55%),
+        radial-gradient(900px 700px at 60% 95%, rgba(255,255,255,0.04), transparent 60%),
+        var(--bg);
+      overflow: hidden;
+    }
+    .app{ position: relative; height: 100%; display: grid; grid-template-columns: 320px 1fr; }
+    .sidebar{
+      padding: 18px 14px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      overflow: auto;
+    }
+    .brand{
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px; border-radius: 14px;
+      background: var(--panel); box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .brand__title{ font-weight: 800; letter-spacing: 0.02em; font-size: 14px; line-height: 1.2; }
+    .brand__subtitle{ margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.35; }
+    .brand__hint{ font-size: 11px; color: var(--faint); text-align: right; white-space: nowrap; }
+    .toc{ margin-top: 14px; padding: 10px 6px 2px; }
+    .toc__section{
+      margin: 14px 6px 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.86); display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .toc__badge{
+      font-size: 11px; color: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 999px; padding: 2px 8px;
+    }
+    .toc__list{ list-style: none; padding: 0; margin: 0 6px 18px; display: grid; gap: 6px; }
+    .toc__item{
+      display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center;
+      padding: 10px; border-radius: 12px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer; user-select: none;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+    .toc__item:hover{ background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); transform: translateY(-1px); }
+    .toc__item.is-active{ background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
+    .toc__index{
+      font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.78);
+      text-align: center; padding: 6px; border-radius: 10px;
+      background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .toc__label{
+      font-size: 12px; color: rgba(255,255,255,0.88); line-height: 1.2;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .stage{ position: relative; height: 100%; overflow: hidden; }
+    .slide{ position: absolute; inset: 0; padding: 40px 56px 54px; display: none; overflow: auto; }
+    .slide.is-active{ display: block; animation: fadeIn 180ms ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .slide__card{
+      max-width: 1080px; margin: 0 auto; padding: 34px 34px 30px; border-radius: 20px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: var(--shadow); backdrop-filter: blur(10px);
+    }
+    .footer{
+      position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.72));
+      backdrop-filter: blur(10px);
+    }
+    .footer__left, .footer__right{ display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .progress{ flex: 1; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10); overflow: hidden; }
+    .progress__bar{ height: 100%; width: 0%; background: linear-gradient(90deg, rgba(255,255,255,0.82), rgba(255,255,255,0.52)); border-radius: 999px; transition: width 120ms ease-out; }
+    .btn{
+      appearance: none; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.88);
+      border-radius: 12px; padding: 8px 10px; font-size: 12px; cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease; user-select: none;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.20); }
+    .btn:active{ transform: translateY(0); }
+    .btn--primary{ border-color: rgba(255,255,255,0.38); background: rgba(255,255,255,0.14); }
+    .kbd{
+      font-family: var(--mono); font-size: 11px; padding: 2px 6px;
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18); color: rgba(255,255,255,0.88);
+    }
+    .md h1{ font-size: 30px; margin: 0 0 14px; letter-spacing: 0.01em; }
+    .md h2{ font-size: 22px; margin: 22px 0 10px; }
+    .md h3{ font-size: 16px; margin: 16px 0 8px; color: rgba(255,255,255,0.90); }
+    .md p{ margin: 10px 0; color: rgba(255,255,255,0.86); line-height: 1.6; }
+    .md strong{ color: rgba(255,255,255,0.95); }
+    .md a{ color: var(--accent); text-decoration: none; }
+    .md a:hover{ text-decoration: underline; }
+    .md ul, .md ol{ margin: 10px 0 10px 22px; color: rgba(255,255,255,0.86); line-height: 1.6; }
+    .md li{ margin: 6px 0; }
+    .md code{
+      font-family: var(--mono); font-size: 12px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10);
+      padding: 2px 6px; border-radius: 8px; color: rgba(255,255,255,0.92);
+    }
+    .md pre{
+      background: rgba(0,0,0,0.24); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px; padding: 14px; overflow: auto;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .md pre code{ background: transparent; border: none; padding: 0; border-radius: 0; font-size: 12px; line-height: 1.55; color: rgba(255,255,255,0.90); }
+    .md blockquote{
+      margin: 14px 0; padding: 10px 14px; border-left: 3px solid rgba(255,255,255,0.42);
+      background: rgba(255,255,255,0.05); border-radius: 12px; color: rgba(255,255,255,0.84);
+    }
+    .md hr{ border: none; height: 1px; background: rgba(255,255,255,0.12); margin: 18px 0; }
+    .md table{
+      width: 100%; border-collapse: collapse; margin: 12px 0 4px; font-size: 12px;
+      overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,255,255,0.10);
+    }
+    .md th, .md td{
+      padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      vertical-align: top; color: rgba(255,255,255,0.86);
+    }
+    .md th{ text-align: left; font-weight: 800; color: rgba(255,255,255,0.92); background: rgba(255,255,255,0.06); }
+    .md tr:last-child td{ border-bottom: none; }
+    .seq{
+      margin: 18px auto 6px; padding: 18px 12px 8px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+      max-width: 100%;
+    }
+    .seq svg{ width: 100%; height: auto; display: block; }
+    .seq__caption{ margin-top: 10px; text-align: center; font-size: 12px; color: var(--muted); }
+    .seq svg .ll-head rect{ fill: rgba(255,255,255,0.10); stroke: rgba(255,255,255,0.30); rx: 8; ry: 8; }
+    .seq svg .ll-head text{ fill: rgba(255,255,255,0.94); font-family: var(--sans); font-weight: 700; font-size: 13px; }
+    .seq svg .ll-line{ stroke: rgba(255,255,255,0.32); stroke-width: 1; stroke-dasharray: 4 6; }
+    .seq svg .msg-line{ stroke: rgba(255,255,255,0.78); stroke-width: 1.4; }
+    .seq svg .msg-text{ fill: rgba(255,255,255,0.94); font-family: var(--mono); font-size: 11px; }
+    .arch-frame{
+      margin: 12px 0 8px; border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12); background: #020617;
+      box-shadow: var(--shadow);
+    }
+    .arch-frame iframe{
+      display: block; width: 100%; height: min(72vh, 820px);
+      border: 0; background: #020617;
+    }
+    .arch-frame__caption{
+      margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.45;
+    }
+    .slide__card:has(.pg){ max-width: 1360px; padding: 22px 20px 18px; }
+    .pg{
+      display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 14px;
+      margin-top: 8px; min-height: 560px;
+    }
+    .pg.is-focus{ grid-template-columns: 1fr; }
+    .pg.is-focus [data-pg-controls]{ display: none; }
+    .pg__panel{
+      border: 1px solid rgba(255,255,255,0.10); border-radius: 14px;
+      background: rgba(0,0,0,0.22); padding: 12px; overflow: auto;
+    }
+    .pg__panel h3{
+      margin: 0 0 10px; font-size: 13px; letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.92);
+    }
+    .pg-must{
+      margin: 0 0 12px; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid rgba(251,191,36,0.35);
+      background: rgba(120,53,15,0.28);
+      color: #fde68a; font-size: 11px; line-height: 1.45;
+    }
+    .pg-must strong{ color: #fef3c7; }
+    .pg-must code{
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(0,0,0,0.28); border-radius: 6px; padding: 1px 5px;
+    }
+    .pg-cta{
+      width: 100%; padding: 10px 12px !important;
+      font-size: 13px !important; font-weight: 800 !important;
+      border-color: rgba(255,255,255,0.42) !important;
+      background: rgba(255,255,255,0.18) !important;
+    }
+    .pg-presets{
+      display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;
+    }
+    .pg-presets__label{ font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .pg-chip{
+      appearance: none; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.88);
+      border-radius: 10px; padding: 8px 10px; font-size: 12px; cursor: pointer;
+      text-align: left; transition: background 120ms ease, border-color 120ms ease;
+    }
+    .pg-chip:hover{ background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
+    .pg-chip.is-active{
+      background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.38);
+      font-weight: 700;
+    }
+    .pg-field{ display: grid; gap: 4px; margin-bottom: 10px; }
+    .pg-field label{ font-size: 11px; color: var(--muted); }
+    .pg-field input, .pg-field select{
+      width: 100%; box-sizing: border-box;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.92);
+      padding: 8px 10px; font-size: 12px; font-family: var(--sans);
+    }
+    .pg-field--row{
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+      font-size: 12px; color: rgba(255,255,255,0.86);
+    }
+    .pg-field--row input{ width: auto; }
+    .pg details{
+      margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;
+    }
+    .pg summary{
+      cursor: pointer; font-size: 12px; color: rgba(255,255,255,0.88);
+      user-select: none; margin-bottom: 8px;
+    }
+    .pg-preview{
+      position: relative;
+      display: flex; flex-direction: column; gap: 10px; min-height: 560px;
+    }
+    .pg-preview__bar{
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 2px;
+    }
+    .pg-preview__bar h3{ margin: 0; }
+    .pg-preview__tools{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pg-status{
+      font-size: 11px; color: var(--muted);
+      padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .pg-status.is-ok{ color: #86efac; border-color: rgba(52,211,153,0.35); }
+    .pg-status.is-err{ color: #fecdd3; border-color: rgba(251,113,133,0.45); }
+    .pg-status.is-loading{ color: #fde68a; border-color: rgba(251,191,36,0.35); }
+    .pg-slot{
+      min-height: 72px; border-radius: 12px;
+      border: 1px dashed rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.03); padding: 8px;
+    }
+    .pg-slot--main{
+      flex: 1; min-height: 220px; border-style: solid;
+      border-color: rgba(255,255,255,0.10);
+      padding: 16px;
+    }
+    .pg-slot__label{ font-size: 11px; color: var(--faint); margin-bottom: 6px; }
+    .pg-error{
+      display: none; margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid rgba(251,113,133,0.45); background: rgba(136,19,55,0.25);
+      color: #fecdd3; font-size: 12px; white-space: pre-wrap;
+    }
+    .pg-error.is-on{ display: block; }
+    .pg-actions{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .pg-hint{ font-size: 11px; color: var(--faint); line-height: 1.4; margin-top: 8px; }
+    .pg-modal{
+      display: none; position: fixed; inset: 0; z-index: 30000;
+      align-items: center; justify-content: center;
+      padding: 24px; box-sizing: border-box;
+      background: rgba(0,0,0,0.62); backdrop-filter: blur(6px);
+    }
+    .pg-modal.is-open{ display: flex; }
+    .pg-modal__panel{
+      width: min(820px, 100%); max-height: min(84vh, 780px);
+      display: flex; flex-direction: column; gap: 10px;
+      border-radius: 16px; border: 1px solid rgba(255,255,255,0.14);
+      background: #141414; box-shadow: var(--shadow); padding: 16px;
+    }
+    .pg-modal__head{
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .pg-modal__head h3{ margin: 0; font-size: 15px; }
+    .pg-tabs{ display: flex; gap: 6px; flex-wrap: wrap; }
+    .pg-tab{
+      appearance: none; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.82);
+      border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+    }
+    .pg-tab.is-active{
+      background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.36);
+      color: #fff; font-weight: 700;
+    }
+    .pg-code{
+      flex: 1; margin: 0; padding: 12px; border-radius: 12px; overflow: auto;
+      min-height: 240px; font-family: var(--mono); font-size: 12px; line-height: 1.5;
+      background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.90); white-space: pre;
+    }
+    .pg-checklist{
+      margin: 0; padding: 12px 12px 12px 28px;
+      border-radius: 12px; border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.35); color: rgba(255,255,255,0.88);
+      font-size: 13px; line-height: 1.55;
+    }
+    .pg-checklist li{ margin: 8px 0; }
+    .pg-pack-pane{ display: none; flex: 1; min-height: 0; overflow: auto; }
+    .pg-pack-pane.is-active{ display: block; }
+    /* playground：popup 浮層層級；可一鍵隱藏避免遮擋預覽 */
+    #infPopupproductCarousel{ z-index: 20000 !important; }
+    .pg.is-hide-popup ~ #infPopupproductCarousel,
+    body:has(.pg.is-hide-popup) #infPopupproductCarousel{
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    @media (max-width: 900px){
+      .pg{ grid-template-columns: 1fr; min-height: 0; }
+    }
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+      .sidebar{ display: none; }
+      .slide{ padding: 26px 16px 54px; }
+      .slide__card{ padding: 22px 18px; border-radius: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div>
+          <div class="brand__title">infFITS Product Carousel Widget 整合說明</div>
+          <div class="brand__subtitle">更新日期：2026-09-17｜試用 → 上線包 → 精要參數（詳見 WIDGET.md）。</div>
+        </div>
+        <div class="brand__hint">
+          <div><span class="kbd">←</span> <span class="kbd">→</span></div>
+          <div style="margin-top:6px;"><span class="kbd">Home</span> <span class="kbd">End</span></div>
+        </div>
+      </div>
+      <div class="toc" id="toc"></div>
+    </aside>
+
+    <main class="stage" aria-label="投影片舞台">
+      <section class="slide is-active" id="slide" tabindex="0" aria-live="polite">
+        <div class="slide__card">
+          <div class="md" id="slideContent"></div>
+        </div>
+      </section>
+      <footer class="footer">
+        <div class="footer__left">
+          <button class="btn" id="btnPrev" type="button">上一頁</button>
+          <button class="btn btn--primary" id="btnNext" type="button">下一頁</button>
+        </div>
+        <div class="progress" aria-label="進度"><div class="progress__bar" id="progressBar"></div></div>
+        <div class="footer__right">
+          <span id="deckLabel">—</span><span>｜</span><span id="pageLabel">0 / 0</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <template id="svg-seq-mount">
+    <div class="seq">
+      <svg viewBox="0 0 940 420" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Widget mount sequence">
+        <defs>
+          <marker id="arrM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(255,255,255,0.86)" />
+          </marker>
+        </defs>
+        <g class="ll-head">
+          <rect x="40" y="20" width="160" height="36" />
+          <text x="120" y="44" text-anchor="middle">頁面 / GTM</text>
+        </g>
+        <g class="ll-head">
+          <rect x="260" y="20" width="200" height="36" />
+          <text x="360" y="44" text-anchor="middle">Widget ESM</text>
+        </g>
+        <g class="ll-head">
+          <rect x="520" y="20" width="180" height="36" />
+          <text x="610" y="44" text-anchor="middle">Custom Element</text>
+        </g>
+        <g class="ll-head">
+          <rect x="740" y="20" width="160" height="36" />
+          <text x="820" y="44" text-anchor="middle">API / GA4</text>
+        </g>
+        <line class="ll-line" x1="120" y1="56" x2="120" y2="400" />
+        <line class="ll-line" x1="360" y1="56" x2="360" y2="400" />
+        <line class="ll-line" x1="610" y1="56" x2="610" y2="400" />
+        <line class="ll-line" x1="820" y1="56" x2="820" y2="400" />
+
+        <line class="msg-line" x1="120" y1="100" x2="358" y2="100" marker-end="url(#arrM)" />
+        <text class="msg-text" x="130" y="94">await import(widget.js)</text>
+
+        <line class="msg-line" x1="120" y1="150" x2="358" y2="150" marker-end="url(#arrM)" />
+        <text class="msg-text" x="130" y="144">InfFitsProductCarousel.mount(config)</text>
+
+        <line class="msg-line" x1="360" y1="200" x2="608" y2="200" marker-end="url(#arrM)" />
+        <text class="msg-text" x="370" y="194">建立 &lt;inf-product-carousel-widget&gt;</text>
+
+        <line class="msg-line" x1="610" y1="250" x2="818" y2="250" marker-end="url(#arrM)" />
+        <text class="msg-text" x="620" y="244">GetItems / recom_product</text>
+
+        <line class="msg-line" x1="610" y1="300" x2="818" y2="300" marker-end="url(#arrM)" />
+        <text class="msg-text" x="620" y="294">gtag event（有 GA4Key）</text>
+
+        <line class="msg-line" x1="610" y1="350" x2="818" y2="350" marker-end="url(#arrM)" />
+        <text class="msg-text" x="620" y="344">商品點擊 → mkt_click_action_record</text>
+      </svg>
+      <div class="seq__caption">頁面兩行呼叫 → Widget 展開 carousels → 渲染／推薦／追蹤</div>
+    </div>
+  </template>
+
+  <template id="svg-arch-diagram">
+    <div class="arch-frame">
+      <iframe
+        title="Product Carousel Widget Architecture"
+        src="./widget-architecture.html"
+        loading="lazy"
+      ></iframe>
+    </div>
+    <p class="arch-frame__caption">完整單頁架構圖（可匯出 Copy / PNG / PDF）：開啟 <a href="./widget-architecture.html" target="_blank" rel="noopener">docs/widget-architecture.html</a>。風格依 <a href="https://github.com/Cocoon-AI/architecture-diagram-generator" target="_blank" rel="noopener">Cocoon-AI architecture-diagram-generator</a>。</p>
+  </template>
+
+  <template id="svg-playground">
+    <div class="pg" id="widgetPlayground">
+      <div class="pg__panel" data-pg-controls>
+        <div class="pg-must">
+          <strong>零基礎：</strong>點情境看預覽 →「一鍵複製上線包」→ 只改
+          <code>brand</code>／容器 id／<code>GA4Key</code>
+        </div>
+        <h3>基本設定</h3>
+        <div class="pg-presets">
+          <div class="pg-presets__label">快速情境（一鍵套用）</div>
+          <button type="button" class="pg-chip is-active" data-pg-preset="both">兩者：product + popup</button>
+          <button type="button" class="pg-chip" data-pg-preset="product">只嵌入 product</button>
+          <button type="button" class="pg-chip" data-pg-preset="popup">只浮層 popup</button>
+        </div>
+        <div class="pg-field">
+          <label for="pg-mode">掛載模式</label>
+          <select id="pg-mode" name="pg-mode">
+            <option value="both" selected>兩者（product + popup）</option>
+            <option value="product">只 product</option>
+            <option value="popup">只 popup</option>
+          </select>
+        </div>
+        <div class="pg-field">
+          <label for="pg-brand">brand</label>
+          <input id="pg-brand" name="pg-brand" type="text" value="DES" autocomplete="off" />
+        </div>
+        <div class="pg-field">
+          <label for="pg-ga4">GA4Key（可留空）</label>
+          <input id="pg-ga4" name="pg-ga4" type="text" value="" placeholder="G-XXXXXXXXXX" autocomplete="off" />
+        </div>
+        <div class="pg-field">
+          <label for="pg-title">popup Title</label>
+          <input id="pg-title" name="pg-title" type="text" value="您可能會喜歡" autocomplete="off" />
+        </div>
+        <details>
+          <summary>進階設定</summary>
+          <div class="pg-field">
+            <label for="pg-recom">RecommendMode</label>
+            <select id="pg-recom" name="pg-recom">
+              <option value="bhv" selected>bhv</option>
+              <option value="corr">corr</option>
+              <option value="sp_atc">sp_atc</option>
+              <option value="sp_trans">sp_trans</option>
+              <option value="bhv,corr,sp_atc,sp_trans">bhv,corr,sp_atc,sp_trans</option>
+            </select>
+          </div>
+          <div class="pg-field">
+            <label for="pg-layout">CarouselLayout</label>
+            <input id="pg-layout" name="pg-layout" type="number" step="0.5" min="1" value="2.5" />
+          </div>
+          <div class="pg-field">
+            <label for="pg-display">DisplayMode</label>
+            <select id="pg-display" name="pg-display">
+              <option value="SaleRate" selected>SaleRate</option>
+              <option value="Price">Price</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+          <div class="pg-field">
+            <label for="pg-location">Location</label>
+            <select id="pg-location" name="pg-location">
+              <option value="bottom" selected>bottom</option>
+              <option value="top">top</option>
+            </select>
+          </div>
+          <label class="pg-field--row"><input name="pg-btn" type="checkbox" checked /> CarouselButton</label>
+          <label class="pg-field--row"><input name="pg-status" type="checkbox" checked /> status</label>
+          <div class="pg-field">
+            <label for="pg-pos-top">showPositionId.top（product）</label>
+            <input id="pg-pos-top" name="pg-pos-top" type="text" value="infFitsHeader" />
+          </div>
+          <div class="pg-field">
+            <label for="pg-pos-bottom">showPositionId.bottom（product）</label>
+            <input id="pg-pos-bottom" name="pg-pos-bottom" type="text" value="infFitsFooter" />
+          </div>
+          <div class="pg-field">
+            <label for="pg-pos-popup">showPositionId.bottom（popup）</label>
+            <input id="pg-pos-popup" name="pg-pos-popup" type="text" value="popupProductContent" />
+          </div>
+        </details>
+        <div class="pg-actions">
+          <button type="button" class="btn btn--primary pg-cta" data-pg-open-code data-pg-copy-all>一鍵複製上線包（全部）</button>
+        </div>
+        <p class="pg-hint">預覽成功＝右邊／左下有商品。上線請用 https 或 localhost，並可連外網 API。</p>
+      </div>
+      <div class="pg__panel pg-preview" data-pg-preview>
+        <div class="pg-preview__bar">
+          <h3>即時預覽</h3>
+          <div class="pg-preview__tools">
+            <span class="pg-status" data-pg-status>待命</span>
+            <label class="pg-field--row" style="margin:0;">
+              <input name="pg-show-popup" type="checkbox" checked /> 顯示 popup
+            </label>
+            <button type="button" class="btn" data-pg-focus>專注預覽</button>
+            <button type="button" class="btn btn--primary" data-pg-open-code>上線包</button>
+          </div>
+        </div>
+        <div class="pg-slot">
+          <div class="pg-slot__label">#pgHeader ← product top</div>
+          <div id="pgHeader"></div>
+        </div>
+        <div class="pg-slot pg-slot--main">
+          <div class="pg-slot__label">模擬店舖內容</div>
+          <p style="margin:0;color:rgba(255,255,255,0.72);font-size:13px;line-height:1.5;">用左側快捷情境開始；popup 可開關避免遮擋。專注預覽可隱藏設定欄。</p>
+          <div class="pg-error" data-pg-error></div>
+        </div>
+        <div class="pg-slot">
+          <div class="pg-slot__label">#pgFooter ← product bottom</div>
+          <div id="pgFooter"></div>
+        </div>
+      </div>
+      <div class="pg-modal" data-pg-modal aria-hidden="true">
+        <div class="pg-modal__panel" role="dialog" aria-modal="true" aria-labelledby="pgCodeTitle">
+          <div class="pg-modal__head">
+            <h3 id="pgCodeTitle">上線包（貼到網站就能用）</h3>
+            <button type="button" class="btn" data-pg-close-code>關閉</button>
+          </div>
+          <div class="pg-must" style="margin-top:0;">
+            <strong>貼上後只改 3 處：</strong>
+            <code>brand</code>、<code>showPositionId</code> 對應的容器 id、<code>GA4Key</code>（可留空）。
+          </div>
+          <div class="pg-tabs" role="tablist">
+            <button type="button" class="pg-tab is-active" data-pg-tab="all">全部（建議）</button>
+            <button type="button" class="pg-tab" data-pg-tab="js">1. JS</button>
+            <button type="button" class="pg-tab" data-pg-tab="html">2. HTML</button>
+            <button type="button" class="pg-tab" data-pg-tab="check">3. 檢查清單</button>
+          </div>
+          <div class="pg-pack-pane is-active" data-pg-pane="all">
+            <pre class="pg-code" data-pg-code-all tabindex="0"></pre>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="js">
+            <pre class="pg-code" data-pg-code-js tabindex="0"></pre>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="html">
+            <pre class="pg-code" data-pg-code-html tabindex="0"></pre>
+          </div>
+          <div class="pg-pack-pane" data-pg-pane="check">
+            <ul class="pg-checklist" data-pg-checklist></ul>
+          </div>
+          <div class="pg-actions">
+            <button type="button" class="btn btn--primary" data-pg-copy>一鍵複製目前內容</button>
+            <span class="pg-hint" data-pg-copy-status></span>
+          </div>
+          <p class="pg-hint">建議：先貼 HTML 容器到頁面 → 再貼 JS → 依檢查清單打勾。</p>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script type="text/plain" id="md_widget">
+# 即時上手
+
+**零基礎路徑：** 點情境看預覽有商品 →「一鍵複製上線包」→ 貼到網站後只改 `brand`／容器 id／`GA4Key`。
+
+> 請用瀏覽器開啟本檔（建議 `python3 -m http.server` 在專案根目錄），並可連外網。細節見 `WIDGET.md`。
+
+---
+
+# 怎麼運作
+
+![Widget mount 時序](#seq-mount)
+
+1. `import` → `mount(config)`
+2. 建立 `<inf-product-carousel-widget>`（同 key 不重複）
+3. product：GetItems → recom_product；popup：pidinfo 推薦
+4. 有 `GA4Key` 才打 GA；商品點擊另記 `mkt_click_action_record`
+
+架構細節：`docs/widget-architecture.html`（或下一頁）。
+
+---
+
+# 系統架構圖
+
+![Widget 架構圖](#arch-diagram)
+
+Host → mount → Custom Element → API／快取 → GA4 + 點擊記錄。
+
+---
+
+# 參數精要
+
+```js
+{ brand, GA4Key, carousel | carousels }
+```
+
+| 參數 | 重點 |
+| :--- | :--- |
+| `brand` / `GA4Key` | 必填品牌；`GA4Key` 空＝不追蹤 |
+| `carousel` vs `carousels` | 有 `carousel` 只跑該筆；否則展開陣列 |
+| `type` | `product` \| `popup` |
+| `showPositionId` | 容器 DOM id（須先存在） |
+| `brandConfig` | `Title`、`RecommendMode`、`CarouselLayout`、`Location`、`status`、`autoShow` |
+
+**規則：** 缺 `carousel(s)` 會 throw；popup 需 `status: true`；`autoShow: false` 時呼叫 `showPopup()`。
+
+---
+
+# 追蹤與 FAQ
+
+**GA4**（有 `GA4Key`）：商品 `…click_embedded_itemA`；箭頭 `…arrow_*A`；標題導覽 `…title_nav_*A`。每點一次只打一筆。
+
+**後端：** 僅商品點擊 POST `mkt_click_action_record`（`recom_loc` = embed／popup）。
+
+**Popup：** `showPopup()`／`closePopup()`／`resetRecom(newBid?)`。
+
+### FAQ
+
+- 沒畫面 → 查容器 id、`status`、是否要手動 `showPopup`
+- 關追蹤 → 不傳或空 `GA4Key`
+- 指定商品 → `skuContent` 設 PID
+- 重複 mount → 同 `type + showPositionId` 回既有實例
+
+---
+
+# 檔案與 CDN
+
+| | |
+| :--- | :--- |
+| 本體 | `inf-product-carousel-widget.js` |
+| 示範 | `demo-widget.html` |
+| 文件 | `WIDGET.md` |
+| CDN | `https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js` |
+
+```bash
+npm test
+```
+  </script>
+
+  <script>
+    function escapeHtml(s){
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function parseMarkdown(md){
+      const lines = String(md || '').replace(/\r\n/g,'\n').split('\n');
+      let html = '';
+      let i = 0;
+      let inCode = false;
+      let codeLang = '';
+      let codeBuf = [];
+      let parBuf = [];
+      let listType = null;
+      let tableRows = [];
+
+      function inline(text){
+        let t = escapeHtml(text);
+        t = t.replace(/`([^`]+)`/g, (_,c)=>`<code>${c}</code>`);
+        t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // 圖片必須先於連結，否則 ![alt](#id) 會被吃成「! + <a>」
+        t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_,alt,src)=>{
+          const s = String(src);
+          if (s.startsWith('#seq-') || s.startsWith('#arch-')) {
+            return `<!--SEQ:${s.slice(1)}-->`;
+          }
+          return `<img alt="${alt}" src="${src}" />`;
+        });
+        t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        return t;
+      }
+
+      function flushCode(){
+        if (!inCode) return;
+        html += `<pre><code>${escapeHtml(codeBuf.join('\n'))}</code></pre>`;
+        inCode = false; codeLang = ''; codeBuf = [];
+      }
+      function flushList(){
+        if (!listType) return;
+        html += listType === 'ul' ? '</ul>' : '</ol>';
+        listType = null;
+      }
+      function flushPar(){
+        if (!parBuf.length) return;
+        html += `<p>${inline(parBuf.join(' '))}</p>`;
+        parBuf = [];
+      }
+      function flushTable(){
+        if (!tableRows.length) return;
+        const rows = tableRows.map(r => r.split('|').slice(1,-1).map(c => c.trim()));
+        tableRows = [];
+        if (rows.length < 2) return;
+        const head = rows[0];
+        const body = rows.slice(2); // skip separator
+        html += '<table><thead><tr>' + head.map(c=>`<th>${inline(c)}</th>`).join('') + '</tr></thead><tbody>';
+        body.forEach(r => {
+          html += '<tr>' + r.map(c=>`<td>${inline(c)}</td>`).join('') + '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+
+      while (i < lines.length){
+        const line = lines[i];
+        if (line.startsWith('```')){
+          flushPar(); flushList(); flushTable();
+          if (!inCode){ inCode = true; codeLang = line.slice(3).trim(); codeBuf = []; }
+          else flushCode();
+          i++; continue;
+        }
+        if (inCode){ codeBuf.push(line); i++; continue; }
+
+        if (/^\|/.test(line) && line.includes('|',1)){
+          flushPar(); flushList();
+          tableRows.push(line);
+          i++; continue;
+        } else {
+          flushTable();
+        }
+
+        if (/^>\s?/.test(line)){
+          flushPar(); flushList();
+          html += `<blockquote><p>${inline(line.replace(/^>\s?/,''))}</p></blockquote>`;
+          i++; continue;
+        }
+        if (/^#{1,3}\s/.test(line)){
+          flushPar(); flushList();
+          const m = line.match(/^(#{1,3})\s+(.*)$/);
+          const level = m[1].length;
+          html += `<h${level}>${inline(m[2])}</h${level}>`;
+          i++; continue;
+        }
+        if (/^[-*]\s+/.test(line)){
+          flushPar();
+          if (listType !== 'ul'){ flushList(); html += '<ul>'; listType = 'ul'; }
+          html += `<li>${inline(line.replace(/^[-*]\s+/,''))}</li>`;
+          i++; continue;
+        }
+        if (/^\d+\.\s+/.test(line)){
+          flushPar();
+          if (listType !== 'ol'){ flushList(); html += '<ol>'; listType = 'ol'; }
+          html += `<li>${inline(line.replace(/^\d+\.\s+/,''))}</li>`;
+          i++; continue;
+        }
+        if (!line.trim()){
+          flushPar(); flushList();
+          i++; continue;
+        }
+        flushList();
+        parBuf.push(line.trim());
+        i++;
+      }
+      flushCode(); flushPar(); flushList(); flushTable();
+
+      // inject templates for <!--SEQ:seq-xxx--> / <!--SEQ:arch-xxx-->
+      html = html.replace(/<!--SEQ:((?:seq|arch)-[a-z0-9-]+)-->/g, (_, id) => {
+        const tpl = document.getElementById('svg-' + id);
+        return tpl ? tpl.innerHTML : '';
+      });
+      return html;
+    }
+
+    function splitSlides(md){
+      return String(md || '').split(/\n---\n/).map(s => s.trim()).filter(Boolean);
+    }
+
+    function slideTitleFromMarkdown(md){
+      const m = String(md || '').match(/^#\s+(.+)$/m);
+      return m ? m[1].replace(/[*`]/g,'').trim() : 'Untitled';
+    }
+
+    const decks = [
+      { id: 'widget', name: 'Widget 整合說明', mdEl: 'md_widget' }
+    ];
+
+    const slides = [];
+    decks.forEach(deck => {
+      const raw = document.getElementById(deck.mdEl)?.textContent || '';
+      splitSlides(raw).forEach((md, idx) => {
+        slides.push({
+          deckId: deck.id,
+          deckName: deck.name,
+          md,
+          title: slideTitleFromMarkdown(md),
+          indexInDeck: idx + 1
+        });
+      });
+    });
+
+    let index = 0;
+    const tocEl = document.getElementById('toc');
+    const slideContent = document.getElementById('slideContent');
+    const progressBar = document.getElementById('progressBar');
+    const pageLabel = document.getElementById('pageLabel');
+    const deckLabel = document.getElementById('deckLabel');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+
+    function buildToc(){
+      tocEl.innerHTML = '';
+      let currentDeck = null;
+      let list = null;
+      slides.forEach((s, i) => {
+        if (s.deckId !== currentDeck){
+          currentDeck = s.deckId;
+          const sec = document.createElement('div');
+          sec.className = 'toc__section';
+          sec.innerHTML = `<span>${escapeHtml(s.deckName)}</span><span class="toc__badge">${slides.filter(x=>x.deckId===s.deckId).length}</span>`;
+          tocEl.appendChild(sec);
+          list = document.createElement('div');
+          list.className = 'toc__list';
+          tocEl.appendChild(list);
+        }
+        const item = document.createElement('div');
+        item.className = 'toc__item' + (i === index ? ' is-active' : '');
+        item.innerHTML = `<div class="toc__index">${String(s.indexInDeck).padStart(2,'0')}<` + `/div><div class="toc__label">${escapeHtml(s.title)}<` + `/div>`;
+        item.addEventListener('click', () => setIndex(i));
+        list.appendChild(item);
+      });
+    }
+
+    function setIndex(next){
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      render();
+    }
+
+    const PG_CDN = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js';
+    // query 僅影響本機預覽快取；正式複製碼仍用 PG_CDN
+    const PG_LOCAL = '../inf-product-carousel-widget.js?v=20260917-ux';
+    let pgWidgetLoad = null;
+    let pgRemountTimer = null;
+    let pgActiveTab = 'all';
+
+    function pgVal(root, name){
+      const el = root.querySelector(`[name="${name}"]`);
+      if (!el) return '';
+      if (el.type === 'checkbox') return el.checked;
+      return el.value;
+    }
+
+    function pgSetVal(root, name, value){
+      const el = root.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = !!value;
+      else el.value = value;
+    }
+
+    function pgReadState(root){
+      return {
+        mode: pgVal(root, 'pg-mode') || 'both',
+        brand: String(pgVal(root, 'pg-brand') || 'DES').trim() || 'DES',
+        GA4Key: String(pgVal(root, 'pg-ga4') || '').trim(),
+        Title: String(pgVal(root, 'pg-title') || '您可能會喜歡').trim() || '您可能會喜歡',
+        RecommendMode: String(pgVal(root, 'pg-recom') || 'bhv'),
+        CarouselLayout: Number(pgVal(root, 'pg-layout') || 2.5),
+        DisplayMode: String(pgVal(root, 'pg-display') || 'SaleRate'),
+        CarouselButton: !!pgVal(root, 'pg-btn'),
+        Location: String(pgVal(root, 'pg-location') || 'bottom'),
+        status: !!pgVal(root, 'pg-status'),
+        showPopup: pgVal(root, 'pg-show-popup') !== false,
+        posTop: String(pgVal(root, 'pg-pos-top') || 'infFitsHeader').trim() || 'infFitsHeader',
+        posBottom: String(pgVal(root, 'pg-pos-bottom') || 'infFitsFooter').trim() || 'infFitsFooter',
+        posPopup: String(pgVal(root, 'pg-pos-popup') || 'popupProductContent').trim() || 'popupProductContent'
+      };
+    }
+
+    function pgBrandConfig(state){
+      return {
+        DisplayMode: state.DisplayMode,
+        CarouselButton: state.CarouselButton,
+        RecommendMode: state.RecommendMode,
+        CarouselLayout: Number.isFinite(state.CarouselLayout) ? state.CarouselLayout : 2.5,
+        Title: state.Title,
+        Location: state.Location,
+        status: state.status
+      };
+    }
+
+    function pgBuildCarousels(state, ids){
+      const carousels = [];
+      const brandConfig = pgBrandConfig(state);
+      const wantPopup = (state.mode === 'popup' || state.mode === 'both') && state.showPopup !== false;
+      if (wantPopup) {
+        carousels.push({
+          type: 'popup',
+          showPositionId: { bottom: ids.popup },
+          brandConfig
+        });
+      }
+      if (state.mode === 'product' || state.mode === 'both') {
+        carousels.push({
+          type: 'product',
+          showPositionId: { top: ids.top, bottom: ids.bottom }
+        });
+      }
+      // 模式含 popup 但預覽關掉浮層時，仍讓匯出碼保留 popup
+      return carousels;
+    }
+
+    function pgExportCarousels(state){
+      const carousels = [];
+      const brandConfig = pgBrandConfig(state);
+      if (state.mode === 'popup' || state.mode === 'both') {
+        carousels.push({
+          type: 'popup',
+          showPositionId: { bottom: state.posPopup },
+          brandConfig
+        });
+      }
+      if (state.mode === 'product' || state.mode === 'both') {
+        carousels.push({
+          type: 'product',
+          showPositionId: { top: state.posTop, bottom: state.posBottom }
+        });
+      }
+      return carousels;
+    }
+
+    function pgExportConfig(state){
+      return {
+        brand: state.brand,
+        GA4Key: state.GA4Key,
+        carousels: pgExportCarousels(state)
+      };
+    }
+
+    function pgPreviewConfig(state){
+      return {
+        brand: state.brand,
+        GA4Key: state.GA4Key,
+        carousels: pgBuildCarousels(state, {
+          top: 'pgHeader',
+          bottom: 'pgFooter',
+          popup: state.posPopup
+        })
+      };
+    }
+
+    function pgFormatJs(config){
+      return [
+        '// ===== 正式環境 JS（CDN）=====',
+        '// 複製後請改：brand、showPositionId 的容器 id、GA4Key（可留 ""）',
+        `await import('${PG_CDN}');`,
+        '',
+        `window.InfFitsProductCarousel.mount(${JSON.stringify(config, null, 2)});`
+      ].join('\n');
+    }
+
+    function pgFormatHtml(state){
+      const lines = [
+        '<!' + '-- ===== 請先貼到網頁 HTML ===== -->',
+        '<!' + '-- id 必須與 JS 裡 showPositionId 完全相同 -->'
+      ];
+      if (state.mode === 'product' || state.mode === 'both') {
+        lines.push(`<div id="${state.posTop}"><` + `/div>`);
+        lines.push(`<div id="page-main-content"><!` + `-- 你的原本頁面內容 --><` + `/div>`);
+        lines.push(`<div id="${state.posBottom}"><` + `/div>`);
+      }
+      if (state.mode === 'popup' || state.mode === 'both') {
+        lines.push(`<!` + `-- popup 會自動出現在左下角，通常不用先做容器（id: ${state.posPopup}） -->`);
+      }
+      if (lines.length <= 2) lines.push('<!' + '-- 請先在左邊選擇情境 -->');
+      return lines.join('\n');
+    }
+
+    function pgFormatChecklist(state){
+      return [
+        `【必改】把 brand 從「${state.brand}」改成你的品牌代碼`,
+        state.mode === 'popup'
+          ? '【popup】確認 brandConfig.status 為 true（預設已是）'
+          : `【必改】頁面要有 id="${state.posTop}" 與 id="${state.posBottom}" 的區塊`,
+        state.GA4Key
+          ? `【追蹤】GA4Key 目前是 ${state.GA4Key}，請改成正式 G- 開頭代碼`
+          : '【追蹤】GA4Key 目前空白＝不上報；要追蹤再填 G-XXXXXXXX',
+        '【環境】網站用 https 或 localhost 開啟（不要用無法載入模組的離線路徑）',
+        '【網路】瀏覽器可連線 api.inffits.com',
+        '【順序】先有 HTML 容器，再執行 JS',
+        '【成功標準】頁面出現推薦商品；若有 popup，左下角會浮出白框'
+      ];
+    }
+
+    function pgFormatAll(state){
+      const cfg = pgExportConfig(state);
+      const checks = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
+      return [
+        '/* ============================================',
+        '   infFITS Product Carousel 上線包',
+        '   只改 3 件事：brand / 容器 id / GA4Key',
+        '   ============================================ */',
+        '',
+        '/* --- A) 先貼 HTML 容器到網頁 --- */',
+        pgFormatHtml(state),
+        '',
+        '/* --- B) 再貼這段 JS（通常放在 body 結尾前）--- */',
+        pgFormatJs(cfg),
+        '',
+        '/* --- C) 上線檢查 --- */',
+        checks
+      ].join('\n');
+    }
+
+    function pgFriendlyError(err){
+      const raw = String(err?.message || err || '未知錯誤');
+      if (/Failed to fetch|NetworkError|Load failed|net::|CORS|network/i.test(raw)) {
+        return [
+          '連線失敗：無法載入元件或呼叫 API。',
+          '請這樣做：',
+          '1) 在專案根目錄執行 python3 -m http.server 8767',
+          '2) 用瀏覽器打開 http://127.0.0.1:8767/docs/WIDGET-slides.html',
+          '3) 確認電腦可上網（需連 api.inffits.com）',
+          '',
+          '技術訊息：' + raw
+        ].join('\n');
+      }
+      if (/404|Cannot find module|Failed to resolve|error loading dynamically imported/i.test(raw)) {
+        return [
+          '找不到 widget 檔案。',
+          '請確認：',
+          '1) 開啟的是 docs/WIDGET-slides.html',
+          '2) 上一層資料夾有 inf-product-carousel-widget.js',
+          '',
+          '技術訊息：' + raw
+        ].join('\n');
+      }
+      if (/品牌|GetItems|brand/i.test(raw)) {
+        return [
+          '品牌設定讀取失敗。',
+          '請確認 brand 代碼正確，且網路可連 API。',
+          '',
+          '技術訊息：' + raw
+        ].join('\n');
+      }
+      if (/必須提供 carousel|config 必須/i.test(raw)) {
+        return '設定不完整：請先點左邊「快速情境」再試。\n\n技術訊息：' + raw;
+      }
+      return '載入失敗。\n若預覽空白：檢查網路、brand、以及是否用本機伺服器開啟本頁。\n\n技術訊息：' + raw;
+    }
+
+    function pgSyncPresetChips(root){
+      const mode = pgVal(root, 'pg-mode') || 'both';
+      root.querySelectorAll('[data-pg-preset]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-pg-preset') === mode);
+      });
+    }
+
+    function pgApplyPreset(root, mode){
+      pgSetVal(root, 'pg-mode', mode);
+      pgSetVal(root, 'pg-brand', 'DES');
+      pgSetVal(root, 'pg-title', '您可能會喜歡');
+      pgSetVal(root, 'pg-recom', 'bhv');
+      pgSetVal(root, 'pg-layout', '2.5');
+      pgSetVal(root, 'pg-display', 'SaleRate');
+      pgSetVal(root, 'pg-location', 'bottom');
+      pgSetVal(root, 'pg-btn', true);
+      pgSetVal(root, 'pg-status', true);
+      pgSetVal(root, 'pg-pos-top', 'infFitsHeader');
+      pgSetVal(root, 'pg-pos-bottom', 'infFitsFooter');
+      pgSetVal(root, 'pg-pos-popup', 'popupProductContent');
+      if (mode === 'popup' || mode === 'both') pgSetVal(root, 'pg-show-popup', true);
+      pgSyncPresetChips(root);
+      pgScheduleRemount(root);
+    }
+
+    function pgSetStatus(root, text, kind){
+      const el = root.querySelector('[data-pg-status]');
+      if (!el) return;
+      el.textContent = text;
+      el.classList.remove('is-ok', 'is-err', 'is-loading');
+      if (kind) el.classList.add(kind);
+    }
+
+    function pgClearWidgets(){
+      document.querySelectorAll('inf-product-carousel-widget').forEach((el) => el.remove());
+      document.querySelectorAll('#infPopupproductCarousel').forEach((el) => el.remove());
+      const header = document.getElementById('pgHeader');
+      const footer = document.getElementById('pgFooter');
+      if (header) header.innerHTML = '';
+      if (footer) footer.innerHTML = '';
+    }
+
+    function pgEnsureWidgetModule(){
+      if (window.InfFitsProductCarousel?.mount) return Promise.resolve();
+      if (!pgWidgetLoad) {
+        pgWidgetLoad = import(PG_LOCAL).catch((err) => {
+          pgWidgetLoad = null;
+          throw err;
+        });
+      }
+      return pgWidgetLoad;
+    }
+
+    function pgSetError(root, msg){
+      const box = root.querySelector('[data-pg-error]');
+      if (!box) return;
+      if (!msg) {
+        box.textContent = '';
+        box.classList.remove('is-on');
+        return;
+      }
+      box.textContent = msg;
+      box.classList.add('is-on');
+    }
+
+    function pgUpdatePack(root, state){
+      const cfg = pgExportConfig(state);
+      const jsEl = root.querySelector('[data-pg-code-js]');
+      const htmlEl = root.querySelector('[data-pg-code-html]');
+      const allEl = root.querySelector('[data-pg-code-all]');
+      const listEl = root.querySelector('[data-pg-checklist]');
+      if (jsEl) jsEl.textContent = pgFormatJs(cfg);
+      if (htmlEl) htmlEl.textContent = pgFormatHtml(state);
+      if (allEl) allEl.textContent = pgFormatAll(state);
+      if (listEl) {
+        listEl.innerHTML = pgFormatChecklist(state).map((c) => `<li>${escapeHtml(c)}</li>`).join('');
+      }
+    }
+
+    function pgSetTab(root, tab){
+      pgActiveTab = tab || 'all';
+      root.querySelectorAll('[data-pg-tab]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-pg-tab') === pgActiveTab);
+      });
+      root.querySelectorAll('[data-pg-pane]').forEach((pane) => {
+        pane.classList.toggle('is-active', pane.getAttribute('data-pg-pane') === pgActiveTab);
+      });
+    }
+
+    function pgSyncPopupVisibility(root){
+      const show = !!pgVal(root, 'pg-show-popup');
+      root.classList.toggle('is-hide-popup', !show);
+    }
+
+    async function pgRemount(root){
+      const state = pgReadState(root);
+      pgSyncPresetChips(root);
+      pgSyncPopupVisibility(root);
+      pgUpdatePack(root, state);
+      pgSetError(root, '');
+      pgSetStatus(root, '載入中…', 'is-loading');
+      try {
+        await pgEnsureWidgetModule();
+        pgClearWidgets();
+        const preview = pgPreviewConfig(state);
+        if (!preview.carousels.length) {
+          if ((state.mode === 'popup') && state.showPopup === false) {
+            pgSetStatus(root, '已隱藏 popup（可再開「顯示 popup」）', '');
+            return;
+          }
+          pgSetError(root, '還沒選擇情境。請先點左邊「兩者／只 product／只 popup」。');
+          pgSetStatus(root, '待選擇', 'is-err');
+          return;
+        }
+        window.InfFitsProductCarousel.mount(preview);
+        pgSyncPopupVisibility(root);
+        const label = preview.carousels.map((c) => c.type).join(' + ');
+        pgSetStatus(root, `已掛載：${label}`, 'is-ok');
+        // 商品在 Shadow DOM 內；稍後確認是否有內容
+        setTimeout(() => {
+          const hosts = document.querySelectorAll('inf-product-carousel-widget');
+          let hasProduct = false;
+          hosts.forEach((host) => {
+            const sr = host.shadowRoot;
+            if (!sr) return;
+            if (sr.querySelector('.embeddedItem, .product-item, img, a')) hasProduct = true;
+          });
+          if (hasProduct) {
+            pgSetStatus(root, `成功：已看到商品（${label}）`, 'is-ok');
+          } else {
+            pgSetStatus(root, `已掛載 ${label}（若仍空白：查 brand／網路）`, 'is-loading');
+          }
+        }, 1800);
+      } catch (err) {
+        pgSetError(root, pgFriendlyError(err));
+        pgSetStatus(root, '失敗：看紅字說明', 'is-err');
+      }
+    }
+
+    function pgScheduleRemount(root){
+      clearTimeout(pgRemountTimer);
+      pgRemountTimer = setTimeout(() => { pgRemount(root); }, 200);
+    }
+
+    function pgOpenCodeModal(root, preferAll){
+      const modal = root.querySelector('[data-pg-modal]');
+      if (!modal) return;
+      pgUpdatePack(root, pgReadState(root));
+      pgSetTab(root, preferAll === false ? (pgActiveTab || 'all') : 'all');
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function pgCloseCodeModal(root){
+      const modal = root.querySelector('[data-pg-modal]');
+      if (!modal) return;
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function pgToggleFocus(root){
+      const on = root.classList.toggle('is-focus');
+      const btn = root.querySelector('[data-pg-focus]');
+      if (btn) btn.textContent = on ? '顯示設定' : '專注預覽';
+    }
+
+    async function pgCopy(root, forceAll){
+      const state = pgReadState(root);
+      const tab = forceAll ? 'all' : pgActiveTab;
+      let text = '';
+      if (tab === 'html') text = pgFormatHtml(state);
+      else if (tab === 'check') text = pgFormatChecklist(state).map((c, i) => `${i + 1}. ${c}`).join('\n');
+      else if (tab === 'all') text = pgFormatAll(state);
+      else text = pgFormatJs(pgExportConfig(state));
+
+      const status = root.querySelector('[data-pg-copy-status]');
+      try {
+        await navigator.clipboard.writeText(text);
+        if (status) status.textContent = forceAll || tab === 'all' ? '已複製完整上線包' : '已複製';
+      } catch (_) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          if (status) status.textContent = '已複製';
+        } catch (e2) {
+          if (status) status.textContent = '複製失敗：請在彈窗內手動全選複製';
+        }
+      }
+      setTimeout(() => { if (status) status.textContent = ''; }, 2500);
+    }
+
+    function initPlaygroundIfPresent(){
+      const root = slideContent.querySelector('#widgetPlayground');
+      if (!root) return;
+      pgActiveTab = 'all';
+      root.querySelectorAll('input, select, textarea').forEach((el) => {
+        el.addEventListener('input', () => pgScheduleRemount(root));
+        el.addEventListener('change', () => {
+          if (el.name === 'pg-mode') pgSyncPresetChips(root);
+          if (el.name === 'pg-show-popup') {
+            pgSyncPopupVisibility(root);
+            pgScheduleRemount(root);
+            return;
+          }
+          pgScheduleRemount(root);
+        });
+      });
+      root.querySelectorAll('[data-pg-preset]').forEach((btn) => {
+        btn.addEventListener('click', () => pgApplyPreset(root, btn.getAttribute('data-pg-preset')));
+      });
+      root.querySelectorAll('[data-pg-open-code]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const copyAll = btn.hasAttribute('data-pg-copy-all');
+          pgOpenCodeModal(root, true);
+          if (copyAll) await pgCopy(root, true);
+        });
+      });
+      root.querySelector('[data-pg-close-code]')?.addEventListener('click', () => pgCloseCodeModal(root));
+      root.querySelector('[data-pg-copy]')?.addEventListener('click', () => pgCopy(root, false));
+      root.querySelector('[data-pg-focus]')?.addEventListener('click', () => pgToggleFocus(root));
+      root.querySelectorAll('[data-pg-tab]').forEach((btn) => {
+        btn.addEventListener('click', () => pgSetTab(root, btn.getAttribute('data-pg-tab')));
+      });
+      root.querySelector('[data-pg-modal]')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) pgCloseCodeModal(root);
+      });
+      pgSyncPresetChips(root);
+      pgRemount(root);
+    }
+
+    function render(){
+      const s = slides[index];
+      if (!s) {
+        slideContent.innerHTML = '<p style="color:#fecdd3;">投影片資料為空。請用本機伺服器開啟本檔（不要用 IDE 預覽），並強制重新整理。</p>';
+        pageLabel.textContent = `0 / ${slides.length}`;
+        return;
+      }
+      slideContent.innerHTML = parseMarkdown(s.md);
+      // 即時上手：直接掛 template，不走 Markdown 圖片注入
+      if (s.title === '即時上手') {
+        const tpl = document.getElementById('svg-playground');
+        if (tpl) slideContent.insertAdjacentHTML('beforeend', tpl.innerHTML);
+      }
+      pageLabel.textContent = `${index + 1} / ${slides.length}`;
+      deckLabel.textContent = s.deckName;
+      progressBar.style.width = `${((index + 1) / slides.length) * 100}%`;
+      btnPrev.disabled = index === 0;
+      btnNext.disabled = index === slides.length - 1;
+      [...tocEl.querySelectorAll('.toc__item')].forEach((el, i) => {
+        el.classList.toggle('is-active', i === index);
+      });
+      history.replaceState(null, '', `#${index + 1}`);
+      document.getElementById('slide').scrollTop = 0;
+      initPlaygroundIfPresent();
+    }
+
+    btnPrev.addEventListener('click', () => setIndex(index - 1));
+    btnNext.addEventListener('click', () => setIndex(index + 1));
+    window.addEventListener('keydown', (e) => {
+      const t = e.target;
+      const pgRoot = slideContent.querySelector('#widgetPlayground');
+      const codeOpen = pgRoot?.querySelector('[data-pg-modal].is-open');
+      if (codeOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          pgCloseCodeModal(pgRoot);
+        }
+        return;
+      }
+      if (t && (t.closest?.('input, textarea, select, button, .pg-code') || ['INPUT','TEXTAREA','SELECT','BUTTON'].includes(t.tagName))) {
+        return;
+      }
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault(); setIndex(index + 1);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault(); setIndex(index - 1);
+      }
+      if (e.key === 'Home') setIndex(0);
+      if (e.key === 'End') setIndex(slides.length - 1);
+    });
+
+    try {
+      buildToc();
+      const hash = Number((location.hash || '').replace('#',''));
+      setIndex(Number.isFinite(hash) && hash >= 1 ? hash - 1 : 0);
+      if (!slides.length) {
+        slideContent.innerHTML = '<p style="color:#fecdd3;">讀不到投影片 Markdown。請確認本檔完整，並用 http://127.0.0.1:8767/docs/WIDGET-slides.html 開啟。</p>';
+      }
+    } catch (err) {
+      const msg = String(err && err.message ? err.message : err);
+      if (slideContent) {
+        slideContent.innerHTML = `<p style="color:#fecdd3;white-space:pre-wrap;">投影片初始化失敗：${escapeHtml(msg)}</p>`;
+      }
+      console.error(err);
+    }
+  </script>
+</body>
+</html>

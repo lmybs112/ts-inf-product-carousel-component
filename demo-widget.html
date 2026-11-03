@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Carousel Widget Demo</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+</style>
+
+<body>
+    <div id="infFitsHeader">
+        <h2>頂部廣告區域</h2>
+    </div>
+
+    <div id="infFitsContent">
+        <h1>頁面內容</h1>
+        <p>Widget 兩行掛載示範</p>
+    </div>
+
+    <div id="infFitsFooter">
+        <h2>底部廣告區域</h2>
+    </div>
+
+    <script type="module">
+        await import('./inf-product-carousel-widget.js');
+
+        window.InfFitsProductCarousel.mount({
+            brand: 'DES',
+            GA4Key: 'G-G3WD6KWQG4',
+            carousels: [{
+                    type: 'popup',
+                    hide_size: false,
+                    showPositionId: {
+                        bottom: 'popupProductContent'
+                    },
+                    bid: {
+                        HV: "25.5",
+                        WV: "0",
+                        CC: "",
+                        DataItem: "0010",
+                        ClothSize: "",
+                        GVID: "INF",
+                        Sizes: "",
+                        Brand: "CLARKS",
+                        ml_out: "",
+                        Hip: "1-cm",
+                        TID: "162410.45086",
+                        FitP: "2,2,2,2",
+                        LGVID: "INF",
+                        ga_id: "INF",
+                        MRID: "INF",
+                        Gender: "F",
+                        Waist: "1-cm",
+                        ClothID: "",
+                        FMLpath: "FMLSep",
+                        Shoulder: "1-cm",
+                        AvatarSizeSCWH: "",
+                        Transaction: "34",
+                        comment: "try_on_report_online",
+                        ORDERID: "",
+                        DnChest: "1-cm",
+                        UpChest: "1-cm",
+                        SHOES_MODE: "1",
+                        FOOT_CIRCUM: "20",
+                        CALF_CIRCUM: "30.4"
+                    },
+                    brandConfig: {
+                        "DisplayMode": "SaleRate",
+                        "CarouselButton": true,
+                        "RecommendMode": "bhv",
+                        "CarouselLayout": 2.5,
+                        "Title": "您可能會喜歡",
+                        "Location": "bottom",
+                        "status": true
+                    }
+                },
+                {
+                    type: 'product',
+                    showPositionId: {
+                        top: 'infFitsHeader',
+                        bottom: 'infFitsFooter'
+                    }
+                }
+            ]
+        });
+    </script>
+</body>
+
+</html>

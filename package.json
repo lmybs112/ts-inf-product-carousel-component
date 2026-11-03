@@ -1,0 +1,9 @@
+{
+  "name": "ts-inf-product-carousel-component",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test scripts/**/*.test.mjs",
+    "test:widget": "node --test scripts/widget-pure.test.mjs"
+  }
+}
