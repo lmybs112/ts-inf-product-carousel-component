@@ -39,6 +39,9 @@ export function resolveRecommendApiUrl({ brand, carouselType, series_in, series_
   if (carouselType === 'popup') {
     return 'https://api.inffits.com/HTTP_pidinfo_cdp_product_recommendation/extension/recom_product';
   }
+  if (carouselType === 'compact') {
+    return 'https://api.inffits.com/HTTP_stock_cdp_product_recommendation/extension/recom_product';
+  }
   const hasSeries = !!(series_in || series_out);
   const path =
     String(brand || '').toLocaleUpperCase() === 'DABE' || hasSeries
@@ -229,7 +232,7 @@ export function buildMktClickPayload({
     LGVID: ids.lgiven_id || '',
     MRID: ids.member_id || '',
     recom_type: eventRecom || '',
-    recom_loc: carouselType === 'popup' ? 'popup' : 'embed',
+    recom_loc: carouselType === 'popup' || carouselType === 'compact' ? carouselType : 'embed',
     action: 'click',
     action_link: link || '',
     action_itemname: title || '',
@@ -275,6 +278,257 @@ export function resolveProductImageUrl(item, placeholder = PRODUCT_IMAGE_PLACEHO
   return placeholder;
 }
 
+export function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function parsePriceAmount(value) {
+  const match = String(value ?? '').match(/\d[\d,]*/);
+  return match ? parseInt(match[0].replace(/,/g, ''), 10) : null;
+}
+
+function resolveCompactProof(item, { displayMode, hide_discount }) {
+  const count = Math.floor(Number(item.record_cnt) || 0);
+  if (!hide_discount && displayMode === 'SocialProofNum' && count > 0) {
+    return { kind: 'count', count };
+  }
+  const price = parsePriceAmount(item.price);
+  const salePrice = hide_discount ? null : parsePriceAmount(item.sale_price);
+  if (salePrice !== null && price !== null && salePrice < price) {
+    return { kind: 'price', price: salePrice, originalPrice: price };
+  }
+  const onlyPrice = price ?? salePrice;
+  return onlyPrice === null ? { kind: 'none' } : { kind: 'price', price: onlyPrice, originalPrice: null };
+}
+
+export function buildCompactSlide(item, { displayMode, hide_discount } = {}) {
+  return {
+    title: item.title,
+    link: item.link,
+    image: resolveProductImageUrl(item),
+    pid: item.productid || item.id || item.pid || '',
+    eventRecom: item.event_recom || '',
+    proof: resolveCompactProof(item, { displayMode, hide_discount })
+  };
+}
+
+function renderCompactProofHtml(proof) {
+  if (proof.kind === 'count') {
+    return `<p class="inf-compact__proof">近期超過 <strong>${proof.count.toLocaleString()}</strong> 位顧客購買這款商品</p>`;
+  }
+  if (proof.kind === 'price') {
+    const original = proof.originalPrice === null
+      ? ''
+      : ` <s>NT$ ${proof.originalPrice.toLocaleString()}</s>`;
+    return `<p class="inf-compact__proof"><strong>NT$ ${proof.price.toLocaleString()}</strong>${original}</p>`;
+  }
+  return '';
+}
+
+export function renderCompactSlideHtml(slide) {
+  return `
+    <a class="inf-compact__item swiper-slide"
+       href="${escapeHtml(slide.link)}"
+       target="_blank"
+       rel="noopener"
+       draggable="false"
+       data-title="${escapeHtml(slide.title)}"
+       data-link="${escapeHtml(slide.link)}"
+       data-pid="${escapeHtml(slide.pid)}"
+       data-event-recom="${escapeHtml(slide.eventRecom)}">
+      <img class="inf-compact__img"
+           src="${escapeHtml(slide.image)}"
+           alt=""
+           draggable="false"
+           data-swiper-parallax="-16"
+           data-swiper-parallax-scale="0.88"
+           data-swiper-parallax-opacity="0.2"
+           onerror="this.onerror=null;this.src='${PRODUCT_IMAGE_PLACEHOLDER}';">
+      <div class="inf-compact__text"
+           data-swiper-parallax="-64"
+           data-swiper-parallax-opacity="0">
+        <h3 class="inf-compact__title">${escapeHtml(slide.title)}</h3>
+        ${renderCompactProofHtml(slide.proof)}
+      </div>
+    </a>`;
+}
+
+const COMPACT_CSS = `
+  :host {
+    display: block;
+    --inf-compact-ease: cubic-bezier(.32, .72, 0, 1);
+  }
+  .inf-compact {
+    position: fixed;
+    left: var(--inf-compact-left, 20px);
+    bottom: calc(var(--inf-compact-bottom, 20px) + env(safe-area-inset-bottom, 0px));
+    z-index: 9999;
+    width: min(360px, calc(100vw - 2 * var(--inf-compact-left, 20px)));
+    color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', "微軟正黑體", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(16px) scale(.96);
+    transition:
+      opacity .35s ease,
+      transform .55s var(--inf-compact-ease),
+      visibility .55s;
+  }
+  .inf-compact.is-visible {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+  .inf-compact__card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow:
+      0 0 0 .5px rgba(0, 0, 0, .06),
+      0 2px 6px rgba(0, 0, 0, .06),
+      0 12px 32px rgba(0, 0, 0, .14);
+    overflow: hidden;
+    transition: transform .4s var(--inf-compact-ease);
+  }
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .inf-compact__card {
+      background: rgba(255, 255, 255, .78);
+      -webkit-backdrop-filter: saturate(180%) blur(24px);
+      backdrop-filter: saturate(180%) blur(24px);
+    }
+  }
+  .inf-compact__card:active {
+    transform: scale(.985);
+  }
+  .inf-compact__swiper {
+    --swiper-wrapper-transition-timing-function: var(--inf-compact-ease);
+    --swiper-pagination-bottom: 4px;
+    --swiper-pagination-bullet-size: 5px;
+    --swiper-pagination-bullet-horizontal-gap: 2px;
+    --swiper-pagination-bullet-inactive-color: #1d1d1f;
+    --swiper-pagination-bullet-inactive-opacity: .22;
+    --swiper-pagination-color: #1d1d1f;
+  }
+  .inf-compact__item.swiper-slide {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    padding: 10px 14px 10px 10px;
+    color: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .inf-compact__img,
+  .inf-compact__text {
+    transition-timing-function: var(--inf-compact-ease);
+    will-change: transform, opacity;
+  }
+  .inf-compact__img {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #efefef;
+  }
+  .inf-compact__text {
+    flex: 1;
+    min-width: 0;
+  }
+  .inf-compact__title,
+  .inf-compact__proof {
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .inf-compact__title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+    letter-spacing: -.01em;
+  }
+  .inf-compact__proof {
+    font-size: 12px;
+    line-height: 17px;
+    color: rgba(29, 29, 31, .72);
+  }
+  .inf-compact__proof strong {
+    color: #EB7454;
+    font-weight: 600;
+  }
+  .inf-compact__proof s {
+    margin-left: 4px;
+    opacity: .5;
+  }
+  .inf-compact__close {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(29, 29, 31, .56);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    backdrop-filter: saturate(180%) blur(12px);
+    cursor: pointer;
+    transition: transform .3s var(--inf-compact-ease);
+  }
+  .inf-compact__close:active {
+    transform: scale(.88);
+  }
+  /* 視覺 24px，觸控範圍 44px */
+  .inf-compact__close::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+  @media (max-width: 480px) {
+    .inf-compact {
+      left: var(--inf-compact-left, 12px);
+      bottom: calc(var(--inf-compact-bottom, 12px) + env(safe-area-inset-bottom, 0px));
+      width: min(360px, calc(100vw - 2 * var(--inf-compact-left, 12px)));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .inf-compact,
+    .inf-compact__card,
+    .inf-compact__close {
+      transition: none;
+      transform: none;
+    }
+  }
+`;
+
+function sendWidgetGaEvent(GA4Key, eventName, eventData) {
+  if (!GA4Key) return;
+
+  const fullEventData = { ...eventData, send_to: GA4Key };
+
+  // 優先使用 window.gtag；備用 dataLayer.push（支援 GTM）
+  if (typeof window.gtag === 'function') {
+    window.gtag('event', eventName, fullEventData);
+    return;
+  }
+  if (window.dataLayer && Array.isArray(window.dataLayer)) {
+    window.dataLayer.push({ event: eventName, ...fullEventData });
+  }
+}
+
 const __infWidgetIsBrowser = typeof window !== 'undefined' && typeof customElements !== 'undefined';
 
 if (__infWidgetIsBrowser) {
@@ -299,6 +553,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
     }
 
     disconnectedCallback() {
+      this.destroyCompactCarousel();
       if (this.fetchDebounceTimer) {
         clearTimeout(this.fetchDebounceTimer);
         this.fetchDebounceTimer = null;
@@ -863,6 +1118,17 @@ if (!customElements.get('inf-product-carousel-widget')) {
       // console.log('最終配置:', finalConfig);
       // console.log('原始品牌配置:', config.brandConfig);
   
+      if (finalConfig.carouselType === 'compact') {
+        this.ensureEmbeddedAdJQueryLoaded(() => this.loadCompactCarousel({
+          ...finalConfig,
+          skuContentType: skuContent,
+          displayMode: config.displayMode || 'SocialProofNum',
+          // compact 不顯示尺寸，不必向 API 要 SIZEAI 結果
+          hide_size: true
+        }));
+        return;
+      }
+
       // 如果需要自動 append 且品牌配置指定了 Location，則自動移動到目標容器
       if (shouldAutoAppend && config.brandConfig && config.brandConfig.Location) {
         const appendSuccess = this.appendToTargetContainer(containerId, backgroundColor);
@@ -1828,33 +2094,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
       // 確保 Google Analytics 已載入（如果配置了 GA4Key）
       this.ensureGtagLoaded(GA4Key);
   
-      // 創建統一的 GA 事件發送函數，支援 gtag 和 dataLayer.push
-      const sendGAEvent = (eventName, eventData) => {
-        if (!GA4Key) {
-          return; // 沒有配置 GA4Key，不發送事件
-        }
-
-        const fullEventData = {
-          ...eventData,
-          send_to: GA4Key
-        };
-
-        // 優先使用 window.gtag（如果存在）
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', eventName, fullEventData);
-          return;
-        }
-
-        // 備用方案：使用 dataLayer.push（支援 GTM）
-        if (window.dataLayer && Array.isArray(window.dataLayer)) {
-          const dataLayerEvent = {
-            event: eventName,
-            ...fullEventData
-          };
-          window.dataLayer.push(dataLayerEvent);
-          return;
-        }
-      };
+      const sendGAEvent = (eventName, eventData) => sendWidgetGaEvent(GA4Key, eventName, eventData);
   
       $(() => {
         let ids = this.ids_init(skuContentType || skuContent || 'shopline_sku'); // 修改：傳遞 skuContentType 或 skuContent
@@ -2041,6 +2281,97 @@ if (!customElements.get('inf-product-carousel-widget')) {
       });
     }
   
+    loadCompactCarousel(config) {
+      this.ensureGtagLoaded(config.GA4Key);
+      const ids = this.ids_init(config.skuContentType || 'shopline_sku');
+      this.fetchRecommendations(ids, 'inf-compact', config);
+    }
+
+    renderCompactCarousel(slides, ids, config) {
+      const { brand, bid, GA4Key, autoplay } = config;
+      const hasMultiple = slides.length > 1;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const style = document.createElement('style');
+      style.textContent = COMPACT_CSS;
+      this.shadowRoot.appendChild(style);
+
+      const root = document.createElement('section');
+      root.className = 'inf-compact';
+      root.setAttribute('aria-label', '商品推薦');
+      root.innerHTML = `
+        <button class="inf-compact__close" type="button" aria-label="關閉推薦">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="inf-compact__card">
+          <div class="swiper inf-compact__swiper">
+            <div class="swiper-wrapper">${slides.map(renderCompactSlideHtml).join('')}</div>
+            <div class="swiper-pagination"></div>
+          </div>
+        </div>`;
+      this.shadowRoot.appendChild(root);
+
+      root.addEventListener('click', (event) => {
+        if (event.target.closest('.inf-compact__close')) {
+          this.destroyCompactCarousel();
+          root.classList.remove('is-visible');
+          setTimeout(() => root.remove(), 350);
+          return;
+        }
+
+        const item = event.target.closest('.inf-compact__item');
+        if (!item) return;
+        const { title, link, eventRecom, pid } = item.dataset;
+        const ga = buildProductClickGaPayload(title, link, eventRecom);
+        sendWidgetGaEvent(GA4Key, ga.eventName, { ...ga.eventData, carousel_type: 'compact' });
+        this.recordMktClick(buildMktClickPayload({
+          brand,
+          bid,
+          ids,
+          eventRecom,
+          carouselType: 'compact',
+          link,
+          title,
+          pid
+        })).catch((error) => console.error('recordMktClick:', error));
+      });
+
+      if (typeof window.Swiper === 'undefined') {
+        console.error('Swiper 尚未載入，無法初始化輪播');
+        return;
+      }
+
+      // Swiper 的 loop 至少要 3 張才能雙向滑動，2 張改用 rewind
+      this.compactSwiper = new window.Swiper(root.querySelector('.inf-compact__swiper'), {
+        slidesPerView: 1,
+        speed: reducedMotion ? 0 : 520,
+        parallax: !reducedMotion,
+        threshold: 3,
+        longSwipesRatio: 0.25,
+        loop: slides.length >= 3,
+        rewind: slides.length === 2,
+        allowTouchMove: hasMultiple,
+        grabCursor: hasMultiple,
+        autoplay: autoplay && hasMultiple && !reducedMotion
+          ? { delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }
+          : false,
+        pagination: hasMultiple
+          ? { el: root.querySelector('.swiper-pagination'), clickable: true, dynamicBullets: true, dynamicMainBullets: 1 }
+          : false
+      });
+
+      requestAnimationFrame(() => root.classList.add('is-visible'));
+    }
+
+    destroyCompactCarousel() {
+      if (this.compactSwiper) {
+        this.compactSwiper.destroy(true, true);
+        this.compactSwiper = null;
+      }
+    }
+
     /**
      * 記錄行銷點擊行為到 API
      * @param {Object} data - 點擊數據對象
@@ -2831,6 +3162,11 @@ if (!customElements.get('inf-product-carousel-widget')) {
       if (jsonData.length > 0) {
         // 設置標記表示數據有效，允許顯示 popup
         window.hasValidPopupData = true;
+        if (carouselType === 'compact') {
+          const slides = jsonData.map((item) => buildCompactSlide(item, { displayMode, hide_discount }));
+          this.renderCompactCarousel(slides, ids, config);
+          return;
+        }
         this.updatePopAd(jsonData, containerId, autoplay, sortedBreakpoints, displayMode, hide_size, hide_discount);
 
       } else {

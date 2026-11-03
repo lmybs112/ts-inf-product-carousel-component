@@ -10,12 +10,13 @@ ESM 商品推薦輪播。與舊版 `inf-product-carousel-component.js` **互不�
 | 渲染 | Shadow DOM |
 | 依賴 | 執行期自行載入 jQuery、Swiper；有 `GA4Key` 時載入 gtag |
 
-支援兩種輪播，可一次 `mount` 同時掛上：
+支援三種輪播，可一次 `mount` 同時掛上：
 
 | `carousel.type` | 說明 |
 |-----------------|------|
 | `product` | 嵌入頁面指定容器 |
 | `popup` | 左下角浮動彈窗 |
+| `compact` | 左下角小版面庫存推薦，一次一件商品，可左右滑動 |
 
 ---
 
@@ -104,7 +105,7 @@ window.InfFitsProductCarousel.mount({
 
 | 參數 | 型別 | 說明 |
 |------|------|------|
-| `type` | `'product'` \| `'popup'` | 輪播型態；未傳時依流程視為 `product` |
+| `type` | `'product'` \| `'popup'` \| `'compact'` | 輪播型態；未傳時依流程視為 `product` |
 | `showPositionId` | `{ top?, bottom? }` | 掛載容器 DOM `id`。常見：`{ top: 'infFitsHeader', bottom: 'infFitsFooter' }`；popup 常用 `{ bottom: 'popupProductContent' }` |
 | `hide_size` | `boolean` | 隱藏尺寸相關資訊 |
 | `hide_discount` | `boolean` | 隱藏折扣價 |
@@ -148,6 +149,43 @@ window.InfFitsProductCarousel.mount({
   - `true`：資料載入後自動顯示
   - `false`：需手動 `window.showPopup()`
 - 推薦 endpoint：`https://api.inffits.com/HTTP_pidinfo_cdp_product_recommendation/extension/recom_product`
+
+### `type: 'compact'`
+
+小版面庫存推薦，固定在左下角。不需要 `showPositionId`，也不需要頁面容器。示範頁：`demo-widget-compact.html`。
+
+```js
+window.InfFitsProductCarousel.mount({
+  brand: 'DES',
+  GA4Key: 'G-XXXXXXXXXX',
+  carousel: { type: 'compact' }
+});
+```
+
+- 推薦 endpoint：`https://api.inffits.com/HTTP_stock_cdp_product_recommendation/extension/recom_product`
+- 不呼叫品牌設定 API。需要設定時傳 `carousel.brandConfig`；`status: false` 會停用。
+- 商品挑選規則與 `product` 相同（見第 8 節），隨機取最多 12 件。
+- 輪播：手機左右滑動，桌面可拖曳或點圓點。多於一張時預設每 4 秒自動切換，`autoplay: false` 或系統開啟減少動態效果時不自動切換。
+- 關閉後只在當次頁面消失，換頁會再出現。
+- 沒有可顯示的商品時不渲染。
+
+顯示內容依 `displayMode`：
+
+| `displayMode` | 商品順序 | 第二行文字 |
+|---------------|----------|------------|
+| `SocialProofNum`（compact 預設） | 只用 `sp_atc`，沒有才用 `sp_trans` | 近期超過 N 位顧客購買這款商品 |
+| `SaleRate` | 優先 `bhv` / `corr`，沒有才用 `sp_atc` / `sp_trans` | 價格 |
+
+沒有 `record_cnt` 時，第二行改顯示價格。`hide_discount` 時只顯示原價，不顯示人數。`hide_size` 對 compact 沒有作用，因為版面不顯示尺寸。
+
+位置可用 CSS 變數調整，例如避開手機底部的固定購買列：
+
+```css
+inf-product-carousel-widget {
+  --inf-compact-bottom: 72px;
+  --inf-compact-left: 12px;
+}
+```
 
 ---
 
@@ -284,6 +322,8 @@ window.showPopup();
 
 箭頭／標題導覽**不會**打後端點擊 API。
 
+`compact` 的商品點擊沿用上表事件名稱，並多帶參數 `carousel_type: 'compact'`。滑動與圓點不發事件。
+
 查詢建議：GA4 DebugView 確認 `send_to`；點一次商品／箭頭應各只有一筆事件。
 
 ---
@@ -297,7 +337,7 @@ window.showPopup();
 | `Brand` | 品牌 |
 | `GVID` / `LGVID` / `MRID` | 訪客／會員相關 ID |
 | `recom_type` | 同 `data-event-recom` |
-| `recom_loc` | `popup` 或 `embed` |
+| `recom_loc` | `popup`、`compact` 或 `embed` |
 | `action` | `click` |
 | `action_link` / `action_itemname` / `action_pid` | 連結、名稱、PID |
 

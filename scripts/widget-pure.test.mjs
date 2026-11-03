@@ -15,7 +15,9 @@ import {
   resolveNavDisplayMode,
   buildMktClickPayload,
   resolveProductImageUrl,
-  PRODUCT_IMAGE_PLACEHOLDER
+  PRODUCT_IMAGE_PLACEHOLDER,
+  buildCompactSlide,
+  renderCompactSlideHtml
 } from '../inf-product-carousel-widget.js';
 
 test('assertMountConfig throws without carousel(s)', () => {
@@ -281,4 +283,63 @@ test('resolveProductImageUrl prefers usable fields', () => {
     resolveProductImageUrl('https://cdn.example/direct.jpg'),
     'https://cdn.example/direct.jpg'
   );
+});
+
+const compactItem = (id, extra = {}) => ({
+  id,
+  title: `商品 ${id}`,
+  link: `https://shop.example/${id}`,
+  image_link: `https://img.example/${id}.jpg`,
+  price: '880 TWD',
+  sale_price: '599 TWD',
+  availability: 'in stock',
+  ...extra
+});
+
+test('compact slide shows the count in SocialProofNum mode with one copy for every source', () => {
+  for (const event_recom of ['sp_atc', 'sp_trans']) {
+    const slide = buildCompactSlide(compactItem('a', { record_cnt: 1, event_recom }), {
+      displayMode: 'SocialProofNum'
+    });
+    assert.deepEqual(slide.proof, { kind: 'count', count: 1 });
+    assert.equal(slide.eventRecom, event_recom);
+    assert.ok(renderCompactSlideHtml(slide).includes('位顧客購買這款商品'));
+  }
+});
+
+test('compact slide shows the price without a count or outside SocialProofNum', () => {
+  const saleProof = { kind: 'price', price: 599, originalPrice: 880 };
+  assert.deepEqual(
+    buildCompactSlide(compactItem('a'), { displayMode: 'SocialProofNum' }).proof,
+    saleProof
+  );
+  assert.deepEqual(
+    buildCompactSlide(compactItem('a', { record_cnt: 50 }), { displayMode: 'SaleRate' }).proof,
+    saleProof
+  );
+});
+
+test('compact slide shows only the original price when hide_discount is set', () => {
+  const slide = buildCompactSlide(compactItem('a', { record_cnt: 50 }), {
+    displayMode: 'SocialProofNum',
+    hide_discount: true
+  });
+  assert.deepEqual(slide.proof, { kind: 'price', price: 880, originalPrice: null });
+});
+
+test('compact slide HTML escapes API text', () => {
+  const slide = buildCompactSlide(compactItem('x', { title: '<img src=x onerror=alert(1)>"' }), {
+    displayMode: 'SaleRate'
+  });
+  const html = renderCompactSlideHtml(slide);
+  assert.ok(!html.includes('<img src=x'));
+  assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;&quot;'));
+});
+
+test('compact uses the stock endpoint and its own click location', () => {
+  assert.match(
+    resolveRecommendApiUrl({ brand: 'DES', carouselType: 'compact' }),
+    /HTTP_stock_cdp_product_recommendation/
+  );
+  assert.equal(buildMktClickPayload({ carouselType: 'compact' }).recom_loc, 'compact');
 });
