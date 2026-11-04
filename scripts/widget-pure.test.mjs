@@ -17,7 +17,8 @@ import {
   resolveProductImageUrl,
   PRODUCT_IMAGE_PLACEHOLDER,
   buildCompactSlide,
-  renderCompactSlideHtml
+  renderCompactSlideHtml,
+  resolveCompactBottomOffset
 } from '../inf-product-carousel-widget.js';
 
 test('assertMountConfig throws without carousel(s)', () => {
@@ -327,6 +328,16 @@ test('compact slide shows only the original price when hide_discount is set', ()
   assert.deepEqual(slide.proof, { kind: 'price', price: 880, originalPrice: null });
 });
 
+test('compact slide shows the size tag only when hide_size is off', () => {
+  const item = compactItem('a', { size_tag: 'UK7<' });
+  const shown = renderCompactSlideHtml(buildCompactSlide(item, { hide_size: false }));
+  assert.ok(shown.includes('<span class="inf-compact__size">UK7&lt;</span>'));
+  const hidden = renderCompactSlideHtml(buildCompactSlide(item, { hide_size: true }));
+  assert.ok(!hidden.includes('inf-compact__size'));
+  const noSize = renderCompactSlideHtml(buildCompactSlide(compactItem('b'), { hide_size: false }));
+  assert.ok(!noSize.includes('inf-compact__size'));
+});
+
 test('compact slide HTML escapes API text', () => {
   const slide = buildCompactSlide(compactItem('x', { title: '<img src=x onerror=alert(1)>"' }), {
     displayMode: 'SaleRate'
@@ -334,6 +345,17 @@ test('compact slide HTML escapes API text', () => {
   const html = renderCompactSlideHtml(slide);
   assert.ok(!html.includes('<img src=x'));
   assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;&quot;'));
+});
+
+test('compact clears a bottom bar pinned to the viewport', () => {
+  assert.equal(resolveCompactBottomOffset({ top: 776, bottom: 844, height: 68 }, 844), 80);
+});
+
+test('compact ignores a missing, hidden, or unpinned bottom bar', () => {
+  assert.equal(resolveCompactBottomOffset(undefined, 844), null);
+  assert.equal(resolveCompactBottomOffset({ top: 0, bottom: 0, height: 0 }, 844), null);
+  assert.equal(resolveCompactBottomOffset({ top: 400, bottom: 468, height: 68 }, 844), null);
+  assert.equal(resolveCompactBottomOffset({ top: 900, bottom: 968, height: 68 }, 844), null);
 });
 
 test('compact uses the stock endpoint and its own click location', () => {

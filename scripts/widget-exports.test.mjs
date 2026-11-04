@@ -19,7 +19,8 @@ const REQUIRED_EXPORTS = [
   'resolveProductImageUrl',
   'escapeHtml',
   'buildCompactSlide',
-  'renderCompactSlideHtml'
+  'renderCompactSlideHtml',
+  'resolveCompactBottomOffset'
 ];
 
 test('widget module exports all public helpers', () => {

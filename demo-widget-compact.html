@@ -5,18 +5,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Compact Carousel Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 200vh;
+            padding: 24px 16px;
+            background: #8fb4c2;
+            color: #1d1d1f;
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', sans-serif;
+        }
+
+        main {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: 24px;
+        }
+
+        .snippet {
+            overflow: hidden;
+            border-radius: 12px;
+            background: #1d1d1f;
+            color: #f5f5f7;
+        }
+
+        .snippet__bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px 10px 16px;
+            font-size: 14px;
+        }
+
+        .snippet__copy {
+            flex: none;
+            min-height: 36px;
+            padding: 0 14px;
+            border: 0;
+            border-radius: 8px;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .snippet pre {
+            margin: 0;
+            padding: 0 16px 16px;
+            overflow-x: auto;
+            font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+    </style>
 </head>
 
-<body style="min-height: 200vh; background: #8fb4c2;">
-    <h1>type: 'compact' 示範</h1>
+<body>
+    <main>
+        <h1>type: 'compact' 示範</h1>
+        <section class="snippet" aria-label="Console 測試程式碼">
+            <div class="snippet__bar">
+                <span>貼到 Console 測試</span>
+                <button class="snippet__copy" id="copySnippet" type="button">複製程式碼</button>
+            </div>
+            <pre><code id="snippetCode"></code></pre>
+        </section>
+    </main>
 
     <script type="module">
-        await import('./inf-product-carousel-widget.js');
-
-        window.InfFitsProductCarousel.mount({
+        // 程式碼會貼到其他網站執行，不能用本機網址
+        const productionWidgetUrl = 'https://ts-inf-product-carousel-component.vercel.app/inf-product-carousel-widget.js';
+        const demoConfig = {
             brand: 'DES',
             carousel: { type: 'compact' }
+        };
+
+        const snippet = `(async () => {
+  await import('${productionWidgetUrl}');
+
+  // 移除舊的 compact，才能重複貼上測試
+  document
+    .querySelectorAll('inf-product-carousel-widget[data-instance-key^="inf-widget-carousel-compact"]')
+    .forEach((el) => el.remove());
+
+  window.InfFitsProductCarousel.mount(${JSON.stringify(demoConfig, null, 2).replace(/\n/g, '\n  ')});
+})();`;
+
+        const copyButton = document.getElementById('copySnippet');
+        document.getElementById('snippetCode').textContent = snippet;
+
+        function copyWithSelection(text) {
+            const field = document.createElement('textarea');
+            field.value = text;
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand('copy');
+            field.remove();
+            return copied;
+        }
+
+        let resetLabel;
+        copyButton.addEventListener('click', async () => {
+            let copied;
+            try {
+                await navigator.clipboard.writeText(snippet);
+                copied = true;
+            } catch {
+                copied = copyWithSelection(snippet);
+            }
+            copyButton.textContent = copied ? '已複製' : '複製失敗，請手動選取';
+            clearTimeout(resetLabel);
+            resetLabel = setTimeout(() => {
+                copyButton.textContent = '複製程式碼';
+            }, 2000);
         });
+
+        await import('./inf-product-carousel-widget.js');
+        window.InfFitsProductCarousel.mount(demoConfig);
     </script>
 </body>
 
