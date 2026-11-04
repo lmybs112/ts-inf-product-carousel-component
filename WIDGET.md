@@ -176,9 +176,16 @@ window.InfFitsProductCarousel.mount({
 | `SocialProofNum`（compact 預設） | 只用 `sp_atc`，沒有才用 `sp_trans` | 近期超過 N 位顧客購買這款商品 |
 | `SaleRate` | 優先 `bhv` / `corr`，沒有才用 `sp_atc` / `sp_trans` | 價格 |
 
-沒有 `record_cnt` 時，第二行改顯示價格。`hide_discount` 時只顯示原價，不顯示人數。`hide_size` 對 compact 沒有作用，因為版面不顯示尺寸。
+沒有 `record_cnt` 時，第二行改顯示價格。`hide_discount` 時只顯示原價，不顯示人數。
 
-位置可用 CSS 變數調整，例如避開手機底部的固定購買列：
+尺寸相關參數：
+
+| 參數 | 行為 |
+|------|------|
+| `bid` | 有傳時連同 `SIZEAI: 'True'` 傳給庫存 API；沒傳時兩者都不送 |
+| `hide_size` | 只控制前端是否顯示尺寸標籤，不影響 API 請求。預設 `true`（不顯示）；設 `false` 且 API 有回傳尺寸時顯示 |
+
+偵測到貼齊視窗底部的 91APP 購買列（`.salepage-fix-bottom`）時，卡片會自動移到購買列上方。其他網站可用 CSS 變數調整位置，有設定 `--inf-compact-bottom` 時以設定值為準：
 
 ```css
 inf-product-carousel-widget {

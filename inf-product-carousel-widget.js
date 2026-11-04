@@ -307,13 +307,14 @@ function resolveCompactProof(item, { displayMode, hide_discount }) {
   return onlyPrice === null ? { kind: 'none' } : { kind: 'price', price: onlyPrice, originalPrice: null };
 }
 
-export function buildCompactSlide(item, { displayMode, hide_discount } = {}) {
+export function buildCompactSlide(item, { displayMode, hide_discount, hide_size } = {}) {
   return {
     title: item.title,
     link: item.link,
     image: resolveProductImageUrl(item),
     pid: item.productid || item.id || item.pid || '',
     eventRecom: item.event_recom || '',
+    sizeTag: hide_size ? '' : (item.size_tag || ''),
     proof: resolveCompactProof(item, { displayMode, hide_discount })
   };
 }
@@ -342,14 +343,17 @@ export function renderCompactSlideHtml(slide) {
        data-link="${escapeHtml(slide.link)}"
        data-pid="${escapeHtml(slide.pid)}"
        data-event-recom="${escapeHtml(slide.eventRecom)}">
-      <img class="inf-compact__img"
-           src="${escapeHtml(slide.image)}"
-           alt=""
-           draggable="false"
+      <div class="inf-compact__media"
            data-swiper-parallax="-16"
            data-swiper-parallax-scale="0.88"
-           data-swiper-parallax-opacity="0.2"
-           onerror="this.onerror=null;this.src='${PRODUCT_IMAGE_PLACEHOLDER}';">
+           data-swiper-parallax-opacity="0.2">
+        <img class="inf-compact__img"
+             src="${escapeHtml(slide.image)}"
+             alt=""
+             draggable="false"
+             onerror="this.onerror=null;this.src='${PRODUCT_IMAGE_PLACEHOLDER}';">
+        ${slide.sizeTag ? `<span class="inf-compact__size">${escapeHtml(slide.sizeTag)}</span>` : ''}
+      </div>
       <div class="inf-compact__text"
            data-swiper-parallax="-64"
            data-swiper-parallax-opacity="0">
@@ -359,16 +363,29 @@ export function renderCompactSlideHtml(slide) {
     </a>`;
 }
 
+const COMPACT_BOTTOM_BAR_SELECTOR = '.salepage-fix-bottom';
+const COMPACT_BOTTOM_BAR_GAP = 12;
+
+/** 回傳卡片要避開的底部高度；購買列不存在或沒有貼齊視窗底部時回傳 null */
+export function resolveCompactBottomOffset(barRect, viewportHeight, gap = COMPACT_BOTTOM_BAR_GAP) {
+  if (!barRect || barRect.height <= 0) return null;
+  if (barRect.top >= viewportHeight || barRect.bottom < viewportHeight - 1) return null;
+  return viewportHeight - barRect.top + gap;
+}
+
 const COMPACT_CSS = `
+  /* 部分網站會把 host 設成 z-index: 1，形成層疊環境讓卡片蓋不過購買列；!important 才能贏過外部 CSS */
   :host {
     display: block;
+    position: static !important;
+    z-index: auto !important;
     --inf-compact-ease: cubic-bezier(.32, .72, 0, 1);
   }
   .inf-compact {
     position: fixed;
     left: var(--inf-compact-left, 20px);
-    bottom: calc(var(--inf-compact-bottom, 20px) + env(safe-area-inset-bottom, 0px));
-    z-index: 9999;
+    bottom: calc(var(--inf-compact-bottom, var(--inf-compact-auto-bottom, 20px)) + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
     width: min(360px, calc(100vw - 2 * var(--inf-compact-left, 20px)));
     color: #1d1d1f;
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', "微軟正黑體", sans-serif;
@@ -398,7 +415,7 @@ const COMPACT_CSS = `
   }
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .inf-compact__card {
-      background: rgba(255, 255, 255, .78);
+      background: rgba(255, 255, 255, .92);
       -webkit-backdrop-filter: saturate(180%) blur(24px);
       backdrop-filter: saturate(180%) blur(24px);
     }
@@ -426,13 +443,37 @@ const COMPACT_CSS = `
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
-  .inf-compact__img,
+  .inf-compact__media,
   .inf-compact__text {
     transition-timing-function: var(--inf-compact-ease);
     will-change: transform, opacity;
   }
-  .inf-compact__img {
+  .inf-compact__media {
+    position: relative;
     flex: none;
+    width: 44px;
+    height: 44px;
+  }
+  .inf-compact__size {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    max-width: 40px;
+    padding: 0 4px;
+    overflow: hidden;
+    border-radius: 40px;
+    background: rgba(255, 255, 255, .7);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: rgba(0, 0, 0, .95);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 14px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .inf-compact__img {
+    display: block;
     width: 44px;
     height: 44px;
     border-radius: 10px;
@@ -500,7 +541,7 @@ const COMPACT_CSS = `
   @media (max-width: 480px) {
     .inf-compact {
       left: var(--inf-compact-left, 12px);
-      bottom: calc(var(--inf-compact-bottom, 12px) + env(safe-area-inset-bottom, 0px));
+      bottom: calc(var(--inf-compact-bottom, var(--inf-compact-auto-bottom, 12px)) + env(safe-area-inset-bottom, 0px));
       width: min(360px, calc(100vw - 2 * var(--inf-compact-left, 12px)));
     }
   }
@@ -1123,8 +1164,9 @@ if (!customElements.get('inf-product-carousel-widget')) {
           ...finalConfig,
           skuContentType: skuContent,
           displayMode: config.displayMode || 'SocialProofNum',
-          // compact 不顯示尺寸，不必向 API 要 SIZEAI 結果
-          hide_size: true
+          hide_size: config.hide_size ?? true,
+          // 不用預設體型資料：只有網站傳了 bid 才送
+          bid: config.bid
         }));
         return;
       }
@@ -2338,6 +2380,20 @@ if (!customElements.get('inf-product-carousel-widget')) {
         })).catch((error) => console.error('recordMktClick:', error));
       });
 
+      const syncBottomOffset = () => {
+        const bar = document.querySelector(COMPACT_BOTTOM_BAR_SELECTOR);
+        const offset = resolveCompactBottomOffset(bar?.getBoundingClientRect(), window.innerHeight);
+        if (offset === null) {
+          root.style.removeProperty('--inf-compact-auto-bottom');
+        } else {
+          // 購買列的高度已含安全區，扣掉避免和卡片本身的 env() 重複計算
+          root.style.setProperty('--inf-compact-auto-bottom', `calc(${offset}px - env(safe-area-inset-bottom, 0px))`);
+        }
+      };
+      syncBottomOffset();
+      this.compactResizeHandler = syncBottomOffset;
+      window.addEventListener('resize', syncBottomOffset, { passive: true });
+
       if (typeof window.Swiper === 'undefined') {
         console.error('Swiper 尚未載入，無法初始化輪播');
         return;
@@ -2359,13 +2415,19 @@ if (!customElements.get('inf-product-carousel-widget')) {
           : false,
         pagination: hasMultiple
           ? { el: root.querySelector('.swiper-pagination'), clickable: true, dynamicBullets: true, dynamicMainBullets: 1 }
-          : false
+          : false,
+        // 購買列可能比卡片晚出現或被收起，切換時順便重新量測
+        on: { slideChange: syncBottomOffset }
       });
 
       requestAnimationFrame(() => root.classList.add('is-visible'));
     }
 
     destroyCompactCarousel() {
+      if (this.compactResizeHandler) {
+        window.removeEventListener('resize', this.compactResizeHandler);
+        this.compactResizeHandler = null;
+      }
       if (this.compactSwiper) {
         this.compactSwiper.destroy(true, true);
         this.compactSwiper = null;
@@ -2794,7 +2856,9 @@ if (!customElements.get('inf-product-carousel-widget')) {
         SIZEAI_ptr: "bhv,corr,sp_atc,sp_trans"||"bhv"
         // SIZEAI_ptr: recommendMode||"bhv"
       };
-      bid.Brand = brand;
+      if (bid) {
+        bid.Brand = brand;
+      }
   
       if (ctype_val && ctype_val.length > 0) {
         requestData.ctype_val = JSON.stringify(ctype_val);
@@ -2805,7 +2869,8 @@ if (!customElements.get('inf-product-carousel-widget')) {
         requestData.bid = bid;
       }
 
-      if (!!hide_size &&  requestData.SIZEAI === 'True') {
+      // compact 的 hide_size 只控制前端顯示
+      if (!!hide_size && carouselType !== 'compact' && requestData.SIZEAI === 'True') {
         delete requestData.SIZEAI;
       }
       if (series_out) {
@@ -3163,7 +3228,7 @@ if (!customElements.get('inf-product-carousel-widget')) {
         // 設置標記表示數據有效，允許顯示 popup
         window.hasValidPopupData = true;
         if (carouselType === 'compact') {
-          const slides = jsonData.map((item) => buildCompactSlide(item, { displayMode, hide_discount }));
+          const slides = jsonData.map((item) => buildCompactSlide(item, { displayMode, hide_discount, hide_size }));
           this.renderCompactCarousel(slides, ids, config);
           return;
         }
