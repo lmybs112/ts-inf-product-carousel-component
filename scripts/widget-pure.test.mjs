@@ -267,6 +267,22 @@ test('resolveProductImageUrl falls back for missing/undefined values', () => {
   assert.equal(resolveProductImageUrl({ image_link: '  ' }), PRODUCT_IMAGE_PLACEHOLDER);
 });
 
+test('resolveProductImageUrl swaps only the dead image host and keeps path and query', () => {
+  const path = 'webapi/imagesV3/Cropped/SalePage/10154126/0/621373598015440000?v=1';
+  assert.equal(
+    resolveProductImageUrl({ image_link: `https://diz36nn4q02zr.cloudfront.net/${path}` }),
+    `https://img.91app.com/${path}`
+  );
+  assert.equal(
+    resolveProductImageUrl(`https://diz36nn4q02zr.cloudfront.net/${path}`),
+    `https://img.91app.com/${path}`
+  );
+  assert.equal(
+    resolveProductImageUrl({ image_link: 'https://other.cloudfront.net/a.jpg' }),
+    'https://other.cloudfront.net/a.jpg'
+  );
+});
+
 test('resolveProductImageUrl prefers usable fields', () => {
   assert.equal(
     resolveProductImageUrl({ image_link: 'https://cdn.example/a.jpg' }),
