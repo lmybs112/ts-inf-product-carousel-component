@@ -324,10 +324,10 @@ function renderCompactProofHtml(proof) {
     return `<p class="inf-compact__proof">近期超過 <strong>${proof.count.toLocaleString()}</strong> 位顧客購買這款商品</p>`;
   }
   if (proof.kind === 'price') {
-    const original = proof.originalPrice === null
+    const discount = proof.originalPrice === null
       ? ''
-      : ` <s>NT$ ${proof.originalPrice.toLocaleString()}</s>`;
-    return `<p class="inf-compact__proof"><strong>NT$ ${proof.price.toLocaleString()}</strong>${original}</p>`;
+      : `<span class="inf-compact__discount">${Math.ceil(100 - (proof.price * 100) / proof.originalPrice)}% off</span>`;
+    return `<p class="inf-compact__proof">${discount}<strong>NT$ ${proof.price.toLocaleString()}</strong></p>`;
   }
   return '';
 }
@@ -506,9 +506,15 @@ const COMPACT_CSS = `
     color: #EB7454;
     font-weight: 600;
   }
-  .inf-compact__proof s {
-    margin-left: 4px;
-    opacity: .5;
+  .inf-compact__discount {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 0 4px;
+    border: 1px solid #EB7454;
+    border-radius: 5px;
+    color: #EB7454;
+    font-size: 10px;
+    line-height: 13px;
   }
   .inf-compact__close {
     position: absolute;
@@ -1163,7 +1169,6 @@ if (!customElements.get('inf-product-carousel-widget')) {
         this.ensureEmbeddedAdJQueryLoaded(() => this.loadCompactCarousel({
           ...finalConfig,
           skuContentType: skuContent,
-          displayMode: config.displayMode || 'SocialProofNum',
           hide_size: config.hide_size ?? true,
           // 不用預設體型資料：只有網站傳了 bid 才送
           bid: config.bid

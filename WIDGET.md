@@ -169,12 +169,12 @@ window.InfFitsProductCarousel.mount({
 - 關閉後只在當次頁面消失，換頁會再出現。
 - 沒有可顯示的商品時不渲染。
 
-顯示內容依 `displayMode`：
+第二行顯示價格或購買人數，用 `displayMode` 切換（也可用 `brandConfig.DisplayMode`），預設顯示價格：
 
 | `displayMode` | 商品順序 | 第二行文字 |
 |---------------|----------|------------|
-| `SocialProofNum`（compact 預設） | 只用 `sp_atc`，沒有才用 `sp_trans` | 近期超過 N 位顧客購買這款商品 |
-| `SaleRate` | 優先 `bhv` / `corr`，沒有才用 `sp_atc` / `sp_trans` | 價格 |
+| `SaleRate`（預設） | 優先 `bhv` / `corr`，沒有才用 `sp_atc` / `sp_trans` | 價格；有特價時加上折扣標籤，例如 `32% off` `NT$ 599` |
+| `SocialProofNum` | 只用 `sp_atc`，沒有才用 `sp_trans` | 近期超過 N 位顧客購買這款商品 |
 
 沒有 `record_cnt` 時，第二行改顯示價格。`hide_discount` 時只顯示原價，不顯示人數。
 
