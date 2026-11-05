@@ -250,10 +250,15 @@ function isUsableImageUrl(value) {
   return trimmed !== '' && trimmed !== 'undefined' && trimmed !== 'null';
 }
 
+// 暫時處理：API 回傳的這個網域已查不到 IP，同路徑圖片在 img.91app.com。後端修正 image_link 後移除。
+function replaceDeadImageHost(url) {
+  return url.replace(/^https:\/\/diz36nn4q02zr\.cloudfront\.net\//, 'https://img.91app.com/');
+}
+
 /** 解析商品圖片 URL；無效時回傳占位圖 */
 export function resolveProductImageUrl(item, placeholder = PRODUCT_IMAGE_PLACEHOLDER) {
   if (typeof item === 'string') {
-    return isUsableImageUrl(item) ? item.trim() : placeholder;
+    return isUsableImageUrl(item) ? replaceDeadImageHost(item.trim()) : placeholder;
   }
   if (!item || typeof item !== 'object') {
     return placeholder;
@@ -272,7 +277,7 @@ export function resolveProductImageUrl(item, placeholder = PRODUCT_IMAGE_PLACEHO
   ];
   for (const candidate of candidates) {
     if (isUsableImageUrl(candidate)) {
-      return candidate.trim();
+      return replaceDeadImageHost(candidate.trim());
     }
   }
   return placeholder;
