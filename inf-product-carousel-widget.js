@@ -448,6 +448,10 @@ const COMPACT_CSS = `
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
+  .inf-compact__swiper.is-dragging,
+  .inf-compact__swiper.is-dragging * {
+    cursor: grabbing;
+  }
   .inf-compact__media,
   .inf-compact__text {
     transition-timing-function: var(--inf-compact-ease);
@@ -2420,6 +2424,8 @@ if (!customElements.get('inf-product-carousel-widget')) {
         rewind: slides.length === 2,
         allowTouchMove: hasMultiple,
         grabCursor: hasMultiple,
+        // forceToAxis：只接管左右滑，上下滾輪仍交給頁面捲動
+        mousewheel: hasMultiple ? { forceToAxis: true, thresholdDelta: 6 } : false,
         autoplay: autoplay && hasMultiple && !reducedMotion
           ? { delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true }
           : false,
@@ -2427,7 +2433,11 @@ if (!customElements.get('inf-product-carousel-widget')) {
           ? { el: root.querySelector('.swiper-pagination'), clickable: true, dynamicBullets: true, dynamicMainBullets: 1 }
           : false,
         // 購買列可能比卡片晚出現或被收起，切換時順便重新量測
-        on: { slideChange: syncBottomOffset }
+        on: {
+          slideChange: syncBottomOffset,
+          sliderFirstMove: (swiper) => swiper.el.classList.add('is-dragging'),
+          touchEnd: (swiper) => swiper.el.classList.remove('is-dragging')
+        }
       });
 
       requestAnimationFrame(() => root.classList.add('is-visible'));
