@@ -338,6 +338,16 @@ test('compact slide shows the size tag only when hide_size is off', () => {
   assert.ok(!noSize.includes('inf-compact__size'));
 });
 
+test('compact price line shows a discount tag only for a real discount', () => {
+  const onSale = renderCompactSlideHtml(buildCompactSlide(compactItem('a'), { displayMode: 'SaleRate' }));
+  assert.ok(onSale.includes('<span class="inf-compact__discount">32% off</span><strong>NT$ 599</strong>'));
+  const fullPrice = renderCompactSlideHtml(
+    buildCompactSlide(compactItem('b', { sale_price: '880 TWD' }), { displayMode: 'SaleRate' })
+  );
+  assert.ok(fullPrice.includes('<strong>NT$ 880</strong>'));
+  assert.ok(!fullPrice.includes('inf-compact__discount'));
+});
+
 test('compact slide HTML escapes API text', () => {
   const slide = buildCompactSlide(compactItem('x', { title: '<img src=x onerror=alert(1)>"' }), {
     displayMode: 'SaleRate'
